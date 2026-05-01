@@ -361,8 +361,9 @@ subject_syntax (OPTIONAL):
   claim used by this issuer. Defined values are "uri" (default,
   arbitrary StringOrURI) and "spiffe" (a SPIFFE ID {{SPIFFE}}; see
   also {{SPIFFE-CLIENT-AUTH}} for the related SPIFFE-based client
-  authentication profile). Other values MAY be used; unrecognized
-  values MUST cause the AS to fall back to "uri" semantics.
+  authentication profile). Other values MAY be defined by future
+  specifications. An AS that does not understand the value MUST reject
+  actor tokens for that descriptor with invalid_grant.
 
 trust_domain (OPTIONAL):
 : When subject_syntax is "spiffe", a SPIFFE trust domain that the
@@ -405,8 +406,11 @@ OPTIONAL. A positive integer specifying the maximum delegation depth
 ({{ACTOR-PROFILE}}) the client class permits in actor chains
 originating from one of its instances. If absent, the AS applies its
 own policy. The AS MUST reject requests whose resulting act chain
-would exceed the lower of (a) this value, (b) the AS-imposed maximum,
-and (c) 4 (the floor specified by {{ACTOR-PROFILE}}).
+would exceed the lower of (a) this value, when present, and (b) the
+AS-imposed maximum. To remain compatible with {{ACTOR-PROFILE}}, an
+AS-imposed maximum used for this profile MUST support actor chains of
+at least depth 4, unless a lower client-specific max_actor_chain_depth
+is published by the client class.
 
 ## actor_token_required {#actor-token-required}
 
@@ -590,9 +594,16 @@ grant_type=client_credentials
 
 ## Authorization Server Processing {#as-processing}
 
-On receipt of a token request that includes actor_token and
-actor_token_type, an AS implementing this document MUST perform the
-following steps in addition to grant-type-specific processing:
+When evaluating a token request for this profile, an AS implementing
+this document MUST perform the following checks and steps in addition
+to grant-type-specific processing:
+
+If exactly one of actor_token and actor_token_type is present, the AS
+MUST reject the request with invalid_request. If actor_token_type is
+urn:ietf:params:oauth:token-type:client-instance-jwt but actor_token
+is absent, the AS MUST reject the request with invalid_request. If
+actor_token is present but is not a syntactically valid JWT, the AS
+MUST reject the request with invalid_request.
 
 1. **Authenticate the client.** Authenticate the client class using
    its registered token_endpoint_auth_method per {{RFC6749}} and, if
@@ -627,16 +638,17 @@ following steps in addition to grant-type-specific processing:
    MUST exactly equal the authenticated client_id. Reject with
    invalid_grant otherwise.
 
-8. **Enforce delegation policy.** Apply max_actor_chain_depth, the
-   AS's own policy, and the floor of 4 from {{ACTOR-PROFILE}}.
+8. **Enforce delegation policy.** Apply max_actor_chain_depth and the
+   AS's own maximum, subject to the minimum supported depth required by
+   {{ACTOR-PROFILE}}.
 
 9. **Check authorization-time consistency.** For grants that
    originate from a prior authorization step (notably
    authorization_code), apply the rules of
    {{auth-time-consistency}}.
 
-10. **Bind the actor.** If issuance succeeds, populate the access
-    token's act claim per {{access-token}}, applying
+10. **Bind the instance.** If issuance succeeds, represent the
+    instance in the access token per {{access-token}}, applying
     {{sender-constrained}} for token binding. Reflect any prior actor
     chain present in input tokens (e.g., the subject_token in a
     token-exchange request) by nesting per {{ACTOR-PROFILE}}.
@@ -763,7 +775,11 @@ proof in the same request) when the deployment supports it. If the
 actor token does not include a cnf claim, the AS MUST establish a
 sender-constrained binding through some other means (for example, by
 using the client's mTLS certificate as the bound key per
-{{RFC8705}}).
+{{RFC8705}}). The binding key MUST be specific to the validated client
+instance or otherwise bound by AS policy to the actor token's instance
+identity. A credential shared by the client class as a whole is not
+sufficient unless the AS can determine that its use in this request
+represents the same concrete instance named by the actor token.
 
 ## Access Token Representation {#access-token}
 
@@ -912,10 +928,11 @@ and that act is absent.
 When an access token issued under this profile is refreshed
 ({{RFC6749}} Section 6), the AS MAY require a fresh actor token in
 the refresh request, or it MAY copy the previously validated actor
-identity into the refreshed access token's act claim. The choice is a
-matter of AS policy and SHOULD be documented by the deployment.
-Issuing access tokens with a stale act claim across long refresh
-windows is discouraged; see {{security-replay}}.
+identity into the refreshed access token using the representation
+determined for the original grant. The choice is a matter of AS policy
+and SHOULD be documented by the deployment. Issuing access tokens with
+stale instance identity across long refresh windows is discouraged;
+see {{security-replay}}.
 
 ## Error Responses {#errors}
 
@@ -927,13 +944,14 @@ defined in {{as-processing}} to error codes:
 | --- | --- |
 | actor_token absent but actor_token_required is true | invalid_request |
 | actor_token present but actor_token_type absent | invalid_request |
+| actor_token_type present but actor_token absent | invalid_request |
 | actor_token malformed (not a valid JWT) | invalid_request |
 | actor_token_type not understood and required for the grant | unsupported_token_type ({{RFC8693}}) |
 | iss not found in instance_issuers | invalid_grant |
 | signature invalid; alg not permitted | invalid_grant |
 | aud, exp, iat, nbf, or jti validation fails | invalid_grant |
 | client_id binding mismatch | invalid_grant |
-| sub_profile or trust_domain constraint fails | invalid_grant |
+| subject_syntax, sub_profile, or trust_domain constraint fails | invalid_grant |
 | max_actor_chain_depth exceeded | invalid_grant |
 
 The AS MAY return additional information via the error_description
@@ -1010,22 +1028,25 @@ Trust withdrawal:
   references the affected scope SHOULD be revoked.
 
 Refresh windows are a particular concern: an access token refreshed
-without a new actor token may carry a stale act claim long after the
-original instance has terminated. ASes SHOULD prefer requiring a
+without a new actor token may carry stale instance identity long after
+the original instance has terminated. ASes SHOULD prefer requiring a
 fresh actor token on refresh ({{refresh}}), or set short refresh
-intervals when act is present.
+intervals when instance identity is present.
 
 ## Replay {#security-replay}
 
-Actor tokens MUST include jti, exp, and iat ({{claims}}). The AS
-MUST reject tokens whose jti has been seen within their validity
-window. Issuers SHOULD use short lifetimes (five minutes or less)
-both to limit replay exposure and because client instances often
-have lifetimes of seconds to minutes.
+Actor tokens MUST include jti, exp, and iat ({{claims}}). After the
+AS has identified the issuer and validated the actor token signature,
+it MUST reject a token whose (iss, jti) pair has already been seen
+within the token's validity window. The AS MUST retain replay-cache
+entries at least until the token's exp time, plus any allowed clock
+skew. Issuers SHOULD use short lifetimes (five minutes or less) both
+to limit replay exposure and because client instances often have
+lifetimes of seconds to minutes.
 
 When refreshing access tokens ({{refresh}}), AS implementations
 SHOULD prefer requiring a fresh actor token rather than perpetuating
-a stale act claim, especially across long refresh windows.
+stale instance identity, especially across long refresh windows.
 
 ## Audience and Confused Deputy
 
@@ -1092,8 +1113,10 @@ possession against the same key the AS authenticated.
 
 Unbounded delegation chains permit privilege amplification across
 boundaries. Client classes SHOULD set max_actor_chain_depth, AS
-implementations SHOULD enforce their own ceiling, and both MUST
-honor the floor of 4 from {{ACTOR-PROFILE}}.
+implementations SHOULD enforce their own ceiling, and AS-imposed
+ceilings used for this profile MUST preserve the minimum supported
+depth required by {{ACTOR-PROFILE}} unless the client class publishes
+a lower max_actor_chain_depth for itself.
 
 ## Privacy
 
