@@ -1,0 +1,2563 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>OAuth 2.0 Client Instance Actor Assertion Profile</title>
+<meta content="Karl McGuinness" name="author">
+<meta content="
+       This specification defines a profile for representing client instance
+identity in OAuth 2.0. It does not introduce a new client_instance
+identifier in protocol messages. Instead, it extends the Client ID
+Metadata Document (CIMD) so that a client_id identifies a logical
+client class whose concrete runtime instances are authenticated by one
+or more trusted instance issuers (for example, workload identity
+systems). 
+       This document profiles the actor_token and actor_token_type parameters
+defined by OAuth 2.0 Token Exchange (RFC 8693) and permits their use
+with grant types other than token exchange. It registers a new
+actor_token_type, urn:ietf:params:oauth:token-type:client-instance-jwt,
+that carries the instance identity as a signed JWT. The Authorization
+Server validates the actor token and represents the instance using the
+act claim defined by the OAuth Actor Profile. 
+    " name="description">
+<meta content="xml2rfc 3.33.0" name="generator">
+<meta content="OAuth" name="keyword">
+<meta content="CIMD" name="keyword">
+<meta content="Actor" name="keyword">
+<meta content="Workload Identity" name="keyword">
+<meta content="Client Instance" name="keyword">
+<meta content="draft-mcguinness-oauth-client-instance-actor-assertion-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.33.0
+    Python 3.12.13
+    ConfigArgParse 1.7
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.0.2
+    platformdirs 4.9.6
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.32.5
+    wcwidth 0.6.0
+-->
+<link href="draft-mcguinness-oauth-client-instance-actor-assertion.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1#title {
+  font-size: 32px;
+  line-height: 40px;
+  clear: both;
+}
+h1#title, h1#rfcnum {
+  margin: 1.5em 0 0.2em;
+}
+h1#rfcnum + h1#title {
+  margin: 0.2em 0;
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+}
+#abstract+p code, #abstract+p samp, #abstract+p tt {
+  font-size: 16px;
+  line-height: 0;
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+/* font-family isn't space-separated, but =~ will have to do */
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  border: none;
+  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+     support flexbox yet.
+  */
+  display: table;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+    }
+  }
+  &.olPercent > dt {
+    float: none;
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+}
+dl:not(.dlNewline) > dt {
+  float: left;
+  margin-right: 2ch;
+  min-width: 8ch;
+}
+dl > dd {
+  margin-bottom: .8em;
+  margin-left: var(--indent) !important; /* stupid element overrides */
+  min-height: 2ex;
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a, a[href].selfRef:hover {
+  text-decoration: none;
+}
+a[href] {
+  color: var(--link-color);
+}
+a[href].selfRef, .iref + a[href].internal {
+  color: var(--text-color);
+}
+a[href]:hover {
+  text-decoration: underline;
+}
+a[href].selfRef:hover {
+  background-color: var(--highlight-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) p {
+    margin: -2px 0;
+    max-height: 0;
+    transition: max-height 2s ease, margin 0.5s ease 0.5s;
+    overflow: hidden;
+  }
+  :is(#status-of-memo, #copyright):hover p,
+  :is(#status-of-memo, #copyright) h2:target ~ p {
+    margin: 0.5em 0;
+    max-height: 500px;
+    overflow: auto;
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+}
+table.right {
+  margin-left: auto;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+table.left {
+  margin-right: auto;
+}
+table .text-left {
+  text-align: left;
+}
+table .text-center {
+  text-align: center;
+}
+table .text-right {
+  text-align: right;
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+table caption {
+  margin: 0;
+  padding: 3px 0 3px 1em;
+}
+table p {
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+}
+@media not print {
+  :hover > a.pilcrow, a.pilcrow:focus {
+    opacity: 1;
+  }
+  a.pilcrow[href]:hover {
+    color: var(--pilcrow-strong);
+    background-color: transparent;
+  }
+}
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses > section {
+    column-count: 2;
+    column-gap: 20px;
+  }
+  #authors-addresses > section > h2 {
+    column-span: all;
+  }
+  /* hack for break-inside: avoid-column */
+  #authors-addresses address {
+    display: inline-block;
+    break-inside: avoid-column;
+  }
+}
+
+/* Comments */
+.rfcEditorRemove p:first-of-type {
+  font-style: italic;
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc nav {
+    font-family: var(--font-title);
+    font-weight: 360;
+    & > ul { margin-bottom: 2em; }
+    & ul {
+      margin: 0 0 0 4px;
+      & :is(p, li) {
+        margin: 2px 0;
+      }
+    }
+  }
+  #toc a.toplink {
+    float: right;
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 2px 0 2px 6px;
+    padding-right: 1em;
+    font-size: 18px;
+    line-height: 24px;
+    min-width: 190px;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+    &::before { /* css hamburger */
+      float: right;
+      position: relative;
+      width: 1em;
+      height: 1px;
+      left: -164px;
+      margin: 8px 0 0 0;
+      background: white none repeat scroll 0 0;
+      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+      content: "";
+    }
+  }
+  #toc nav {
+    display: none;
+    background-color: var(--background-color);
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+  #toc.active {
+    opacity: 1;
+    & nav { display: block; }
+  }
+  /* Make the collapsed ToC header render white on gray also when it's a link */
+  #toc h2 a,
+  #toc h2 a:is(:link, :focus, :hover),
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+  #toc a.toplink {
+    margin: 2px 0.5em 0;
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 2em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+  #toc a.toplink {
+    margin: 8px 0.5em 0;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg :is([stroke="black"], [stroke^="#000"]) {
+  stroke: var(--text-color);
+}
+svg :is([stroke="white"], [stroke^="#fff"]) {
+  stroke: var(--background-color);
+}
+svg :is([fill="black"], [fill^="#000"], :not([fill])) {
+  fill: var(--text-color);
+}
+svg :is([fill="white"], [fill^="#fff"]) {
+  fill: var(--background-color);
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">oauth-client-instance-actor</td>
+<td class="right">May 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">McGuinness</td>
+<td class="center">Expires 2 November 2026</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">OAuth</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-mcguinness-oauth-client-instance-actor-assertion-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-05-01" class="published">1 May 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2026-11-02">2 November 2026</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">K. McGuinness</div>
+<div class="org">Independent</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">OAuth 2.0 Client Instance Actor Assertion Profile</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This specification defines a profile for representing client instance
+identity in OAuth 2.0. It does not introduce a new client_instance
+identifier in protocol messages. Instead, it extends the Client ID
+Metadata Document (CIMD) so that a client_id identifies a logical
+client class whose concrete runtime instances are authenticated by one
+or more trusted instance issuers (for example, workload identity
+systems).<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">This document profiles the actor_token and actor_token_type parameters
+defined by OAuth 2.0 Token Exchange (RFC 8693) and permits their use
+with grant types other than token exchange. It registers a new
+actor_token_type, urn:ietf:params:oauth:token-type:client-instance-jwt,
+that carries the instance identity as a signed JWT. The Authorization
+Server validates the actor token and represents the instance using the
+act claim defined by the OAuth Actor Profile.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://kmcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/draft-mcguinness-oauth-client-instance-actor-assertion.html">https://kmcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/draft-mcguinness-oauth-client-instance-actor-assertion.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-mcguinness-oauth-client-instance-actor-assertion/">https://datatracker.ietf.org/doc/draft-mcguinness-oauth-client-instance-actor-assertion/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        OAuth Working Group mailing list (<span><a href="mailto:oauth@ietf.org">mailto:oauth@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/oauth/">https://mailarchive.ietf.org/arch/browse/oauth/</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/oauth/">https://www.ietf.org/mailman/listinfo/oauth/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/kmcguinness/draft-mcguinness-oauth-client-instance-actor-assertion">https://github.com/kmcguinness/draft-mcguinness-oauth-client-instance-actor-assertion</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 2 November 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-relationship-to-rfc-8693" class="internal xref">Relationship to RFC 8693</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-relationship-to-oauth-actor" class="internal xref">Relationship to OAuth Actor Profile</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-architecture" class="internal xref">Architecture</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-cimd-extensions" class="internal xref">CIMD Extensions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-instance_issuers" class="internal xref">instance_issuers</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-max_actor_chain_depth" class="internal xref">max_actor_chain_depth</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-actor_token_required" class="internal xref">actor_token_required</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-authorization-server-metada" class="internal xref">Authorization Server Metadata</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-the-client-instance-actor-t" class="internal xref">The Client Instance Actor Token</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-jwt-claims" class="internal xref">JWT Claims</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-signing" class="internal xref">Signing</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-example" class="internal xref">Example</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-token-endpoint-processing" class="internal xref">Token Endpoint Processing</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-token-request" class="internal xref">Token Request</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-authorization-server-proces" class="internal xref">Authorization Server Processing</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-access-token-representation" class="internal xref">Access Token Representation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
+                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-refresh-tokens" class="internal xref">Refresh Tokens</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.5">
+                <p id="section-toc.1-1.7.2.5.1"><a href="#section-7.5" class="auto internal xref">7.5</a>.  <a href="#name-error-responses" class="internal xref">Error Responses</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-grant-type-applicability" class="internal xref">Grant Type Applicability</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-trust-model" class="internal xref">Trust Model</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-replay" class="internal xref">Replay</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
+                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-audience-and-confused-deput" class="internal xref">Audience and Confused Deputy</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4">
+                <p id="section-toc.1-1.9.2.4.1"><a href="#section-9.4" class="auto internal xref">9.4</a>.  <a href="#name-binding" class="internal xref">Binding</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.5">
+                <p id="section-toc.1-1.9.2.5.1"><a href="#section-9.5" class="auto internal xref">9.5</a>.  <a href="#name-delegation-control" class="internal xref">Delegation Control</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.6">
+                <p id="section-toc.1-1.9.2.6.1"><a href="#section-9.6" class="auto internal xref">9.6</a>.  <a href="#name-privacy" class="internal xref">Privacy</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-oauth-token-type" class="internal xref">OAuth Token Type</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-oauth-dynamic-client-regist" class="internal xref">OAuth Dynamic Client Registration Metadata</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2.2.1">
+                    <p id="section-toc.1-1.10.2.2.2.1.1"><a href="#section-10.2.1" class="auto internal xref">10.2.1</a>.  <a href="#name-instance_issuers-2" class="internal xref">instance_issuers</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2.2.2">
+                    <p id="section-toc.1-1.10.2.2.2.2.1"><a href="#section-10.2.2" class="auto internal xref">10.2.2</a>.  <a href="#name-max_actor_chain_depth-2" class="internal xref">max_actor_chain_depth</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2.2.3">
+                    <p id="section-toc.1-1.10.2.2.2.3.1"><a href="#section-10.2.3" class="auto internal xref">10.2.3</a>.  <a href="#name-actor_token_required-2" class="internal xref">actor_token_required</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.3">
+                <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-oauth-authorization-server-" class="internal xref">OAuth Authorization Server Metadata</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4">
+                <p id="section-toc.1-1.10.2.4.1"><a href="#section-10.4" class="auto internal xref">10.4</a>.  <a href="#name-oauth-entity-profile" class="internal xref">OAuth Entity Profile</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
+                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref">11.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-design-rationale" class="internal xref">Design Rationale</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1">
+                <p id="section-toc.1-1.12.2.1.1"><a href="#appendix-A.1" class="auto internal xref"></a><a href="#name-why-not-a-client_instance-r" class="internal xref">Why not a client_instance request parameter?</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.2">
+                <p id="section-toc.1-1.12.2.2.1"><a href="#appendix-A.2" class="auto internal xref"></a><a href="#name-why-extend-actor_token-to-n" class="internal xref">Why extend actor_token to non-token-exchange grants?</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.3">
+                <p id="section-toc.1-1.12.2.3.1"><a href="#appendix-A.3" class="auto internal xref"></a><a href="#name-why-cimd-as-the-trust-ancho" class="internal xref">Why CIMD as the trust anchor for instance issuers?</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.4">
+                <p id="section-toc.1-1.12.2.4.1"><a href="#appendix-A.4" class="auto internal xref"></a><a href="#name-why-a-dedicated-actor_token" class="internal xref">Why a dedicated actor_token_type URN?</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">OAuth 2.0 <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> defines client_id as the identifier of a client.
+In modern deployments -- agentic workloads, autoscaled services,
+ephemeral function executions -- a single logical client routinely
+corresponds to many concrete runtime instances that come and go on a
+short timescale. Resource servers and authorization servers
+increasingly need to know not only <em>which</em> client made a request but
+<em>which instance</em> of that client made it.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">OAuth 2.0 Token Exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines the actor_token and
+actor_token_type token request parameters and the act claim for
+representing an actor in an issued token. The OAuth Actor Profile
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> further constrains the act claim and registers
+actor-related claims, but explicitly leaves out a token request
+parameter for proving an actor in flows other than token exchange.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This document fills that gap with a tightly scoped profile:<a href="#section-1-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-4.1">
+          <p id="section-1-4.1.1">It treats the CIMD client_id as identifying a client <em>class</em>, and
+defines metadata describing the <em>instance issuers</em> trusted to assert
+that a particular runtime is an instance of that class.<a href="#section-1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-4.2">
+          <p id="section-1-4.2.1">It permits the actor_token and actor_token_type parameters from
+<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> to appear on token requests using grant types other than
+urn:ietf:params:oauth:grant-type:token-exchange (including the
+authorization code, client credentials, and JWT bearer
+(<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>) grants).<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-4.3">
+          <p id="section-1-4.3.1">It registers a new actor_token_type,
+urn:ietf:params:oauth:token-type:client-instance-jwt, that carries
+the instance identity as a JWT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> signed by an instance
+issuer published in the client's CIMD metadata.<a href="#section-1-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-4.4">
+          <p id="section-1-4.4.1">It defines authorization server metadata so that clients can
+discover support.<a href="#section-1-4.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-1-5">What this document does <em>not</em> do:<a href="#section-1-5" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-6.1">
+          <p id="section-1-6.1.1">It does not introduce a client_instance request parameter.<a href="#section-1-6.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-6.2">
+          <p id="section-1-6.2.1">It does not change the syntax or processing of the act claim
+beyond what <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> already defines.<a href="#section-1-6.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-6.3">
+          <p id="section-1-6.3.1">It does not define authorization endpoint interactions for
+conveying actor identity; like <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, this is left for
+future work.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<div id="relationship-to-rfc-8693">
+<section id="section-1.1">
+        <h3 id="name-relationship-to-rfc-8693">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-relationship-to-rfc-8693" class="section-name selfRef">Relationship to RFC 8693</a>
+        </h3>
+<p id="section-1.1-1"><span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines actor_token and actor_token_type only in the
+context of the token exchange grant type. This document permits these
+parameters on additional grant types listed in
+<a href="#grant-type-applicability" class="auto internal xref">Section 8</a>, while preserving their semantics: the
+actor_token identifies the party acting on behalf of the subject and
+is reflected in an act claim in the issued token. Use of these
+parameters on a token exchange request remains fully governed by
+<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, with the additional client-instance-jwt token type
+defined here.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="relationship-to-oauth-actor-profile">
+<section id="section-1.2">
+        <h3 id="name-relationship-to-oauth-actor">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-relationship-to-oauth-actor" class="section-name selfRef">Relationship to OAuth Actor Profile</a>
+        </h3>
+<p id="section-1.2-1"><span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> defines the structure of the act claim, the
+sub_profile claim, and nested actor representation. This document does
+not redefine those constructs. It defines (a) how a client instance
+proves itself at the token endpoint and (b) how the AS populates
+act using the validated assertion. Implementations of this document
+<span class="bcp14">MUST</span> also implement <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">This document uses the following terms:<a href="#section-2-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-3">
+        <dt id="section-2-3.1">Client Class:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.2">
+          <p id="section-2-3.2.1">The logical OAuth client identified by a CIMD client_id. The client
+class is the issuer (in the OAuth metadata sense) that publishes the
+set of instance issuers permitted to authenticate its runtime
+instances.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.3">Client Instance:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.4">
+          <p id="section-2-3.4.1">A concrete runtime of a client class -- for example, a particular
+process, container, function invocation, or session.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.5">Instance Issuer:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.6">
+          <p id="section-2-3.6.1">An authority trusted by the client class to authenticate client
+instances and issue actor tokens on their behalf. Examples include
+workload identity providers (e.g., a SPIFFE control plane
+<span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>) and platform-managed identity services.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.7">Client Instance Actor Token:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.8">
+          <p id="section-2-3.8.1">A JWT issued by an instance issuer asserting the identity of a
+client instance, presented as the actor_token in a token request.<a href="#section-2-3.8.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="architecture">
+<section id="section-3">
+      <h2 id="name-architecture">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-architecture" class="section-name selfRef">Architecture</a>
+      </h2>
+<p id="section-3-1">Three roles cooperate to authenticate a client instance:<a href="#section-3-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+        <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Role</th>
+            <th class="text-left" rowspan="1" colspan="1">Responsibility</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Client Class</td>
+            <td class="text-left" rowspan="1" colspan="1">Logical OAuth client identified by a CIMD client_id. Publishes the list of trusted instance issuers in its CIMD metadata document.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Instance Issuer</td>
+            <td class="text-left" rowspan="1" colspan="1">Authenticates concrete runtime instances and issues short-lived JWT actor tokens describing them.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Authorization Server (AS)</td>
+            <td class="text-left" rowspan="1" colspan="1">Authenticates the client per its registered client authentication method; resolves the CIMD metadata; verifies the actor token against a trusted instance issuer; mints an access token whose act claim represents the instance.</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="section-3-3">A high-level flow:<a href="#section-3-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-ascii-art art-text artwork" id="section-3-4">
+<pre>
++-----------+   actor token   +------------+
+|  Client   |&lt;----------------|  Instance  |
+|  Instance |                 |   Issuer   |
++-----------+                 +------------+
+      |
+      | token request:
+      |  - client authentication (e.g., private_key_jwt)
+      |  - actor_token (instance JWT)
+      |  - actor_token_type =
+      |      urn:...:client-instance-jwt
+      v
++--------------------+
+| Authorization      |  -&gt; resolves CIMD for client_id
+| Server             |  -&gt; validates actor token
+|                    |  -&gt; issues access token with act claim
++--------------------+
+</pre><a href="#section-3-4" class="pilcrow">¶</a>
+</div>
+<p id="section-3-5">The client class identifier (the CIMD URL) is the OAuth client
+identifier; the instance issuer identifier is the JWT iss of the
+actor token. They are distinct trust anchors: the AS authenticates
+the client class using its registered client authentication method
+(typically private_key_jwt with keys from the CIMD jwks_uri) and
+authenticates the instance through the actor token.<a href="#section-3-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="cimd-extensions">
+<section id="section-4">
+      <h2 id="name-cimd-extensions">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-cimd-extensions" class="section-name selfRef">CIMD Extensions</a>
+      </h2>
+<p id="section-4-1">This document extends the Client ID Metadata Document <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> with
+parameters describing the trust relationship between a client class
+and the instance issuers that authenticate its runtime instances.
+These parameters are registered in the OAuth Dynamic Client
+Registration Metadata registry (see <a href="#iana-client-metadata" class="auto internal xref">Section 10.2</a>).<a href="#section-4-1" class="pilcrow">¶</a></p>
+<div id="instance-issuers">
+<section id="section-4.1">
+        <h3 id="name-instance_issuers">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-instance_issuers" class="section-name selfRef">instance_issuers</a>
+        </h3>
+<p id="section-4.1-1"><span class="bcp14">OPTIONAL</span>. A non-empty JSON array of <em>instance issuer descriptor</em>
+objects. Each descriptor declares an issuer that the client class
+trusts to authenticate its instances. If this parameter is absent,
+the AS <span class="bcp14">MUST NOT</span> accept actor tokens of type
+urn:ietf:params:oauth:token-type:client-instance-jwt for this client.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">An instance issuer descriptor has the following members:<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-4.1-3">
+          <dt id="section-4.1-3.1">issuer (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-4.1-3.2">
+            <p id="section-4.1-3.2.1">A StringOrURI <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> identifying the instance issuer. This
+value <span class="bcp14">MUST</span> exactly match the iss claim of accepted actor tokens.<a href="#section-4.1-3.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-4.1-3.3">jwks_uri (<span class="bcp14">REQUIRED</span> unless jwks is present):</dt>
+          <dd style="margin-left: 1.5em" id="section-4.1-3.4">
+            <p id="section-4.1-3.4.1">An HTTPS URL of a JWK Set <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span> containing the public keys
+used to verify signatures of actor tokens issued by this issuer.<a href="#section-4.1-3.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-4.1-3.5">jwks (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-4.1-3.6">
+            <p id="section-4.1-3.6.1">An inline JWK Set. If both jwks and jwks_uri are present, jwks_uri
+takes precedence and jwks <span class="bcp14">SHOULD</span> be ignored.<a href="#section-4.1-3.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-4.1-3.7">signing_alg_values_supported (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-4.1-3.8">
+            <p id="section-4.1-3.8.1">A JSON array of JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> alg values that this issuer uses to
+sign actor tokens. If present, the AS <span class="bcp14">MUST</span> reject actor tokens
+whose alg is not listed.<a href="#section-4.1-3.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-4.1-3.9">subject_syntax (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-4.1-3.10">
+            <p id="section-4.1-3.10.1">A short identifier indicating the syntactic profile of the sub
+claim used by this issuer. Defined values are "uri" (default,
+arbitrary StringOrURI) and "spiffe" (a SPIFFE ID <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>).
+Other values <span class="bcp14">MAY</span> be used; unrecognized values <span class="bcp14">MUST</span> cause the AS
+to fall back to "uri" semantics.<a href="#section-4.1-3.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-4.1-3.11">trust_domain (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-4.1-3.12">
+            <p id="section-4.1-3.12.1">When subject_syntax is "spiffe", a SPIFFE trust domain that the
+sub claim <span class="bcp14">MUST</span> belong to. The AS <span class="bcp14">MUST</span> reject any actor token
+whose sub does not lie within this trust domain.<a href="#section-4.1-3.12.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-4.1-3.13">actor_profiles_supported (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-4.1-3.14">
+            <p id="section-4.1-3.14.1">A JSON array of sub_profile values from the OAuth Entity Profiles
+registry <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span> that this issuer is authorized to
+assert. If present, the AS <span class="bcp14">MUST</span> reject any actor token whose
+sub_profile contains values not listed.<a href="#section-4.1-3.14.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-4.1-4">Example client metadata document:<a href="#section-4.1-4" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-4.1-5">
+<pre>
+{
+  "client_id": "https://openai.example.com/codex",
+  "jwks_uri": "https://openai.example.com/codex/jwks.json",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "instance_issuers": [
+    {
+      "issuer": "https://workload.openai.example.com",
+      "jwks_uri": "https://workload.openai.example.com/jwks.json",
+      "subject_syntax": "spiffe",
+      "trust_domain": "openai.example.com",
+      "signing_alg_values_supported": ["ES256"],
+      "actor_profiles_supported": ["client_instance", "ai_agent"]
+    }
+  ],
+  "max_actor_chain_depth": 4
+}
+</pre><a href="#section-4.1-5" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="max-actor-chain-depth">
+<section id="section-4.2">
+        <h3 id="name-max_actor_chain_depth">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-max_actor_chain_depth" class="section-name selfRef">max_actor_chain_depth</a>
+        </h3>
+<p id="section-4.2-1"><span class="bcp14">OPTIONAL</span>. A positive integer specifying the maximum delegation depth
+(<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>) the client class permits in actor chains
+originating from one of its instances. If absent, the AS applies its
+own policy. The AS <span class="bcp14">MUST</span> reject requests whose resulting act chain
+would exceed the lower of (a) this value, (b) the AS-imposed maximum,
+and (c) 4 (the floor specified by <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>).<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="actor-token-required">
+<section id="section-4.3">
+        <h3 id="name-actor_token_required">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-actor_token_required" class="section-name selfRef">actor_token_required</a>
+        </h3>
+<p id="section-4.3-1"><span class="bcp14">OPTIONAL</span>. A JSON boolean. When true, the AS <span class="bcp14">MUST</span> reject any token
+request from this client_id that does not include an actor_token of
+type urn:ietf:params:oauth:token-type:client-instance-jwt. The default
+is false.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<p id="section-4.3-2">This parameter lets a client class enforce that every issued access
+token is bound to an identifiable instance.<a href="#section-4.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="as-metadata">
+<section id="section-5">
+      <h2 id="name-authorization-server-metada">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-authorization-server-metada" class="section-name selfRef">Authorization Server Metadata</a>
+      </h2>
+<p id="section-5-1">This document defines the following AS metadata parameter for
+<span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> (see <a href="#iana-as-metadata" class="auto internal xref">Section 10.3</a>):<a href="#section-5-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5-2">
+        <dt id="section-5-2.1">actor_token_types_supported:</dt>
+        <dd style="margin-left: 1.5em" id="section-5-2.2">
+          <p id="section-5-2.2.1"><span class="bcp14">OPTIONAL</span>. A JSON array of actor_token_type values supported by the
+AS at the token endpoint. An AS implementing this profile <span class="bcp14">SHOULD</span>
+include urn:ietf:params:oauth:token-type:client-instance-jwt.<a href="#section-5-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-5-3">Clients use this metadata to determine whether the AS supports
+client-instance actor tokens before assembling token requests.<a href="#section-5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="client-instance-jwt">
+<section id="section-6">
+      <h2 id="name-the-client-instance-actor-t">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-the-client-instance-actor-t" class="section-name selfRef">The Client Instance Actor Token</a>
+      </h2>
+<p id="section-6-1">A <em>Client Instance Actor Token</em> is a JWT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> that asserts the
+identity of a client instance. Its actor_token_type is
+urn:ietf:params:oauth:token-type:client-instance-jwt (see
+<a href="#iana-token-type" class="auto internal xref">Section 10.1</a>).<a href="#section-6-1" class="pilcrow">¶</a></p>
+<div id="claims">
+<section id="section-6.1">
+        <h3 id="name-jwt-claims">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-jwt-claims" class="section-name selfRef">JWT Claims</a>
+        </h3>
+<p id="section-6.1-1">The following claims are defined for client instance actor tokens.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-6.1-2">
+          <dt id="section-6.1-2.1">iss (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.2">
+            <p id="section-6.1-2.2.1">The instance issuer identifier. <span class="bcp14">MUST</span> exactly match an issuer
+member of an instance_issuers descriptor in the client class CIMD
+metadata.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.3">sub (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.4">
+            <p id="section-6.1-2.4.1">The identifier of the client instance, in the syntax declared by
+the descriptor's subject_syntax (default: arbitrary StringOrURI).<a href="#section-6.1-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.5">aud (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.6">
+            <p id="section-6.1-2.6.1">The intended audience. <span class="bcp14">MUST</span> identify the AS. Per <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>
+Section 3, the AS <span class="bcp14">MUST</span> verify aud and <span class="bcp14">SHOULD</span> use its issuer
+identifier or token endpoint URL. If multiple values are present,
+the AS <span class="bcp14">MUST</span> find one that matches.<a href="#section-6.1-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.7">client_id (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.8">
+            <p id="section-6.1-2.8.1">The client_id of the client class to which this instance belongs.
+This claim binds the actor token to a specific client class; it is
+not part of the actor's identity (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, client_id
+identifies an OAuth client, not an actor). The AS <span class="bcp14">MUST</span> reject the
+token if this value does not exactly equal the client_id of the
+authenticated client.<a href="#section-6.1-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.9">exp (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.10">
+            <p id="section-6.1-2.10.1">Expiration time. Issuers <span class="bcp14">SHOULD</span> set short lifetimes (e.g., five
+minutes or less); see <a href="#security-replay" class="auto internal xref">Section 9.2</a>.<a href="#section-6.1-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.11">iat (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.12">
+            <p id="section-6.1-2.12.1">Issued-at time.<a href="#section-6.1-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.13">jti (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.14">
+            <p id="section-6.1-2.14.1">A unique identifier used for replay prevention; see
+<a href="#security-replay" class="auto internal xref">Section 9.2</a>.<a href="#section-6.1-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.15">sub_profile (<span class="bcp14">RECOMMENDED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.16">
+            <p id="section-6.1-2.16.1">A space-delimited list of OAuth Entity Profile names
+<span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span> classifying the actor. This document registers
+the value client_instance (<a href="#iana-entity-profile" class="auto internal xref">Section 10.4</a>). Issuers <span class="bcp14">MAY</span>
+include additional values such as service or ai_agent.<a href="#section-6.1-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.17">cnf (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.18">
+            <p id="section-6.1-2.18.1">A confirmation claim <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> carrying a key bound to this
+instance, enabling proof-of-possession at the AS or downstream.
+See <a href="#security-binding" class="auto internal xref">Section 9.4</a>.<a href="#section-6.1-2.18.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.19">nbf (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.20">
+            <p id="section-6.1-2.20.1">Not-before time. If present, the AS <span class="bcp14">MUST</span> reject the token before
+this time.<a href="#section-6.1-2.20.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-6.1-3">Additional claims <span class="bcp14">MAY</span> be present and <span class="bcp14">MUST</span> be ignored if not
+understood, except where this document or <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> specifies
+processing rules.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="signing">
+<section id="section-6.2">
+        <h3 id="name-signing">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-signing" class="section-name selfRef">Signing</a>
+        </h3>
+<p id="section-6.2-1">The actor token <span class="bcp14">MUST</span> be signed using a JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> algorithm. The
+"none" algorithm <span class="bcp14">MUST NOT</span> be used. Implementations <span class="bcp14">MUST</span> follow the
+guidance in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2-2">Verification keys are obtained from the descriptor's jwks_uri (or
+jwks) for the issuer that matches the iss claim. The AS <span class="bcp14">MUST</span> verify
+the alg against signing_alg_values_supported when present.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="example-token">
+<section id="section-6.3">
+        <h3 id="name-example">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-example" class="section-name selfRef">Example</a>
+        </h3>
+<p id="section-6.3-1">A decoded client instance actor token:<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-6.3-2">
+<pre>
+{
+  "iss":          "https://workload.openai.example.com",
+  "sub":          "spiffe://openai.example.com/codex/session-abc",
+  "aud":          "https://as.example.com",
+  "client_id":    "https://openai.example.com/codex",
+  "sub_profile":  "client_instance ai_agent",
+  "iat":          1770000000,
+  "nbf":          1770000000,
+  "exp":          1770000300,
+  "jti":          "1a2b3c4d-5e6f"
+}
+</pre><a href="#section-6.3-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="token-endpoint">
+<section id="section-7">
+      <h2 id="name-token-endpoint-processing">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-token-endpoint-processing" class="section-name selfRef">Token Endpoint Processing</a>
+      </h2>
+<div id="token-request">
+<section id="section-7.1">
+        <h3 id="name-token-request">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-token-request" class="section-name selfRef">Token Request</a>
+        </h3>
+<p id="section-7.1-1">A client presents a client instance actor token at the token endpoint
+by adding the actor_token and actor_token_type parameters defined by
+<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> to a token request of any grant type listed in
+<a href="#grant-type-applicability" class="auto internal xref">Section 8</a>.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<p id="section-7.1-2">The following example shows a client credentials grant carrying a
+client instance actor token. The client class authenticates with
+private_key_jwt; line breaks are for readability:<a href="#section-7.1-2" class="pilcrow">¶</a></p>
+<div class="lang-http-message sourcecode" id="section-7.1-3">
+<pre>
+POST /token HTTP/1.1
+Host: as.example.com
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&amp;scope=repo.write
+&amp;client_id=https%3A%2F%2Fopenai.example.com%2Fcodex
+&amp;client_assertion_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&amp;client_assertion=eyJhbGciOiJFUzI1NiIsImtpZCI6...
+&amp;actor_token=eyJhbGciOiJFUzI1NiIsImtpZCI6...
+&amp;actor_token_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
+</pre><a href="#section-7.1-3" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="as-processing">
+<section id="section-7.2">
+        <h3 id="name-authorization-server-proces">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-authorization-server-proces" class="section-name selfRef">Authorization Server Processing</a>
+        </h3>
+<p id="section-7.2-1">On receipt of a token request that includes actor_token and
+actor_token_type, an AS implementing this document <span class="bcp14">MUST</span> perform the
+following steps in addition to grant-type-specific processing:<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-7.2-2">
+<li id="section-7.2-2.1">
+            <p id="section-7.2-2.1.1"><strong>Authenticate the client.</strong> Authenticate the client class using
+its registered token_endpoint_auth_method per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> and, if
+applicable, <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>. The CIMD client_id is the client class.<a href="#section-7.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-2.2">
+            <p id="section-7.2-2.2.1"><strong>Match the token type.</strong> If actor_token_type is not
+urn:ietf:params:oauth:token-type:client-instance-jwt, processing
+under this document does not apply. (Other actor token types <span class="bcp14">MAY</span>
+be processed under their own specifications.)<a href="#section-7.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-2.3">
+            <p id="section-7.2-2.3.1"><strong>Resolve client metadata.</strong> Retrieve the CIMD document for the
+authenticated client_id, subject to caching rules in <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-7.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-2.4">
+            <p id="section-7.2-2.4.1"><strong>Locate the instance issuer descriptor.</strong> Parse the actor_token
+as a JWT and read its iss claim. Find the descriptor in
+instance_issuers whose issuer member exactly equals iss. If no
+descriptor is found, or instance_issuers is absent, reject the
+request with invalid_grant (<a href="#errors" class="auto internal xref">Section 7.5</a>).<a href="#section-7.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-2.5">
+            <p id="section-7.2-2.5.1"><strong>Verify the signature.</strong> Using the descriptor's jwks_uri or
+jwks, verify the JWS signature per <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> and <a href="#signing" class="auto internal xref">Section 6.2</a>.<a href="#section-7.2-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-2.6">
+            <p id="section-7.2-2.6.1"><strong>Validate JWT claims.</strong> Validate iss, sub, aud, exp, iat, nbf,
+and jti per <a href="#claims" class="auto internal xref">Section 6.1</a> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> Section 3. Enforce
+subject_syntax, trust_domain, signing_alg_values_supported, and
+actor_profiles_supported when present in the descriptor.<a href="#section-7.2-2.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-2.7">
+            <p id="section-7.2-2.7.1"><strong>Verify client_id binding.</strong> The actor token's client_id claim
+<span class="bcp14">MUST</span> exactly equal the authenticated client_id. Reject with
+invalid_grant otherwise.<a href="#section-7.2-2.7.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-2.8">
+            <p id="section-7.2-2.8.1"><strong>Enforce delegation policy.</strong> Apply max_actor_chain_depth, the
+AS's own policy, and the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-7.2-2.8.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-2.9">
+            <p id="section-7.2-2.9.1"><strong>Bind the actor.</strong> If issuance succeeds, populate the access
+token's act claim per <a href="#access-token" class="auto internal xref">Section 7.3</a>. Reflect any prior actor
+chain present in input tokens (e.g., the subject_token in a
+token-exchange request) by nesting per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-7.2-2.9.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-7.2-3">If the client metadata sets actor_token_required to true and no
+actor_token of this type is presented, the AS <span class="bcp14">MUST</span> reject the request
+with invalid_request.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
+<p id="section-7.2-4">If validation succeeds, the AS issues an access token (and optionally
+a refresh token) per the requested grant.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="access-token">
+<section id="section-7.3">
+        <h3 id="name-access-token-representation">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-access-token-representation" class="section-name selfRef">Access Token Representation</a>
+        </h3>
+<p id="section-7.3-1">If the request is granted, the AS <span class="bcp14">MUST</span> set the act claim of the
+issued access token to an actor object as defined by
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, populated from the validated actor token:<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.3-2.1">
+            <p id="section-7.3-2.1.1">act.iss = actor token iss<a href="#section-7.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.3-2.2">
+            <p id="section-7.3-2.2.1">act.sub = actor token sub<a href="#section-7.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.3-2.3">
+            <p id="section-7.3-2.3.1">act.sub_profile = actor token sub_profile (if present); the value
+client_instance <span class="bcp14">SHOULD</span> be included.<a href="#section-7.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.3-2.4">
+            <p id="section-7.3-2.4.1">act.cnf = actor token cnf (if present and the AS chooses to
+propagate proof-of-possession; see <a href="#security-binding" class="auto internal xref">Section 9.4</a>).<a href="#section-7.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-7.3-3">If the upstream context already contains an actor (for example, a
+token exchange request whose subject_token has its own act), the AS
+<span class="bcp14">MUST</span> nest as specified in <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, with the client instance
+becoming the immediate (outermost) actor.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
+<p id="section-7.3-4">Example issued access token (decoded payload, single-actor case):<a href="#section-7.3-4" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-7.3-5">
+<pre>
+{
+  "iss":       "https://as.example.com",
+  "aud":       "https://api.example.com",
+  "sub":       "user:alice@example.com",
+  "client_id": "https://openai.example.com/codex",
+  "scope":     "repo.write",
+  "iat":       1770000005,
+  "exp":       1770003605,
+  "act": {
+    "iss":         "https://workload.openai.example.com",
+    "sub":         "spiffe://openai.example.com/codex/session-abc",
+    "sub_profile": "client_instance ai_agent"
+  }
+}
+</pre><a href="#section-7.3-5" class="pilcrow">¶</a>
+</div>
+<p id="section-7.3-6">Example with a nested actor (the subject_token of a token-exchange
+request was itself acting on behalf of the user through a prior
+service):<a href="#section-7.3-6" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-7.3-7">
+<pre>
+{
+  "iss":       "https://as.example.com",
+  "aud":       "https://api.example.com",
+  "sub":       "user:alice@example.com",
+  "client_id": "https://openai.example.com/codex",
+  "scope":     "repo.write",
+  "act": {
+    "iss":         "https://workload.openai.example.com",
+    "sub":         "spiffe://openai.example.com/codex/session-abc",
+    "sub_profile": "client_instance",
+    "act": {
+      "iss":         "https://upstream.example.com",
+      "sub":         "service-router",
+      "sub_profile": "service"
+    }
+  }
+}
+</pre><a href="#section-7.3-7" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="refresh">
+<section id="section-7.4">
+        <h3 id="name-refresh-tokens">
+<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-refresh-tokens" class="section-name selfRef">Refresh Tokens</a>
+        </h3>
+<p id="section-7.4-1">When an access token issued under this profile is refreshed
+(<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 6), the AS <span class="bcp14">MAY</span> require a fresh actor token in
+the refresh request, or it <span class="bcp14">MAY</span> copy the previously validated actor
+identity into the refreshed access token's act claim. The choice is a
+matter of AS policy and <span class="bcp14">SHOULD</span> be documented by the deployment.
+Issuing access tokens with a stale act claim across long refresh
+windows is discouraged; see <a href="#security-replay" class="auto internal xref">Section 9.2</a>.<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="errors">
+<section id="section-7.5">
+        <h3 id="name-error-responses">
+<a href="#section-7.5" class="section-number selfRef">7.5. </a><a href="#name-error-responses" class="section-name selfRef">Error Responses</a>
+        </h3>
+<p id="section-7.5-1">Errors are returned per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 5.2 and <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>
+Section 2.2.2. The following table maps the validation failures
+defined in <a href="#as-processing" class="auto internal xref">Section 7.2</a> to error codes:<a href="#section-7.5-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-2">
+          <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Failure</th>
+              <th class="text-left" rowspan="1" colspan="1">error</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">actor_token absent but actor_token_required is true</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_request</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">actor_token present but actor_token_type absent</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_request</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">actor_token malformed (not a valid JWT)</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_request</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">actor_token_type not understood and required for the grant</td>
+              <td class="text-left" rowspan="1" colspan="1">unsupported_token_type (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">iss not found in instance_issuers</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_grant</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">signature invalid; alg not permitted</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_grant</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">aud, exp, iat, nbf, or jti validation fails</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_grant</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">client_id binding mismatch</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_grant</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">sub_profile or trust_domain constraint fails</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_grant</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">max_actor_chain_depth exceeded</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_grant</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-7.5-3">The AS <span class="bcp14">MAY</span> return additional information via the error_description
+parameter; deployments <span class="bcp14">MUST NOT</span> include sensitive instance details
+(e.g., raw SPIFFE IDs of unrelated workloads) in error responses.<a href="#section-7.5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="grant-type-applicability">
+<section id="section-8">
+      <h2 id="name-grant-type-applicability">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-grant-type-applicability" class="section-name selfRef">Grant Type Applicability</a>
+      </h2>
+<p id="section-8-1">Token endpoint grant types that <span class="bcp14">MAY</span> carry an actor_token of type
+client-instance-jwt are:<a href="#section-8-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8-2.1">
+          <p id="section-8-2.1.1">authorization_code (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)<a href="#section-8-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-8-2.2">
+          <p id="section-8-2.2.1">client_credentials (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)<a href="#section-8-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-8-2.3">
+          <p id="section-8-2.3.1">refresh_token (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>; see <a href="#refresh" class="auto internal xref">Section 7.4</a>)<a href="#section-8-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-8-2.4">
+          <p id="section-8-2.4.1">urn:ietf:params:oauth:grant-type:jwt-bearer (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>)<a href="#section-8-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-8-2.5">
+          <p id="section-8-2.5.1">urn:ietf:params:oauth:grant-type:token-exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>)<a href="#section-8-2.5.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-8-3">For the token-exchange grant, processing under <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> continues
+to apply; this document adds only the new actor_token_type and the
+CIMD-based trust resolution.<a href="#section-8-3" class="pilcrow">¶</a></p>
+<p id="section-8-4">This document does not define behavior for the implicit grant or for
+the device authorization grant; specifying those is left to future
+work.<a href="#section-8-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security">
+<section id="section-9">
+      <h2 id="name-security-considerations">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-9-1">This document inherits the security considerations of <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>,
+<span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>, <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>, <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>, and
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<div id="trust-model">
+<section id="section-9.1">
+        <h3 id="name-trust-model">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-trust-model" class="section-name selfRef">Trust Model</a>
+        </h3>
+<p id="section-9.1-1">A client class delegates the authentication of its instances to one
+or more instance issuers by listing them in its CIMD metadata. The AS
+relies on this delegation: a compromised or misconfigured instance
+issuer can mint actor tokens that the AS will accept as legitimate
+instances. Client classes <span class="bcp14">SHOULD</span> list only instance issuers under
+their own administrative control (or contractually equivalent) and
+<span class="bcp14">SHOULD</span> use trust_domain and actor_profiles_supported to constrain
+what each issuer is allowed to assert.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+<p id="section-9.1-2">CIMD metadata changes are themselves trust-affecting. Per <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>,
+the AS detects key changes and may revoke prior tokens. AS
+implementations <span class="bcp14">SHOULD</span> apply the same diligence to changes in
+instance_issuers: an attacker who can modify the metadata document
+can add a new instance issuer under their control. Client classes
+publishing metadata <span class="bcp14">MUST</span> protect the publication channel.<a href="#section-9.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-replay">
+<section id="section-9.2">
+        <h3 id="name-replay">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-replay" class="section-name selfRef">Replay</a>
+        </h3>
+<p id="section-9.2-1">Actor tokens <span class="bcp14">MUST</span> include jti, exp, and iat (<a href="#claims" class="auto internal xref">Section 6.1</a>). The AS
+<span class="bcp14">MUST</span> reject tokens whose jti has been seen within their validity
+window. Issuers <span class="bcp14">SHOULD</span> use short lifetimes (five minutes or less)
+both to limit replay exposure and because client instances often
+have lifetimes of seconds to minutes.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<p id="section-9.2-2">When refreshing access tokens (<a href="#refresh" class="auto internal xref">Section 7.4</a>), AS implementations
+<span class="bcp14">SHOULD</span> prefer requiring a fresh actor token rather than perpetuating
+a stale act claim, especially across long refresh windows.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="audience-and-confused-deputy">
+<section id="section-9.3">
+        <h3 id="name-audience-and-confused-deput">
+<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-audience-and-confused-deput" class="section-name selfRef">Audience and Confused Deputy</a>
+        </h3>
+<p id="section-9.3-1">The aud claim binds the actor token to a specific AS, preventing one
+AS from replaying it against another (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> Section 3). The
+client_id claim, which this document treats as a binding (not as
+actor identity), prevents an actor token issued for one client class
+from being presented under a different client class's authentication.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-binding">
+<section id="section-9.4">
+        <h3 id="name-binding">
+<a href="#section-9.4" class="section-number selfRef">9.4. </a><a href="#name-binding" class="section-name selfRef">Binding</a>
+        </h3>
+<p id="section-9.4-1">A client instance actor token by itself is a bearer credential
+during its short lifetime. Where possible, deployments <span class="bcp14">SHOULD</span> bind
+the actor token to a key the instance possesses by including a cnf
+claim <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>. The AS <span class="bcp14">MAY</span> then verify possession (for example,
+by requiring a DPoP-style proof in the same request) and <span class="bcp14">MAY</span>
+propagate the cnf into the act claim of the issued access token so
+that downstream resource servers can enforce possession.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
+<p id="section-9.4-2">This document does not define a particular proof-of-possession
+mechanism; that is a separate profile.<a href="#section-9.4-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="delegation-control">
+<section id="section-9.5">
+        <h3 id="name-delegation-control">
+<a href="#section-9.5" class="section-number selfRef">9.5. </a><a href="#name-delegation-control" class="section-name selfRef">Delegation Control</a>
+        </h3>
+<p id="section-9.5-1">Unbounded delegation chains permit privilege amplification across
+boundaries. Client classes <span class="bcp14">SHOULD</span> set max_actor_chain_depth, AS
+implementations <span class="bcp14">SHOULD</span> enforce their own ceiling, and both <span class="bcp14">MUST</span>
+honor the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-9.5-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="privacy">
+<section id="section-9.6">
+        <h3 id="name-privacy">
+<a href="#section-9.6" class="section-number selfRef">9.6. </a><a href="#name-privacy" class="section-name selfRef">Privacy</a>
+        </h3>
+<p id="section-9.6-1">A client instance actor token reveals fine-grained workload identity
+to the AS and, after issuance, to resource servers via the act claim.
+Issuers and client classes <span class="bcp14">SHOULD</span> avoid encoding sensitive
+information (e.g., human user identifiers, internal infrastructure
+details) in sub. The error response guidance in <a href="#errors" class="auto internal xref">Section 7.5</a> extends
+to logs and audit trails: actor token contents <span class="bcp14">SHOULD</span> be logged at a
+level commensurate with the sensitivity of the workload identity
+they convey.<a href="#section-9.6-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana">
+<section id="section-10">
+      <h2 id="name-iana-considerations">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<div id="iana-token-type">
+<section id="section-10.1">
+        <h3 id="name-oauth-token-type">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-oauth-token-type" class="section-name selfRef">OAuth Token Type</a>
+        </h3>
+<p id="section-10.1-1">IANA is requested to register the following value in the "OAuth URI"
+registry established by <span>[<a href="#RFC6755" class="cite xref">RFC6755</a>]</span> (and used by <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> for
+actor_token_type values):<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-10.1-2">
+          <dt id="section-10.1-2.1">URN:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.1-2.2">
+            <p id="section-10.1-2.2.1">urn:ietf:params:oauth:token-type:client-instance-jwt<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.1-2.3">Common Name:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.1-2.4">
+            <p id="section-10.1-2.4.1">OAuth 2.0 Client Instance Actor Token<a href="#section-10.1-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.1-2.5">Change Controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.1-2.6">
+            <p id="section-10.1-2.6.1">IETF<a href="#section-10.1-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.1-2.7">Specification Document(s):</dt>
+          <dd style="margin-left: 1.5em" id="section-10.1-2.8">
+            <p id="section-10.1-2.8.1">This document<a href="#section-10.1-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="iana-client-metadata">
+<section id="section-10.2">
+        <h3 id="name-oauth-dynamic-client-regist">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-oauth-dynamic-client-regist" class="section-name selfRef">OAuth Dynamic Client Registration Metadata</a>
+        </h3>
+<p id="section-10.2-1">IANA is requested to register the following parameters in the "OAuth
+Dynamic Client Registration Metadata" registry established by
+<span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>. The Change Controller for each entry is IETF.<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<div id="instanceissuers">
+<section id="section-10.2.1">
+          <h4 id="name-instance_issuers-2">
+<a href="#section-10.2.1" class="section-number selfRef">10.2.1. </a><a href="#name-instance_issuers-2" class="section-name selfRef">instance_issuers</a>
+          </h4>
+<span class="break"></span><dl class="dlParallel" id="section-10.2.1-1">
+            <dt id="section-10.2.1-1.1">Client Metadata Name:</dt>
+            <dd style="margin-left: 1.5em" id="section-10.2.1-1.2">
+              <p id="section-10.2.1-1.2.1">instance_issuers<a href="#section-10.2.1-1.2.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-10.2.1-1.3">Client Metadata Description:</dt>
+            <dd style="margin-left: 1.5em" id="section-10.2.1-1.4">
+              <p id="section-10.2.1-1.4.1">Trusted issuers of client instance actor tokens for this client.<a href="#section-10.2.1-1.4.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-10.2.1-1.5">Specification Document(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-10.2.1-1.6">
+              <p id="section-10.2.1-1.6.1"><a href="#instance-issuers" class="auto internal xref">Section 4.1</a> of this document<a href="#section-10.2.1-1.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="maxactorchaindepth">
+<section id="section-10.2.2">
+          <h4 id="name-max_actor_chain_depth-2">
+<a href="#section-10.2.2" class="section-number selfRef">10.2.2. </a><a href="#name-max_actor_chain_depth-2" class="section-name selfRef">max_actor_chain_depth</a>
+          </h4>
+<span class="break"></span><dl class="dlParallel" id="section-10.2.2-1">
+            <dt id="section-10.2.2-1.1">Client Metadata Name:</dt>
+            <dd style="margin-left: 1.5em" id="section-10.2.2-1.2">
+              <p id="section-10.2.2-1.2.1">max_actor_chain_depth<a href="#section-10.2.2-1.2.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-10.2.2-1.3">Client Metadata Description:</dt>
+            <dd style="margin-left: 1.5em" id="section-10.2.2-1.4">
+              <p id="section-10.2.2-1.4.1">Maximum permitted delegation depth for act chains rooted at an
+instance of this client.<a href="#section-10.2.2-1.4.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-10.2.2-1.5">Specification Document(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-10.2.2-1.6">
+              <p id="section-10.2.2-1.6.1"><a href="#max-actor-chain-depth" class="auto internal xref">Section 4.2</a> of this document<a href="#section-10.2.2-1.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="actortokenrequired">
+<section id="section-10.2.3">
+          <h4 id="name-actor_token_required-2">
+<a href="#section-10.2.3" class="section-number selfRef">10.2.3. </a><a href="#name-actor_token_required-2" class="section-name selfRef">actor_token_required</a>
+          </h4>
+<span class="break"></span><dl class="dlParallel" id="section-10.2.3-1">
+            <dt id="section-10.2.3-1.1">Client Metadata Name:</dt>
+            <dd style="margin-left: 1.5em" id="section-10.2.3-1.2">
+              <p id="section-10.2.3-1.2.1">actor_token_required<a href="#section-10.2.3-1.2.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-10.2.3-1.3">Client Metadata Description:</dt>
+            <dd style="margin-left: 1.5em" id="section-10.2.3-1.4">
+              <p id="section-10.2.3-1.4.1">When true, the AS rejects token requests for this client that lack
+a client instance actor token.<a href="#section-10.2.3-1.4.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-10.2.3-1.5">Specification Document(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-10.2.3-1.6">
+              <p id="section-10.2.3-1.6.1"><a href="#actor-token-required" class="auto internal xref">Section 4.3</a> of this document<a href="#section-10.2.3-1.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="iana-as-metadata">
+<section id="section-10.3">
+        <h3 id="name-oauth-authorization-server-">
+<a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-oauth-authorization-server-" class="section-name selfRef">OAuth Authorization Server Metadata</a>
+        </h3>
+<p id="section-10.3-1">IANA is requested to register the following parameter in the "OAuth
+Authorization Server Metadata" registry established by <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>:<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-10.3-2">
+          <dt id="section-10.3-2.1">Metadata Name:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.3-2.2">
+            <p id="section-10.3-2.2.1">actor_token_types_supported<a href="#section-10.3-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.3-2.3">Metadata Description:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.3-2.4">
+            <p id="section-10.3-2.4.1">JSON array of actor_token_type values supported at the token
+endpoint.<a href="#section-10.3-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.3-2.5">Change Controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.3-2.6">
+            <p id="section-10.3-2.6.1">IETF<a href="#section-10.3-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.3-2.7">Specification Document(s):</dt>
+          <dd style="margin-left: 1.5em" id="section-10.3-2.8">
+            <p id="section-10.3-2.8.1"><a href="#as-metadata" class="auto internal xref">Section 5</a> of this document<a href="#section-10.3-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="iana-entity-profile">
+<section id="section-10.4">
+        <h3 id="name-oauth-entity-profile">
+<a href="#section-10.4" class="section-number selfRef">10.4. </a><a href="#name-oauth-entity-profile" class="section-name selfRef">OAuth Entity Profile</a>
+        </h3>
+<p id="section-10.4-1">IANA is requested to register the following value in the "OAuth
+Entity Profiles" registry established by <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span>. This
+registration is contingent on the establishment of that registry.<a href="#section-10.4-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-10.4-2">
+          <dt id="section-10.4-2.1">Profile Name:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.4-2.2">
+            <p id="section-10.4-2.2.1">client_instance<a href="#section-10.4-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.4-2.3">Profile Description:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.4-2.4">
+            <p id="section-10.4-2.4.1">A concrete runtime instance of an OAuth client class identified by
+a Client ID Metadata Document.<a href="#section-10.4-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.4-2.5">Profile Usage Location:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.4-2.6">
+            <p id="section-10.4-2.6.1">Actor Profile<a href="#section-10.4-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.4-2.7">Change Controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.4-2.8">
+            <p id="section-10.4-2.8.1">IETF<a href="#section-10.4-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.4-2.9">Specification Document(s):</dt>
+          <dd style="margin-left: 1.5em" id="section-10.4-2.10">
+            <p id="section-10.4-2.10.1">This document<a href="#section-10.4-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-11">
+      <h2 id="name-references">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-11.1">
+        <h3 id="name-normative-references">
+<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6749">[RFC6749]</dt>
+        <dd>
+<span class="refAuthor">Hardt, D., Ed.</span>, <span class="refTitle">"The OAuth 2.0 Authorization Framework"</span>, <span class="seriesInfo">RFC 6749</span>, <span class="seriesInfo">DOI 10.17487/RFC6749</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6749">https://www.rfc-editor.org/rfc/rfc6749</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6755">[RFC6755]</dt>
+        <dd>
+<span class="refAuthor">Campbell, B.</span> and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"An IETF URN Sub-Namespace for OAuth"</span>, <span class="seriesInfo">RFC 6755</span>, <span class="seriesInfo">DOI 10.17487/RFC6755</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6755">https://www.rfc-editor.org/rfc/rfc6755</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7515">[RFC7515]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">N. Sakimura</span>, <span class="refTitle">"JSON Web Signature (JWS)"</span>, <span class="seriesInfo">RFC 7515</span>, <span class="seriesInfo">DOI 10.17487/RFC7515</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7515">https://www.rfc-editor.org/rfc/rfc7515</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7517">[RFC7517]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refTitle">"JSON Web Key (JWK)"</span>, <span class="seriesInfo">RFC 7517</span>, <span class="seriesInfo">DOI 10.17487/RFC7517</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7517">https://www.rfc-editor.org/rfc/rfc7517</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7519">[RFC7519]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">N. Sakimura</span>, <span class="refTitle">"JSON Web Token (JWT)"</span>, <span class="seriesInfo">RFC 7519</span>, <span class="seriesInfo">DOI 10.17487/RFC7519</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7519">https://www.rfc-editor.org/rfc/rfc7519</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7523">[RFC7523]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Campbell, B.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentication and Authorization Grants"</span>, <span class="seriesInfo">RFC 7523</span>, <span class="seriesInfo">DOI 10.17487/RFC7523</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7523">https://www.rfc-editor.org/rfc/rfc7523</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7591">[RFC7591]</dt>
+        <dd>
+<span class="refAuthor">Richer, J., Ed.</span>, <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Machulak, M.</span>, and <span class="refAuthor">P. Hunt</span>, <span class="refTitle">"OAuth 2.0 Dynamic Client Registration Protocol"</span>, <span class="seriesInfo">RFC 7591</span>, <span class="seriesInfo">DOI 10.17487/RFC7591</span>, <time datetime="2015-07" class="refDate">July 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7591">https://www.rfc-editor.org/rfc/rfc7591</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7800">[RFC7800]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"Proof-of-Possession Key Semantics for JSON Web Tokens (JWTs)"</span>, <span class="seriesInfo">RFC 7800</span>, <span class="seriesInfo">DOI 10.17487/RFC7800</span>, <time datetime="2016-04" class="refDate">April 2016</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7800">https://www.rfc-editor.org/rfc/rfc7800</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8414">[RFC8414]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Sakimura, N.</span>, and <span class="refAuthor">J. Bradley</span>, <span class="refTitle">"OAuth 2.0 Authorization Server Metadata"</span>, <span class="seriesInfo">RFC 8414</span>, <span class="seriesInfo">DOI 10.17487/RFC8414</span>, <time datetime="2018-06" class="refDate">June 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8414">https://www.rfc-editor.org/rfc/rfc8414</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8693">[RFC8693]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Nadalin, A.</span>, <span class="refAuthor">Campbell, B., Ed.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"OAuth 2.0 Token Exchange"</span>, <span class="seriesInfo">RFC 8693</span>, <span class="seriesInfo">DOI 10.17487/RFC8693</span>, <time datetime="2020-01" class="refDate">January 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8693">https://www.rfc-editor.org/rfc/rfc8693</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8725">[RFC8725]</dt>
+      <dd>
+<span class="refAuthor">Sheffer, Y.</span>, <span class="refAuthor">Hardt, D.</span>, and <span class="refAuthor">M. Jones</span>, <span class="refTitle">"JSON Web Token Best Current Practices"</span>, <span class="seriesInfo">BCP 225</span>, <span class="seriesInfo">RFC 8725</span>, <span class="seriesInfo">DOI 10.17487/RFC8725</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8725">https://www.rfc-editor.org/rfc/rfc8725</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-11.2">
+        <h3 id="name-informative-references">
+<a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="ACTOR-PROFILE">[ACTOR-PROFILE]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth Actor Profile for Delegation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-actor-profile-00</span>, <time datetime="2026-04-30" class="refDate">30 April 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="CIMD">[CIMD]</dt>
+        <dd>
+<span class="refAuthor">Parecki, A.</span> and <span class="refAuthor">E. Smith</span>, <span class="refTitle">"OAuth Client ID Metadata Document"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-client-id-metadata-document-01</span>, <time datetime="2026-03-01" class="refDate">1 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-01">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ENTITY-PROFILES">[ENTITY-PROFILES]</dt>
+        <dd>
+<span class="refAuthor">Mora, S. C.</span>, <span class="refAuthor">Dingle, P.</span>, and <span class="refAuthor">K. McGuinness</span>, <span class="refTitle">"OAuth 2.0 Entity Profiles"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mora-oauth-entity-profiles-01</span>, <time datetime="2026-04-15" class="refDate">15 April 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-01">https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SPIFFE">[SPIFFE]</dt>
+      <dd>
+<span class="refAuthor">SPIFFE</span>, <span class="refTitle">"SPIFFE: Secure Production Identity Framework For Everyone"</span>, <time datetime="2024" class="refDate">2024</time>, <span>&lt;<a href="https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/">https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="design-rationale">
+<section id="appendix-A">
+      <h2 id="name-design-rationale">
+<a href="#name-design-rationale" class="section-name selfRef">Design Rationale</a>
+      </h2>
+<p id="appendix-A-1">This appendix records design choices that motivated the normative
+text.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<div id="why-not-a-clientinstance-request-parameter">
+<section id="appendix-A.1">
+        <h3 id="name-why-not-a-client_instance-r">
+<a href="#name-why-not-a-client_instance-r" class="section-name selfRef">Why not a client_instance request parameter?</a>
+        </h3>
+<p id="appendix-A.1-1">A new top-level client_instance parameter would have to flow through
+the authorization request, the token request, introspection, the
+access token, and several existing extensions. Each is a separate
+specification touch-point and a deployment cliff. Reusing actor_token
+keeps the protocol surface unchanged.<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="why-extend-actortoken-to-non-token-exchange-grants">
+<section id="appendix-A.2">
+        <h3 id="name-why-extend-actor_token-to-n">
+<a href="#name-why-extend-actor_token-to-n" class="section-name selfRef">Why extend actor_token to non-token-exchange grants?</a>
+        </h3>
+<p id="appendix-A.2-1">The actor concept in <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> fits client instance identity
+exactly: the instance acts on behalf of the subject (the human user
+or service principal) under the authority of the client class. The
+parameter machinery is already specified, deployed, and understood.
+The only normative move is permitting it on additional grants -- a
+small, contained extension whose security analysis is the union of
+<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>'s and the underlying grant's.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="why-cimd-as-the-trust-anchor-for-instance-issuers">
+<section id="appendix-A.3">
+        <h3 id="name-why-cimd-as-the-trust-ancho">
+<a href="#name-why-cimd-as-the-trust-ancho" class="section-name selfRef">Why CIMD as the trust anchor for instance issuers?</a>
+        </h3>
+<p id="appendix-A.3-1">CIMD already establishes a publication mechanism for client metadata
+keyed to a stable, dereferenceable client identifier. Listing
+instance issuers in the same document keeps the trust relationship
+between client class and instance issuer auditable in one place and
+reuses CIMD's caching and key-rotation rules.<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="why-a-dedicated-actortokentype-urn">
+<section id="appendix-A.4">
+        <h3 id="name-why-a-dedicated-actor_token">
+<a href="#name-why-a-dedicated-actor_token" class="section-name selfRef">Why a dedicated actor_token_type URN?</a>
+        </h3>
+<p id="appendix-A.4-1">The generic JWT token type does not signal that the AS should look
+up trust via CIMD's instance_issuers, nor that client_id binding
+applies. A dedicated URN lets ASes route processing unambiguously
+and lets clients advertise support via actor_token_types_supported.<a href="#appendix-A.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-B">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-B-1">The author thanks participants in the OAuth Working Group for
+discussions on client instance identity, workload identity, and
+actor-based delegation that informed this document.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-C">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Karl McGuinness</span></div>
+<div dir="auto" class="left"><span class="org">Independent</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:public@karlmcguinness.com" class="email">public@karlmcguinness.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
