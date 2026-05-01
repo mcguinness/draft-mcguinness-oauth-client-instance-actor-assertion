@@ -1808,8 +1808,9 @@ whose alg is not listed.<a href="#section-5.1-3.8.1" class="pilcrow">¶</a></p>
 claim used by this issuer. Defined values are "uri" (default,
 arbitrary StringOrURI) and "spiffe" (a SPIFFE ID <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>; see
 also <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> for the related SPIFFE-based client
-authentication profile). Other values <span class="bcp14">MAY</span> be used; unrecognized
-values <span class="bcp14">MUST</span> cause the AS to fall back to "uri" semantics.<a href="#section-5.1-3.10.1" class="pilcrow">¶</a></p>
+authentication profile). Other values <span class="bcp14">MAY</span> be defined by future
+specifications. An AS that does not understand the value <span class="bcp14">MUST</span> reject
+actor tokens for that descriptor with invalid_grant.<a href="#section-5.1-3.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-5.1-3.11">trust_domain (<span class="bcp14">OPTIONAL</span>):</dt>
@@ -1863,8 +1864,11 @@ sub_profile contains values not listed.<a href="#section-5.1-3.14.1" class="pilc
 (<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>) the client class permits in actor chains
 originating from one of its instances. If absent, the AS applies its
 own policy. The AS <span class="bcp14">MUST</span> reject requests whose resulting act chain
-would exceed the lower of (a) this value, (b) the AS-imposed maximum,
-and (c) 4 (the floor specified by <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>).<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+would exceed the lower of (a) this value, when present, and (b) the
+AS-imposed maximum. To remain compatible with <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, an
+AS-imposed maximum used for this profile <span class="bcp14">MUST</span> support actor chains of
+at least depth 4, unless a lower client-specific max_actor_chain_depth
+is published by the client class.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-token-required">
@@ -2119,73 +2123,80 @@ grant_type=client_credentials
         <h3 id="name-authorization-server-proces">
 <a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-authorization-server-proces" class="section-name selfRef">Authorization Server Processing</a>
         </h3>
-<p id="section-8.2-1">On receipt of a token request that includes actor_token and
-actor_token_type, an AS implementing this document <span class="bcp14">MUST</span> perform the
-following steps in addition to grant-type-specific processing:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-8.2-2">
-<li id="section-8.2-2.1">
-            <p id="section-8.2-2.1.1"><strong>Authenticate the client.</strong> Authenticate the client class using
+<p id="section-8.2-1">When evaluating a token request for this profile, an AS implementing
+this document <span class="bcp14">MUST</span> perform the following checks and steps in addition
+to grant-type-specific processing:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-2">If exactly one of actor_token and actor_token_type is present, the AS
+<span class="bcp14">MUST</span> reject the request with invalid_request. If actor_token_type is
+urn:ietf:params:oauth:token-type:client-instance-jwt but actor_token
+is absent, the AS <span class="bcp14">MUST</span> reject the request with invalid_request. If
+actor_token is present but is not a syntactically valid JWT, the AS
+<span class="bcp14">MUST</span> reject the request with invalid_request.<a href="#section-8.2-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-8.2-3">
+<li id="section-8.2-3.1">
+            <p id="section-8.2-3.1.1"><strong>Authenticate the client.</strong> Authenticate the client class using
 its registered token_endpoint_auth_method per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> and, if
 applicable, <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>. The CIMD client_id is the client class.
 When the registered method is client_instance_actor_token, follow
 <a href="#auth-via-actor-token" class="auto internal xref">Section 8.3</a> instead of presenting a separate
-client-controlled credential.<a href="#section-8.2-2.1.1" class="pilcrow">¶</a></p>
+client-controlled credential.<a href="#section-8.2-3.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.2-2.2">
-            <p id="section-8.2-2.2.1"><strong>Match the token type.</strong> If actor_token_type is not
+          <li id="section-8.2-3.2">
+            <p id="section-8.2-3.2.1"><strong>Match the token type.</strong> If actor_token_type is not
 urn:ietf:params:oauth:token-type:client-instance-jwt, processing
 under this document does not apply. (Other actor token types <span class="bcp14">MAY</span>
-be processed under their own specifications.)<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
+be processed under their own specifications.)<a href="#section-8.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.2-2.3">
-            <p id="section-8.2-2.3.1"><strong>Resolve client metadata.</strong> Retrieve the CIMD document for the
-authenticated client_id, subject to caching rules in <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-8.2-2.3.1" class="pilcrow">¶</a></p>
+          <li id="section-8.2-3.3">
+            <p id="section-8.2-3.3.1"><strong>Resolve client metadata.</strong> Retrieve the CIMD document for the
+authenticated client_id, subject to caching rules in <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-8.2-3.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.2-2.4">
-            <p id="section-8.2-2.4.1"><strong>Locate the instance issuer descriptor.</strong> Parse the actor_token
+          <li id="section-8.2-3.4">
+            <p id="section-8.2-3.4.1"><strong>Locate the instance issuer descriptor.</strong> Parse the actor_token
 as a JWT and read its iss claim. Find the descriptor in
 instance_issuers whose issuer member exactly equals iss. If no
 descriptor is found, or instance_issuers is absent, reject the
-request with invalid_grant (<a href="#errors" class="auto internal xref">Section 8.8</a>).<a href="#section-8.2-2.4.1" class="pilcrow">¶</a></p>
+request with invalid_grant (<a href="#errors" class="auto internal xref">Section 8.8</a>).<a href="#section-8.2-3.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.2-2.5">
-            <p id="section-8.2-2.5.1"><strong>Verify the signature.</strong> Using the descriptor's jwks_uri or
-jwks, verify the JWS signature per <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> and <a href="#signing" class="auto internal xref">Section 7.3</a>.<a href="#section-8.2-2.5.1" class="pilcrow">¶</a></p>
+          <li id="section-8.2-3.5">
+            <p id="section-8.2-3.5.1"><strong>Verify the signature.</strong> Using the descriptor's jwks_uri or
+jwks, verify the JWS signature per <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> and <a href="#signing" class="auto internal xref">Section 7.3</a>.<a href="#section-8.2-3.5.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.2-2.6">
-            <p id="section-8.2-2.6.1"><strong>Validate JWT claims.</strong> Validate iss, sub, aud, exp, iat, nbf,
+          <li id="section-8.2-3.6">
+            <p id="section-8.2-3.6.1"><strong>Validate JWT claims.</strong> Validate iss, sub, aud, exp, iat, nbf,
 and jti per <a href="#claims" class="auto internal xref">Section 7.2</a> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> Section 3. Enforce
 subject_syntax, trust_domain, signing_alg_values_supported, and
-actor_profiles_supported when present in the descriptor.<a href="#section-8.2-2.6.1" class="pilcrow">¶</a></p>
+actor_profiles_supported when present in the descriptor.<a href="#section-8.2-3.6.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.2-2.7">
-            <p id="section-8.2-2.7.1"><strong>Verify client_id binding.</strong> The actor token's client_id claim
+          <li id="section-8.2-3.7">
+            <p id="section-8.2-3.7.1"><strong>Verify client_id binding.</strong> The actor token's client_id claim
 <span class="bcp14">MUST</span> exactly equal the authenticated client_id. Reject with
-invalid_grant otherwise.<a href="#section-8.2-2.7.1" class="pilcrow">¶</a></p>
+invalid_grant otherwise.<a href="#section-8.2-3.7.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.2-2.8">
-            <p id="section-8.2-2.8.1"><strong>Enforce delegation policy.</strong> Apply max_actor_chain_depth, the
-AS's own policy, and the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.2-2.8.1" class="pilcrow">¶</a></p>
+          <li id="section-8.2-3.8">
+            <p id="section-8.2-3.8.1"><strong>Enforce delegation policy.</strong> Apply max_actor_chain_depth and the
+AS's own maximum, subject to the minimum supported depth required by
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.2-3.8.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.2-2.9">
-            <p id="section-8.2-2.9.1"><strong>Check authorization-time consistency.</strong> For grants that
+          <li id="section-8.2-3.9">
+            <p id="section-8.2-3.9.1"><strong>Check authorization-time consistency.</strong> For grants that
 originate from a prior authorization step (notably
 authorization_code), apply the rules of
-<a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>.<a href="#section-8.2-2.9.1" class="pilcrow">¶</a></p>
+<a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>.<a href="#section-8.2-3.9.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.2-2.10">
-            <p id="section-8.2-2.10.1"><strong>Bind the actor.</strong> If issuance succeeds, populate the access
-token's act claim per <a href="#access-token" class="auto internal xref">Section 8.6</a>, applying
+          <li id="section-8.2-3.10">
+            <p id="section-8.2-3.10.1"><strong>Bind the instance.</strong> If issuance succeeds, represent the
+instance in the access token per <a href="#access-token" class="auto internal xref">Section 8.6</a>, applying
 <a href="#sender-constrained" class="auto internal xref">Section 8.5</a> for token binding. Reflect any prior actor
 chain present in input tokens (e.g., the subject_token in a
-token-exchange request) by nesting per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.2-2.10.1" class="pilcrow">¶</a></p>
+token-exchange request) by nesting per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.2-3.10.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-8.2-3">If the client metadata sets actor_token_required to true and no
+<p id="section-8.2-4">If the client metadata sets actor_token_required to true and no
 actor_token of this type is presented, the AS <span class="bcp14">MUST</span> reject the request
-with invalid_request.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
-<p id="section-8.2-4">If validation succeeds, the AS issues an access token (and optionally
-a refresh token) per the requested grant.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
+with invalid_request.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
+<p id="section-8.2-5">If validation succeeds, the AS issues an access token (and optionally
+a refresh token) per the requested grant.<a href="#section-8.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="auth-via-actor-token">
@@ -2335,7 +2346,11 @@ proof in the same request) when the deployment supports it. If the
 actor token does not include a cnf claim, the AS <span class="bcp14">MUST</span> establish a
 sender-constrained binding through some other means (for example, by
 using the client's mTLS certificate as the bound key per
-<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>).<a href="#section-8.5-3" class="pilcrow">¶</a></p>
+<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>). The binding key <span class="bcp14">MUST</span> be specific to the validated client
+instance or otherwise bound by AS policy to the actor token's instance
+identity. A credential shared by the client class as a whole is not
+sufficient unless the AS can determine that its use in this request
+represents the same concrete instance named by the actor token.<a href="#section-8.5-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="access-token">
@@ -2546,10 +2561,11 @@ and that act is absent.<a href="#section-8.6.3-6" class="pilcrow">¶</a></p>
 <p id="section-8.7-1">When an access token issued under this profile is refreshed
 (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 6), the AS <span class="bcp14">MAY</span> require a fresh actor token in
 the refresh request, or it <span class="bcp14">MAY</span> copy the previously validated actor
-identity into the refreshed access token's act claim. The choice is a
-matter of AS policy and <span class="bcp14">SHOULD</span> be documented by the deployment.
-Issuing access tokens with a stale act claim across long refresh
-windows is discouraged; see <a href="#security-replay" class="auto internal xref">Section 10.3</a>.<a href="#section-8.7-1" class="pilcrow">¶</a></p>
+identity into the refreshed access token using the representation
+determined for the original grant. The choice is a matter of AS policy
+and <span class="bcp14">SHOULD</span> be documented by the deployment. Issuing access tokens with
+stale instance identity across long refresh windows is discouraged;
+see <a href="#security-replay" class="auto internal xref">Section 10.3</a>.<a href="#section-8.7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="errors">
@@ -2578,6 +2594,10 @@ defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> t
               <td class="text-left" rowspan="1" colspan="1">invalid_request</td>
             </tr>
             <tr>
+              <td class="text-left" rowspan="1" colspan="1">actor_token_type present but actor_token absent</td>
+              <td class="text-left" rowspan="1" colspan="1">invalid_request</td>
+            </tr>
+            <tr>
               <td class="text-left" rowspan="1" colspan="1">actor_token malformed (not a valid JWT)</td>
               <td class="text-left" rowspan="1" colspan="1">invalid_request</td>
             </tr>
@@ -2602,7 +2622,7 @@ defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> t
               <td class="text-left" rowspan="1" colspan="1">invalid_grant</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">sub_profile or trust_domain constraint fails</td>
+              <td class="text-left" rowspan="1" colspan="1">subject_syntax, sub_profile, or trust_domain constraint fails</td>
               <td class="text-left" rowspan="1" colspan="1">invalid_grant</td>
             </tr>
             <tr>
@@ -2715,10 +2735,10 @@ references the affected scope <span class="bcp14">SHOULD</span> be revoked.<a hr
         <dd class="break"></dd>
 </dl>
 <p id="section-10.2-3">Refresh windows are a particular concern: an access token refreshed
-without a new actor token may carry a stale act claim long after the
-original instance has terminated. ASes <span class="bcp14">SHOULD</span> prefer requiring a
+without a new actor token may carry stale instance identity long after
+the original instance has terminated. ASes <span class="bcp14">SHOULD</span> prefer requiring a
 fresh actor token on refresh (<a href="#refresh" class="auto internal xref">Section 8.7</a>), or set short refresh
-intervals when act is present.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
+intervals when instance identity is present.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-replay">
@@ -2726,14 +2746,17 @@ intervals when act is present.<a href="#section-10.2-3" class="pilcrow">¶</a></
         <h3 id="name-replay">
 <a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-replay" class="section-name selfRef">Replay</a>
         </h3>
-<p id="section-10.3-1">Actor tokens <span class="bcp14">MUST</span> include jti, exp, and iat (<a href="#claims" class="auto internal xref">Section 7.2</a>). The AS
-<span class="bcp14">MUST</span> reject tokens whose jti has been seen within their validity
-window. Issuers <span class="bcp14">SHOULD</span> use short lifetimes (five minutes or less)
-both to limit replay exposure and because client instances often
-have lifetimes of seconds to minutes.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<p id="section-10.3-1">Actor tokens <span class="bcp14">MUST</span> include jti, exp, and iat (<a href="#claims" class="auto internal xref">Section 7.2</a>). After the
+AS has identified the issuer and validated the actor token signature,
+it <span class="bcp14">MUST</span> reject a token whose (iss, jti) pair has already been seen
+within the token's validity window. The AS <span class="bcp14">MUST</span> retain replay-cache
+entries at least until the token's exp time, plus any allowed clock
+skew. Issuers <span class="bcp14">SHOULD</span> use short lifetimes (five minutes or less) both
+to limit replay exposure and because client instances often have
+lifetimes of seconds to minutes.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
 <p id="section-10.3-2">When refreshing access tokens (<a href="#refresh" class="auto internal xref">Section 8.7</a>), AS implementations
 <span class="bcp14">SHOULD</span> prefer requiring a fresh actor token rather than perpetuating
-a stale act claim, especially across long refresh windows.<a href="#section-10.3-2" class="pilcrow">¶</a></p>
+stale instance identity, especially across long refresh windows.<a href="#section-10.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="audience-and-confused-deputy">
@@ -2817,8 +2840,10 @@ possession against the same key the AS authenticated.<a href="#section-10.7-2" c
         </h3>
 <p id="section-10.8-1">Unbounded delegation chains permit privilege amplification across
 boundaries. Client classes <span class="bcp14">SHOULD</span> set max_actor_chain_depth, AS
-implementations <span class="bcp14">SHOULD</span> enforce their own ceiling, and both <span class="bcp14">MUST</span>
-honor the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-10.8-1" class="pilcrow">¶</a></p>
+implementations <span class="bcp14">SHOULD</span> enforce their own ceiling, and AS-imposed
+ceilings used for this profile <span class="bcp14">MUST</span> preserve the minimum supported
+depth required by <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> unless the client class publishes
+a lower max_actor_chain_depth for itself.<a href="#section-10.8-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="privacy">
