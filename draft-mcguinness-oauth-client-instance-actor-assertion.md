@@ -10,7 +10,7 @@ date: 2026-05-01
 v: 3
 ipr: trust200902
 area: "Security"
-workgroup: "OAuth"
+workgroup: "Web Authorization Protocol"
 keyword:
  - OAuth
  - CIMD
@@ -18,12 +18,12 @@ keyword:
  - Workload Identity
  - Client Instance
 venue:
-  group: OAuth
-  type: Working Group
-  mail: oauth@ietf.org
-  arch: https://mailarchive.ietf.org/arch/browse/oauth/
-  github: kmcguinness/draft-mcguinness-oauth-client-instance-actor-assertion
-  latest: https://kmcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/draft-mcguinness-oauth-client-instance-actor-assertion.html
+  group: "Web Authorization Protocol"
+  type: "Working Group"
+  mail: "oauth@ietf.org"
+  arch: "https://mailarchive.ietf.org/arch/browse/oauth/"
+  github: "mcguinness/draft-mcguinness-oauth-client-instance-actor-assertion"
+  latest: "https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/draft-mcguinness-oauth-client-instance-actor-assertion.html"
 
 author:
  -
