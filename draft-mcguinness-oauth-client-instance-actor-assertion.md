@@ -50,6 +50,7 @@ informative:
   CIMD: I-D.ietf-oauth-client-id-metadata-document
   ACTOR-PROFILE: I-D.mcguinness-oauth-actor-profile
   ENTITY-PROFILES: I-D.mora-oauth-entity-profiles
+  SPIFFE-CLIENT-AUTH: I-D.ietf-oauth-spiffe-client-auth
   SPIFFE:
     title: "SPIFFE: Secure Production Identity Framework For Everyone"
     target: https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/
@@ -141,6 +142,56 @@ not redefine those constructs. It defines (a) how a client instance
 proves itself at the token endpoint and (b) how the AS populates
 act using the validated assertion. Implementations of this document
 MUST also implement {{ACTOR-PROFILE}}.
+
+## Relationship to SPIFFE Client Authentication {#relationship-spiffe-client-auth}
+
+{{SPIFFE-CLIENT-AUTH}} (an OAuth Working Group document) defines how
+a SPIFFE workload authenticates *as the OAuth client itself*, using a
+JWT-SVID or X.509-SVID in place of a client secret. It registers the
+client_assertion_type
+urn:ietf:params:oauth:client-assertion-type:jwt-spiffe and adds CIMD
+metadata (spiffe_id, spiffe_bundle_endpoint) for resolving the
+client's SPIFFE trust bundle. Notably, its spiffe_id field permits a
+trailing /* wildcard, enabling one OAuth client to be authenticated
+by any SPIFFE workload whose ID matches the prefix.
+
+This document operates at a different layer. Its scope is *actor /
+instance identity*, not client authentication. The two specifications
+operate on different OAuth parameters and trust sources:
+
+| Layer | SPIFFE Client Auth | This document |
+| --- | --- | --- |
+| What is authenticated | The OAuth client | An actor (instance) acting under an OAuth client |
+| Token request parameter | client_assertion / client_assertion_type | actor_token / actor_token_type |
+| Trust source | SPIFFE bundle endpoint and spiffe_id (CIMD) | instance_issuers (CIMD) |
+| Where the SPIFFE ID surfaces | Validated against spiffe_id; not propagated | Surfaced in act.sub of issued access tokens |
+
+The two specifications are orthogonal and MAY be combined. A common
+deployment pattern uses {{SPIFFE-CLIENT-AUTH}} with a wildcard
+spiffe_id to authenticate a class of SPIFFE workloads as a single
+OAuth client, and uses this profile to additionally surface the
+specific instance's identity as an act claim and to bind the issued
+access token to that instance ({{sender-constrained}}). In that
+combined pattern:
+
+* {{SPIFFE-CLIENT-AUTH}} answers "may this workload act as this
+  client?" -- a yes/no based on prefix match.
+* This document answers "which specific instance is acting?" -- a
+  named, bindable, propagatable identity.
+
+Where {{SPIFFE-CLIENT-AUTH}} alone is sufficient (no need to name
+specific instances downstream, and the user-facing flows do not
+require post-consent instance binding), this document is not
+needed.
+
+This document does not require SPIFFE. Instance issuers may issue
+non-SPIFFE JWT actor tokens (subject_syntax other than "spiffe");
+{{SPIFFE-CLIENT-AUTH}} is one example mechanism by which the client
+*class itself* might authenticate, alongside others such as
+private_key_jwt with keys published in CIMD jwks_uri. Integration
+with {{SPIFFE-CLIENT-AUTH}}'s spiffe_bundle_endpoint as an
+alternative trust source for the instance_issuers descriptor is
+left to a future profile.
 
 # Conventions and Definitions
 
@@ -296,14 +347,18 @@ signing_alg_values_supported (OPTIONAL):
 subject_syntax (OPTIONAL):
 : A short identifier indicating the syntactic profile of the sub
   claim used by this issuer. Defined values are "uri" (default,
-  arbitrary StringOrURI) and "spiffe" (a SPIFFE ID {{SPIFFE}}).
-  Other values MAY be used; unrecognized values MUST cause the AS
-  to fall back to "uri" semantics.
+  arbitrary StringOrURI) and "spiffe" (a SPIFFE ID {{SPIFFE}}; see
+  also {{SPIFFE-CLIENT-AUTH}} for the related SPIFFE-based client
+  authentication profile). Other values MAY be used; unrecognized
+  values MUST cause the AS to fall back to "uri" semantics.
 
 trust_domain (OPTIONAL):
 : When subject_syntax is "spiffe", a SPIFFE trust domain that the
   sub claim MUST belong to. The AS MUST reject any actor token
-  whose sub does not lie within this trust domain.
+  whose sub does not lie within this trust domain. A descriptor's
+  trust_domain is independent of any SPIFFE trust domain associated
+  with the client class itself under {{SPIFFE-CLIENT-AUTH}}; the two
+  MAY differ.
 
 actor_profiles_supported (OPTIONAL):
 : A JSON array of sub_profile values from the OAuth Entity Profiles
