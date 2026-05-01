@@ -1177,13 +1177,16 @@ act claim defined by the OAuth Actor Profile.<a href="#section-abstract-2" class
         </h2>
 <nav class="toc"><ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
-            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+            <p id="section-toc.1-1.1.1"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
                 <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-relationship-to-rfc-8693" class="internal xref">Relationship to RFC 8693</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
                 <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-relationship-to-oauth-actor" class="internal xref">Relationship to OAuth Actor Profile</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.3">
+                <p id="section-toc.1-1.1.2.3.1" class="keepWithNext"><a href="#section-1.3" class="auto internal xref">1.3</a>.  <a href="#name-relationship-to-spiffe-clie" class="internal xref">Relationship to SPIFFE Client Authentication</a></p>
 </li>
             </ul>
 </li>
@@ -1449,6 +1452,86 @@ act using the validated assertion. Implementations of this document
 <span class="bcp14">MUST</span> also implement <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
+<div id="relationship-spiffe-client-auth">
+<section id="section-1.3">
+        <h3 id="name-relationship-to-spiffe-clie">
+<a href="#section-1.3" class="section-number selfRef">1.3. </a><a href="#name-relationship-to-spiffe-clie" class="section-name selfRef">Relationship to SPIFFE Client Authentication</a>
+        </h3>
+<p id="section-1.3-1"><span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> (an OAuth Working Group document) defines how
+a SPIFFE workload authenticates <em>as the OAuth client itself</em>, using a
+JWT-SVID or X.509-SVID in place of a client secret. It registers the
+client_assertion_type
+urn:ietf:params:oauth:client-assertion-type:jwt-spiffe and adds CIMD
+metadata (spiffe_id, spiffe_bundle_endpoint) for resolving the
+client's SPIFFE trust bundle. Notably, its spiffe_id field permits a
+trailing /* wildcard, enabling one OAuth client to be authenticated
+by any SPIFFE workload whose ID matches the prefix.<a href="#section-1.3-1" class="pilcrow">¶</a></p>
+<p id="section-1.3-2">This document operates at a different layer. Its scope is <em>actor /
+instance identity</em>, not client authentication. The two specifications
+operate on different OAuth parameters and trust sources:<a href="#section-1.3-2" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+          <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Layer</th>
+              <th class="text-left" rowspan="1" colspan="1">SPIFFE Client Auth</th>
+              <th class="text-left" rowspan="1" colspan="1">This document</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">What is authenticated</td>
+              <td class="text-left" rowspan="1" colspan="1">The OAuth client</td>
+              <td class="text-left" rowspan="1" colspan="1">An actor (instance) acting under an OAuth client</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Token request parameter</td>
+              <td class="text-left" rowspan="1" colspan="1">client_assertion / client_assertion_type</td>
+              <td class="text-left" rowspan="1" colspan="1">actor_token / actor_token_type</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Trust source</td>
+              <td class="text-left" rowspan="1" colspan="1">SPIFFE bundle endpoint and spiffe_id (CIMD)</td>
+              <td class="text-left" rowspan="1" colspan="1">instance_issuers (CIMD)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Where the SPIFFE ID surfaces</td>
+              <td class="text-left" rowspan="1" colspan="1">Validated against spiffe_id; not propagated</td>
+              <td class="text-left" rowspan="1" colspan="1">Surfaced in act.sub of issued access tokens</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-1.3-4">The two specifications are orthogonal and <span class="bcp14">MAY</span> be combined. A common
+deployment pattern uses <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> with a wildcard
+spiffe_id to authenticate a class of SPIFFE workloads as a single
+OAuth client, and uses this profile to additionally surface the
+specific instance's identity as an act claim and to bind the issued
+access token to that instance (<a href="#sender-constrained" class="auto internal xref">Section 8.4</a>). In that
+combined pattern:<a href="#section-1.3-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.3-5.1">
+            <p id="section-1.3-5.1.1"><span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> answers "may this workload act as this
+client?" -- a yes/no based on prefix match.<a href="#section-1.3-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.3-5.2">
+            <p id="section-1.3-5.2.1">This document answers "which specific instance is acting?" -- a
+named, bindable, propagatable identity.<a href="#section-1.3-5.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-1.3-6">Where <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> alone is sufficient (no need to name
+specific instances downstream, and the user-facing flows do not
+require post-consent instance binding), this document is not
+needed.<a href="#section-1.3-6" class="pilcrow">¶</a></p>
+<p id="section-1.3-7">This document does not require SPIFFE. Instance issuers may issue
+non-SPIFFE JWT actor tokens (subject_syntax other than "spiffe");
+<span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> is one example mechanism by which the client
+<em>class itself</em> might authenticate, alongside others such as
+private_key_jwt with keys published in CIMD jwks_uri. Integration
+with <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>'s spiffe_bundle_endpoint as an
+alternative trust source for the instance_issuers descriptor is
+left to a future profile.<a href="#section-1.3-7" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1499,8 +1582,8 @@ client instance, presented as the actor_token in a token request.<a href="#secti
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-architecture" class="section-name selfRef">Architecture</a>
       </h2>
 <p id="section-3-1">Three roles cooperate to authenticate a client instance:<a href="#section-3-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-1">
-        <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<table class="center" id="table-2">
+        <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
 <thead>
           <tr>
             <th class="text-left" rowspan="1" colspan="1">Role</th>
@@ -1681,16 +1764,20 @@ whose alg is not listed.<a href="#section-5.1-3.8.1" class="pilcrow">¶</a></p>
           <dd style="margin-left: 1.5em" id="section-5.1-3.10">
             <p id="section-5.1-3.10.1">A short identifier indicating the syntactic profile of the sub
 claim used by this issuer. Defined values are "uri" (default,
-arbitrary StringOrURI) and "spiffe" (a SPIFFE ID <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>).
-Other values <span class="bcp14">MAY</span> be used; unrecognized values <span class="bcp14">MUST</span> cause the AS
-to fall back to "uri" semantics.<a href="#section-5.1-3.10.1" class="pilcrow">¶</a></p>
+arbitrary StringOrURI) and "spiffe" (a SPIFFE ID <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>; see
+also <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> for the related SPIFFE-based client
+authentication profile). Other values <span class="bcp14">MAY</span> be used; unrecognized
+values <span class="bcp14">MUST</span> cause the AS to fall back to "uri" semantics.<a href="#section-5.1-3.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-5.1-3.11">trust_domain (<span class="bcp14">OPTIONAL</span>):</dt>
           <dd style="margin-left: 1.5em" id="section-5.1-3.12">
             <p id="section-5.1-3.12.1">When subject_syntax is "spiffe", a SPIFFE trust domain that the
 sub claim <span class="bcp14">MUST</span> belong to. The AS <span class="bcp14">MUST</span> reject any actor token
-whose sub does not lie within this trust domain.<a href="#section-5.1-3.12.1" class="pilcrow">¶</a></p>
+whose sub does not lie within this trust domain. A descriptor's
+trust_domain is independent of any SPIFFE trust domain associated
+with the client class itself under <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>; the two
+<span class="bcp14">MAY</span> differ.<a href="#section-5.1-3.12.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-5.1-3.13">actor_profiles_supported (<span class="bcp14">OPTIONAL</span>):</dt>
@@ -2219,8 +2306,8 @@ windows is discouraged; see <a href="#security-replay" class="auto internal xref
 <p id="section-8.7-1">Errors are returned per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 5.2 and <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>
 Section 2.2.2. The following table maps the validation failures
 defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> to error codes:<a href="#section-8.7-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-2">
-          <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<table class="center" id="table-3">
+          <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Failure</th>
@@ -2741,8 +2828,12 @@ a Client ID Metadata Document.<a href="#section-11.4-2.4.1" class="pilcrow">¶</
 <span class="refAuthor">Fett, D.</span>, <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Jones, M.</span>, and <span class="refAuthor">D. Waite</span>, <span class="refTitle">"OAuth 2.0 Demonstrating Proof of Possession (DPoP)"</span>, <span class="seriesInfo">RFC 9449</span>, <span class="seriesInfo">DOI 10.17487/RFC9449</span>, <time datetime="2023-09" class="refDate">September 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9449">https://www.rfc-editor.org/rfc/rfc9449</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="SPIFFE">[SPIFFE]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">SPIFFE</span>, <span class="refTitle">"SPIFFE: Secure Production Identity Framework For Everyone"</span>, <time datetime="2024" class="refDate">2024</time>, <span>&lt;<a href="https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/">https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SPIFFE-CLIENT-AUTH">[SPIFFE-CLIENT-AUTH]</dt>
+      <dd>
+<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Rose, S.</span>, and <span class="refAuthor">S. Thorgersen</span>, <span class="refTitle">"OAuth SPIFFE Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-spiffe-client-auth-01</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-01">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-01</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

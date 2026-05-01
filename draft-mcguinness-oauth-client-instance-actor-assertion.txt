@@ -85,6 +85,7 @@ Table of Contents
    1.  Introduction
      1.1.  Relationship to RFC 8693
      1.2.  Relationship to OAuth Actor Profile
+     1.3.  Relationship to SPIFFE Client Authentication
    2.  Conventions and Definitions
    3.  Architecture
    4.  Trust Delegation Model
@@ -205,6 +206,71 @@ Table of Contents
    populates act using the validated assertion.  Implementations of this
    document MUST also implement [ACTOR-PROFILE].
 
+1.3.  Relationship to SPIFFE Client Authentication
+
+   [SPIFFE-CLIENT-AUTH] (an OAuth Working Group document) defines how a
+   SPIFFE workload authenticates _as the OAuth client itself_, using a
+   JWT-SVID or X.509-SVID in place of a client secret.  It registers the
+   client_assertion_type urn:ietf:params:oauth:client-assertion-
+   type:jwt-spiffe and adds CIMD metadata (spiffe_id,
+   spiffe_bundle_endpoint) for resolving the client's SPIFFE trust
+   bundle.  Notably, its spiffe_id field permits a trailing /* wildcard,
+   enabling one OAuth client to be authenticated by any SPIFFE workload
+   whose ID matches the prefix.
+
+   This document operates at a different layer.  Its scope is _actor /
+   instance identity_, not client authentication.  The two
+   specifications operate on different OAuth parameters and trust
+   sources:
+
+      +===============+=======================+=====================+
+      | Layer         | SPIFFE Client Auth    | This document       |
+      +===============+=======================+=====================+
+      | What is       | The OAuth client      | An actor (instance) |
+      | authenticated |                       | acting under an     |
+      |               |                       | OAuth client        |
+      +---------------+-----------------------+---------------------+
+      | Token request | client_assertion /    | actor_token /       |
+      | parameter     | client_assertion_type | actor_token_type    |
+      +---------------+-----------------------+---------------------+
+      | Trust source  | SPIFFE bundle         | instance_issuers    |
+      |               | endpoint and          | (CIMD)              |
+      |               | spiffe_id (CIMD)      |                     |
+      +---------------+-----------------------+---------------------+
+      | Where the     | Validated against     | Surfaced in act.sub |
+      | SPIFFE ID     | spiffe_id; not        | of issued access    |
+      | surfaces      | propagated            | tokens              |
+      +---------------+-----------------------+---------------------+
+
+                                  Table 1
+
+   The two specifications are orthogonal and MAY be combined.  A common
+   deployment pattern uses [SPIFFE-CLIENT-AUTH] with a wildcard
+   spiffe_id to authenticate a class of SPIFFE workloads as a single
+   OAuth client, and uses this profile to additionally surface the
+   specific instance's identity as an act claim and to bind the issued
+   access token to that instance (Section 8.4).  In that combined
+   pattern:
+
+   *  [SPIFFE-CLIENT-AUTH] answers "may this workload act as this
+      client?" -- a yes/no based on prefix match.
+
+   *  This document answers "which specific instance is acting?" -- a
+      named, bindable, propagatable identity.
+
+   Where [SPIFFE-CLIENT-AUTH] alone is sufficient (no need to name
+   specific instances downstream, and the user-facing flows do not
+   require post-consent instance binding), this document is not needed.
+
+   This document does not require SPIFFE.  Instance issuers may issue
+   non-SPIFFE JWT actor tokens (subject_syntax other than "spiffe");
+   [SPIFFE-CLIENT-AUTH] is one example mechanism by which the client
+   _class itself_ might authenticate, alongside others such as
+   private_key_jwt with keys published in CIMD jwks_uri.  Integration
+   with [SPIFFE-CLIENT-AUTH]'s spiffe_bundle_endpoint as an alternative
+   trust source for the instance_issuers descriptor is left to a future
+   profile.
+
 2.  Conventions and Definitions
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -256,7 +322,7 @@ Table of Contents
     |               | whose act claim represents the instance.        |
     +---------------+-------------------------------------------------+
 
-                                  Table 1
+                                  Table 2
 
    A high-level flow:
 
@@ -375,13 +441,17 @@ Table of Contents
    subject_syntax (OPTIONAL):  A short identifier indicating the
       syntactic profile of the sub claim used by this issuer.  Defined
       values are "uri" (default, arbitrary StringOrURI) and "spiffe" (a
-      SPIFFE ID [SPIFFE]).  Other values MAY be used; unrecognized
-      values MUST cause the AS to fall back to "uri" semantics.
+      SPIFFE ID [SPIFFE]; see also [SPIFFE-CLIENT-AUTH] for the related
+      SPIFFE-based client authentication profile).  Other values MAY be
+      used; unrecognized values MUST cause the AS to fall back to "uri"
+      semantics.
 
    trust_domain (OPTIONAL):  When subject_syntax is "spiffe", a SPIFFE
       trust domain that the sub claim MUST belong to.  The AS MUST
       reject any actor token whose sub does not lie within this trust
-      domain.
+      domain.  A descriptor's trust_domain is independent of any SPIFFE
+      trust domain associated with the client class itself under
+      [SPIFFE-CLIENT-AUTH]; the two MAY differ.
 
    actor_profiles_supported (OPTIONAL):  A JSON array of sub_profile
       values from the OAuth Entity Profiles registry [ENTITY-PROFILES]
@@ -808,7 +878,7 @@ Table of Contents
        | max_actor_chain_depth exceeded  | invalid_grant          |
        +---------------------------------+------------------------+
 
-                                 Table 2
+                                 Table 3
 
    The AS MAY return additional information via the error_description
    parameter; deployments MUST NOT include sensitive instance details
@@ -1125,6 +1195,14 @@ Table of Contents
    [SPIFFE]   SPIFFE, "SPIFFE: Secure Production Identity Framework For
               Everyone", 2024, <https://spiffe.io/docs/latest/spiffe-
               about/spiffe-concepts/>.
+
+   [SPIFFE-CLIENT-AUTH]
+              Schwenkschuster, A., Kasselman, P., Rose, S., and S.
+              Thorgersen, "OAuth SPIFFE Client Authentication", Work in
+              Progress, Internet-Draft, draft-ietf-oauth-spiffe-client-
+              auth-01, 2 March 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
+              spiffe-client-auth-01>.
 
 Design Rationale
 
