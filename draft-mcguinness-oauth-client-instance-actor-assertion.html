@@ -1074,7 +1074,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <div id="internal-metadata" class="document-information">
 <dl id="identifiers">
 <dt class="label-workgroup">Workgroup:</dt>
-<dd class="workgroup">OAuth</dd>
+<dd class="workgroup">Web Authorization Protocol</dd>
 <dt class="label-internet-draft">Internet-Draft:</dt>
 <dd class="internet-draft">draft-mcguinness-oauth-client-instance-actor-assertion-latest</dd>
 <dt class="label-published">Published:</dt>
@@ -1118,15 +1118,15 @@ act claim defined by the OAuth Actor Profile.<a href="#section-abstract-2" class
       </h2>
 <p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
 <p id="section-note.1-2">
-        The latest revision of this draft can be found at <span><a href="https://kmcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/draft-mcguinness-oauth-client-instance-actor-assertion.html">https://kmcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/draft-mcguinness-oauth-client-instance-actor-assertion.html</a></span>.
+        The latest revision of this draft can be found at <span><a href="https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/draft-mcguinness-oauth-client-instance-actor-assertion.html">https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/draft-mcguinness-oauth-client-instance-actor-assertion.html</a></span>.
         Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-mcguinness-oauth-client-instance-actor-assertion/">https://datatracker.ietf.org/doc/draft-mcguinness-oauth-client-instance-actor-assertion/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
 <p id="section-note.1-3">
         Discussion of this document takes place on the
-        OAuth Working Group mailing list (<span><a href="mailto:oauth@ietf.org">mailto:oauth@ietf.org</a></span>),
+        Web Authorization Protocol Working Group mailing list (<span><a href="mailto:oauth@ietf.org">mailto:oauth@ietf.org</a></span>),
         which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/oauth/">https://mailarchive.ietf.org/arch/browse/oauth/</a></span>.
         Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/oauth/">https://www.ietf.org/mailman/listinfo/oauth/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
 <p id="section-note.1-4">Source for this draft and an issue tracker can be found at
-        <span><a href="https://github.com/kmcguinness/draft-mcguinness-oauth-client-instance-actor-assertion">https://github.com/kmcguinness/draft-mcguinness-oauth-client-instance-actor-assertion</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+        <span><a href="https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-actor-assertion">https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-actor-assertion</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
 </section>
 <div id="status-of-memo">
 <section id="section-boilerplate.1">
@@ -1194,143 +1194,169 @@ act claim defined by the OAuth Actor Profile.<a href="#section-abstract-2" class
             <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-architecture" class="internal xref">Architecture</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
-            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-cimd-extensions" class="internal xref">CIMD Extensions</a></p>
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-trust-delegation-model" class="internal xref">Trust Delegation Model</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
-                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-instance_issuers" class="internal xref">instance_issuers</a></p>
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-delegation-by-the-client-cl" class="internal xref">Delegation by the Client Class</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
-                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-max_actor_chain_depth" class="internal xref">max_actor_chain_depth</a></p>
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-authority-of-the-authorizat" class="internal xref">Authority of the Authorization Server</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
-                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-actor_token_required" class="internal xref">actor_token_required</a></p>
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-trust-update-handling" class="internal xref">Trust Update Handling</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-authorization-server-metada" class="internal xref">Authorization Server Metadata</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-the-client-instance-actor-t" class="internal xref">The Client Instance Actor Token</a></p>
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-cimd-extensions" class="internal xref">CIMD Extensions</a></p>
 <ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
-                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-jwt-claims" class="internal xref">JWT Claims</a></p>
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-instance_issuers" class="internal xref">instance_issuers</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
-                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-signing" class="internal xref">Signing</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-max_actor_chain_depth" class="internal xref">max_actor_chain_depth</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
-                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-example" class="internal xref">Example</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-actor_token_required" class="internal xref">actor_token_required</a></p>
 </li>
             </ul>
 </li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-authorization-server-metada" class="internal xref">Authorization Server Metadata</a></p>
+</li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-token-endpoint-processing" class="internal xref">Token Endpoint Processing</a></p>
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-the-client-instance-actor-t" class="internal xref">The Client Instance Actor Token</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
-                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-token-request" class="internal xref">Token Request</a></p>
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-layering-of-instance-identi" class="internal xref">Layering of Instance Identity and Actor Assertion</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
-                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-authorization-server-proces" class="internal xref">Authorization Server Processing</a></p>
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-jwt-claims" class="internal xref">JWT Claims</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
-                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-access-token-representation" class="internal xref">Access Token Representation</a></p>
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-signing" class="internal xref">Signing</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
-                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-refresh-tokens" class="internal xref">Refresh Tokens</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.5">
-                <p id="section-toc.1-1.7.2.5.1"><a href="#section-7.5" class="auto internal xref">7.5</a>.  <a href="#name-error-responses" class="internal xref">Error Responses</a></p>
+                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-example" class="internal xref">Example</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-grant-type-applicability" class="internal xref">Grant Type Applicability</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-token-endpoint-processing" class="internal xref">Token Endpoint Processing</a></p>
 <ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
-                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-trust-model" class="internal xref">Trust Model</a></p>
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-token-request" class="internal xref">Token Request</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
-                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-replay" class="internal xref">Replay</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-authorization-server-proces" class="internal xref">Authorization Server Processing</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
-                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-audience-and-confused-deput" class="internal xref">Audience and Confused Deputy</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-authorization-time-consiste" class="internal xref">Authorization-Time Consistency</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4">
-                <p id="section-toc.1-1.9.2.4.1"><a href="#section-9.4" class="auto internal xref">9.4</a>.  <a href="#name-binding" class="internal xref">Binding</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.4">
+                <p id="section-toc.1-1.8.2.4.1"><a href="#section-8.4" class="auto internal xref">8.4</a>.  <a href="#name-sender-constrained-access-t" class="internal xref">Sender-Constrained Access Tokens</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.5">
-                <p id="section-toc.1-1.9.2.5.1"><a href="#section-9.5" class="auto internal xref">9.5</a>.  <a href="#name-delegation-control" class="internal xref">Delegation Control</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.5">
+                <p id="section-toc.1-1.8.2.5.1"><a href="#section-8.5" class="auto internal xref">8.5</a>.  <a href="#name-access-token-representation" class="internal xref">Access Token Representation</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.6">
-                <p id="section-toc.1-1.9.2.6.1"><a href="#section-9.6" class="auto internal xref">9.6</a>.  <a href="#name-privacy" class="internal xref">Privacy</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.6">
+                <p id="section-toc.1-1.8.2.6.1"><a href="#section-8.6" class="auto internal xref">8.6</a>.  <a href="#name-refresh-tokens" class="internal xref">Refresh Tokens</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.7">
+                <p id="section-toc.1-1.8.2.7.1"><a href="#section-8.7" class="auto internal xref">8.7</a>.  <a href="#name-error-responses" class="internal xref">Error Responses</a></p>
 </li>
             </ul>
 </li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-grant-type-applicability" class="internal xref">Grant Type Applicability</a></p>
+</li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
-                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-oauth-token-type" class="internal xref">OAuth Token Type</a></p>
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-trust-model" class="internal xref">Trust Model</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
-                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-oauth-dynamic-client-regist" class="internal xref">OAuth Dynamic Client Registration Metadata</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2.2.1">
-                    <p id="section-toc.1-1.10.2.2.2.1.1"><a href="#section-10.2.1" class="auto internal xref">10.2.1</a>.  <a href="#name-instance_issuers-2" class="internal xref">instance_issuers</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2.2.2">
-                    <p id="section-toc.1-1.10.2.2.2.2.1"><a href="#section-10.2.2" class="auto internal xref">10.2.2</a>.  <a href="#name-max_actor_chain_depth-2" class="internal xref">max_actor_chain_depth</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2.2.3">
-                    <p id="section-toc.1-1.10.2.2.2.3.1"><a href="#section-10.2.3" class="auto internal xref">10.2.3</a>.  <a href="#name-actor_token_required-2" class="internal xref">actor_token_required</a></p>
-</li>
-                </ul>
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-instance-lifecycle" class="internal xref">Instance Lifecycle</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.3">
-                <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-oauth-authorization-server-" class="internal xref">OAuth Authorization Server Metadata</a></p>
+                <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-replay" class="internal xref">Replay</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4">
-                <p id="section-toc.1-1.10.2.4.1"><a href="#section-10.4" class="auto internal xref">10.4</a>.  <a href="#name-oauth-entity-profile" class="internal xref">OAuth Entity Profile</a></p>
+                <p id="section-toc.1-1.10.2.4.1"><a href="#section-10.4" class="auto internal xref">10.4</a>.  <a href="#name-audience-and-confused-deput" class="internal xref">Audience and Confused Deputy</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.5">
+                <p id="section-toc.1-1.10.2.5.1"><a href="#section-10.5" class="auto internal xref">10.5</a>.  <a href="#name-binding" class="internal xref">Binding</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.6">
+                <p id="section-toc.1-1.10.2.6.1"><a href="#section-10.6" class="auto internal xref">10.6</a>.  <a href="#name-delegation-control" class="internal xref">Delegation Control</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.7">
+                <p id="section-toc.1-1.10.2.7.1"><a href="#section-10.7" class="auto internal xref">10.7</a>.  <a href="#name-privacy" class="internal xref">Privacy</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-references" class="internal xref">References</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
-                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-oauth-token-type" class="internal xref">OAuth Token Type</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
-                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref">11.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref">11.2</a>.  <a href="#name-oauth-dynamic-client-regist" class="internal xref">OAuth Dynamic Client Registration Metadata</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2.2.1">
+                    <p id="section-toc.1-1.11.2.2.2.1.1"><a href="#section-11.2.1" class="auto internal xref">11.2.1</a>.  <a href="#name-instance_issuers-2" class="internal xref">instance_issuers</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2.2.2">
+                    <p id="section-toc.1-1.11.2.2.2.2.1"><a href="#section-11.2.2" class="auto internal xref">11.2.2</a>.  <a href="#name-max_actor_chain_depth-2" class="internal xref">max_actor_chain_depth</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2.2.3">
+                    <p id="section-toc.1-1.11.2.2.2.3.1"><a href="#section-11.2.3" class="auto internal xref">11.2.3</a>.  <a href="#name-actor_token_required-2" class="internal xref">actor_token_required</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.3">
+                <p id="section-toc.1-1.11.2.3.1"><a href="#section-11.3" class="auto internal xref">11.3</a>.  <a href="#name-oauth-authorization-server-" class="internal xref">OAuth Authorization Server Metadata</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.4">
+                <p id="section-toc.1-1.11.2.4.1"><a href="#section-11.4" class="auto internal xref">11.4</a>.  <a href="#name-oauth-entity-profile" class="internal xref">OAuth Entity Profile</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-design-rationale" class="internal xref">Design Rationale</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-references" class="internal xref">References</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1">
-                <p id="section-toc.1-1.12.2.1.1"><a href="#appendix-A.1" class="auto internal xref"></a><a href="#name-why-not-a-client_instance-r" class="internal xref">Why not a client_instance request parameter?</a></p>
+                <p id="section-toc.1-1.12.2.1.1"><a href="#section-12.1" class="auto internal xref">12.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.2">
-                <p id="section-toc.1-1.12.2.2.1"><a href="#appendix-A.2" class="auto internal xref"></a><a href="#name-why-extend-actor_token-to-n" class="internal xref">Why extend actor_token to non-token-exchange grants?</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.3">
-                <p id="section-toc.1-1.12.2.3.1"><a href="#appendix-A.3" class="auto internal xref"></a><a href="#name-why-cimd-as-the-trust-ancho" class="internal xref">Why CIMD as the trust anchor for instance issuers?</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.4">
-                <p id="section-toc.1-1.12.2.4.1"><a href="#appendix-A.4" class="auto internal xref"></a><a href="#name-why-a-dedicated-actor_token" class="internal xref">Why a dedicated actor_token_type URN?</a></p>
+                <p id="section-toc.1-1.12.2.2.1"><a href="#section-12.2" class="auto internal xref">12.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
-            <p id="section-toc.1-1.13.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.13.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-design-rationale" class="internal xref">Design Rationale</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.1">
+                <p id="section-toc.1-1.13.2.1.1"><a href="#appendix-A.1" class="auto internal xref"></a><a href="#name-why-not-a-client_instance-r" class="internal xref">Why not a client_instance request parameter?</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.2">
+                <p id="section-toc.1-1.13.2.2.1"><a href="#appendix-A.2" class="auto internal xref"></a><a href="#name-why-extend-actor_token-to-n" class="internal xref">Why extend actor_token to non-token-exchange grants?</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.3">
+                <p id="section-toc.1-1.13.2.3.1"><a href="#appendix-A.3" class="auto internal xref"></a><a href="#name-why-cimd-as-the-trust-ancho" class="internal xref">Why CIMD as the trust anchor for instance issuers?</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.4">
+                <p id="section-toc.1-1.13.2.4.1"><a href="#appendix-A.4" class="auto internal xref"></a><a href="#name-why-a-dedicated-actor_token" class="internal xref">Why a dedicated actor_token_type URN?</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
-            <p id="section-toc.1-1.14.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.14.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -1402,7 +1428,7 @@ future work.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
 <p id="section-1.1-1"><span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines actor_token and actor_token_type only in the
 context of the token exchange grant type. This document permits these
 parameters on additional grant types listed in
-<a href="#grant-type-applicability" class="auto internal xref">Section 8</a>, while preserving their semantics: the
+<a href="#grant-type-applicability" class="auto internal xref">Section 9</a>, while preserving their semantics: the
 actor_token identifies the party acting on behalf of the subject and
 is reflected in an act claim in the issued token. Use of these
 parameters on a token exchange request remains fully governed by
@@ -1525,80 +1551,159 @@ the client class using its registered client authentication method
 authenticates the instance through the actor token.<a href="#section-3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="cimd-extensions">
+<div id="trust-model">
 <section id="section-4">
-      <h2 id="name-cimd-extensions">
-<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-cimd-extensions" class="section-name selfRef">CIMD Extensions</a>
+      <h2 id="name-trust-delegation-model">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-trust-delegation-model" class="section-name selfRef">Trust Delegation Model</a>
       </h2>
-<p id="section-4-1">This document extends the Client ID Metadata Document <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> with
+<p id="section-4-1">This profile defines a three-party trust delegation between the
+client class, the instance issuer, and the AS. The client class
+<em>delegates</em> attestation of its runtime instances to one or more
+instance issuers; the AS <em>relies on</em> that delegation as expressed in
+the CIMD document.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<div id="trust-model-delegation">
+<section id="section-4.1">
+        <h3 id="name-delegation-by-the-client-cl">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-delegation-by-the-client-cl" class="section-name selfRef">Delegation by the Client Class</a>
+        </h3>
+<p id="section-4.1-1">By listing an instance issuer in its CIMD instance_issuers
+(<a href="#instance-issuers" class="auto internal xref">Section 5.1</a>), a client class delegates to that issuer the
+authority to attest that a concrete runtime is an instance of the
+client class. This delegation is bounded by the descriptor; the AS
+<span class="bcp14">MUST</span> enforce, and the instance issuer <span class="bcp14">MUST</span> honor, the following
+limits:<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.1-2.1">
+            <p id="section-4.1-2.1.1">The asserted sub <span class="bcp14">MUST</span> fall within trust_domain when present and
+<span class="bcp14">MUST</span> conform to subject_syntax when present.<a href="#section-4.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.1-2.2">
+            <p id="section-4.1-2.2.1">The asserted sub_profile values <span class="bcp14">MUST</span> be a subset of
+actor_profiles_supported when present.<a href="#section-4.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.1-2.3">
+            <p id="section-4.1-2.3.1">The signing alg <span class="bcp14">MUST</span> be among signing_alg_values_supported when
+present.<a href="#section-4.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.1-3">A client class <span class="bcp14">MUST NOT</span> list instance issuers it does not control or
+trust to enforce these bounds. An instance issuer accepting delegation
+<span class="bcp14">MUST NOT</span> mint actor tokens naming this client_id outside the
+delegated scope.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="trust-model-as">
+<section id="section-4.2">
+        <h3 id="name-authority-of-the-authorizat">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-authority-of-the-authorizat" class="section-name selfRef">Authority of the Authorization Server</a>
+        </h3>
+<p id="section-4.2-1">The AS treats the CIMD instance_issuers list as authoritative: it
+derives its trust in an actor token solely from the descriptor whose
+issuer member matches the actor token's iss claim. This document
+does not define out-of-band or AS-side configuration of additional
+instance issuers for a client_id; deployments requiring such
+configuration <span class="bcp14">MUST</span> do so via a separate specification.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="trust-lifecycle">
+<section id="section-4.3">
+        <h3 id="name-trust-update-handling">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-trust-update-handling" class="section-name selfRef">Trust Update Handling</a>
+        </h3>
+<p id="section-4.3-1">The trust relationship between client class and instance issuer is
+mutable. When the CIMD document changes -- for example, when an
+instance issuer is removed, its jwks_uri changes, or its descriptor's
+scope (trust_domain, actor_profiles_supported,
+signing_alg_values_supported) is narrowed -- the AS <span class="bcp14">SHOULD</span> apply the
+diligence required by <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> for changes to client jwks. In
+particular, the AS <span class="bcp14">SHOULD</span> revoke previously issued access tokens
+whose act claim either:<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.3-2.1">
+            <p id="section-4.3-2.1.1">names a removed instance issuer; or<a href="#section-4.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.3-2.2">
+            <p id="section-4.3-2.2.1">falls outside the descriptor's narrowed scope.<a href="#section-4.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="cimd-extensions">
+<section id="section-5">
+      <h2 id="name-cimd-extensions">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-cimd-extensions" class="section-name selfRef">CIMD Extensions</a>
+      </h2>
+<p id="section-5-1">This document extends the Client ID Metadata Document <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> with
 parameters describing the trust relationship between a client class
 and the instance issuers that authenticate its runtime instances.
 These parameters are registered in the OAuth Dynamic Client
-Registration Metadata registry (see <a href="#iana-client-metadata" class="auto internal xref">Section 10.2</a>).<a href="#section-4-1" class="pilcrow">¶</a></p>
+Registration Metadata registry (see <a href="#iana-client-metadata" class="auto internal xref">Section 11.2</a>).<a href="#section-5-1" class="pilcrow">¶</a></p>
 <div id="instance-issuers">
-<section id="section-4.1">
+<section id="section-5.1">
         <h3 id="name-instance_issuers">
-<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-instance_issuers" class="section-name selfRef">instance_issuers</a>
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-instance_issuers" class="section-name selfRef">instance_issuers</a>
         </h3>
-<p id="section-4.1-1"><span class="bcp14">OPTIONAL</span>. A non-empty JSON array of <em>instance issuer descriptor</em>
+<p id="section-5.1-1"><span class="bcp14">OPTIONAL</span>. A non-empty JSON array of <em>instance issuer descriptor</em>
 objects. Each descriptor declares an issuer that the client class
 trusts to authenticate its instances. If this parameter is absent,
 the AS <span class="bcp14">MUST NOT</span> accept actor tokens of type
-urn:ietf:params:oauth:token-type:client-instance-jwt for this client.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
-<p id="section-4.1-2">An instance issuer descriptor has the following members:<a href="#section-4.1-2" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-4.1-3">
-          <dt id="section-4.1-3.1">issuer (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-3.2">
-            <p id="section-4.1-3.2.1">A StringOrURI <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> identifying the instance issuer. This
-value <span class="bcp14">MUST</span> exactly match the iss claim of accepted actor tokens.<a href="#section-4.1-3.2.1" class="pilcrow">¶</a></p>
+urn:ietf:params:oauth:token-type:client-instance-jwt for this client.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-2">An instance issuer descriptor has the following members:<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5.1-3">
+          <dt id="section-5.1-3.1">issuer (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-3.2">
+            <p id="section-5.1-3.2.1">A StringOrURI <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> identifying the instance issuer. This
+value <span class="bcp14">MUST</span> exactly match the iss claim of accepted actor tokens.<a href="#section-5.1-3.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-3.3">jwks_uri (<span class="bcp14">REQUIRED</span> unless jwks is present):</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-3.4">
-            <p id="section-4.1-3.4.1">An HTTPS URL of a JWK Set <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span> containing the public keys
-used to verify signatures of actor tokens issued by this issuer.<a href="#section-4.1-3.4.1" class="pilcrow">¶</a></p>
+<dt id="section-5.1-3.3">jwks_uri (<span class="bcp14">REQUIRED</span> unless jwks is present):</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-3.4">
+            <p id="section-5.1-3.4.1">An HTTPS URL of a JWK Set <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span> containing the public keys
+used to verify signatures of actor tokens issued by this issuer.<a href="#section-5.1-3.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-3.5">jwks (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-3.6">
-            <p id="section-4.1-3.6.1">An inline JWK Set. If both jwks and jwks_uri are present, jwks_uri
-takes precedence and jwks <span class="bcp14">SHOULD</span> be ignored.<a href="#section-4.1-3.6.1" class="pilcrow">¶</a></p>
+<dt id="section-5.1-3.5">jwks (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-3.6">
+            <p id="section-5.1-3.6.1">An inline JWK Set. If both jwks and jwks_uri are present, jwks_uri
+takes precedence and jwks <span class="bcp14">SHOULD</span> be ignored.<a href="#section-5.1-3.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-3.7">signing_alg_values_supported (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-3.8">
-            <p id="section-4.1-3.8.1">A JSON array of JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> alg values that this issuer uses to
+<dt id="section-5.1-3.7">signing_alg_values_supported (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-3.8">
+            <p id="section-5.1-3.8.1">A JSON array of JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> alg values that this issuer uses to
 sign actor tokens. If present, the AS <span class="bcp14">MUST</span> reject actor tokens
-whose alg is not listed.<a href="#section-4.1-3.8.1" class="pilcrow">¶</a></p>
+whose alg is not listed.<a href="#section-5.1-3.8.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-3.9">subject_syntax (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-3.10">
-            <p id="section-4.1-3.10.1">A short identifier indicating the syntactic profile of the sub
+<dt id="section-5.1-3.9">subject_syntax (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-3.10">
+            <p id="section-5.1-3.10.1">A short identifier indicating the syntactic profile of the sub
 claim used by this issuer. Defined values are "uri" (default,
 arbitrary StringOrURI) and "spiffe" (a SPIFFE ID <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>).
 Other values <span class="bcp14">MAY</span> be used; unrecognized values <span class="bcp14">MUST</span> cause the AS
-to fall back to "uri" semantics.<a href="#section-4.1-3.10.1" class="pilcrow">¶</a></p>
+to fall back to "uri" semantics.<a href="#section-5.1-3.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-3.11">trust_domain (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-3.12">
-            <p id="section-4.1-3.12.1">When subject_syntax is "spiffe", a SPIFFE trust domain that the
+<dt id="section-5.1-3.11">trust_domain (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-3.12">
+            <p id="section-5.1-3.12.1">When subject_syntax is "spiffe", a SPIFFE trust domain that the
 sub claim <span class="bcp14">MUST</span> belong to. The AS <span class="bcp14">MUST</span> reject any actor token
-whose sub does not lie within this trust domain.<a href="#section-4.1-3.12.1" class="pilcrow">¶</a></p>
+whose sub does not lie within this trust domain.<a href="#section-5.1-3.12.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-3.13">actor_profiles_supported (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-3.14">
-            <p id="section-4.1-3.14.1">A JSON array of sub_profile values from the OAuth Entity Profiles
+<dt id="section-5.1-3.13">actor_profiles_supported (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-3.14">
+            <p id="section-5.1-3.14.1">A JSON array of sub_profile values from the OAuth Entity Profiles
 registry <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span> that this issuer is authorized to
 assert. If present, the AS <span class="bcp14">MUST</span> reject any actor token whose
-sub_profile contains values not listed.<a href="#section-4.1-3.14.1" class="pilcrow">¶</a></p>
+sub_profile contains values not listed.<a href="#section-5.1-3.14.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-4.1-4">Example client metadata document:<a href="#section-4.1-4" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-4.1-5">
+<p id="section-5.1-4">Example client metadata document:<a href="#section-5.1-4" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-5.1-5">
 <pre>
 {
   "client_id": "https://openai.example.com/codex",
@@ -1616,169 +1721,212 @@ sub_profile contains values not listed.<a href="#section-4.1-3.14.1" class="pilc
   ],
   "max_actor_chain_depth": 4
 }
-</pre><a href="#section-4.1-5" class="pilcrow">¶</a>
+</pre><a href="#section-5.1-5" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
 <div id="max-actor-chain-depth">
-<section id="section-4.2">
+<section id="section-5.2">
         <h3 id="name-max_actor_chain_depth">
-<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-max_actor_chain_depth" class="section-name selfRef">max_actor_chain_depth</a>
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-max_actor_chain_depth" class="section-name selfRef">max_actor_chain_depth</a>
         </h3>
-<p id="section-4.2-1"><span class="bcp14">OPTIONAL</span>. A positive integer specifying the maximum delegation depth
+<p id="section-5.2-1"><span class="bcp14">OPTIONAL</span>. A positive integer specifying the maximum delegation depth
 (<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>) the client class permits in actor chains
 originating from one of its instances. If absent, the AS applies its
 own policy. The AS <span class="bcp14">MUST</span> reject requests whose resulting act chain
 would exceed the lower of (a) this value, (b) the AS-imposed maximum,
-and (c) 4 (the floor specified by <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>).<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+and (c) 4 (the floor specified by <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>).<a href="#section-5.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-token-required">
-<section id="section-4.3">
+<section id="section-5.3">
         <h3 id="name-actor_token_required">
-<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-actor_token_required" class="section-name selfRef">actor_token_required</a>
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-actor_token_required" class="section-name selfRef">actor_token_required</a>
         </h3>
-<p id="section-4.3-1"><span class="bcp14">OPTIONAL</span>. A JSON boolean. When true, the AS <span class="bcp14">MUST</span> reject any token
+<p id="section-5.3-1"><span class="bcp14">OPTIONAL</span>. A JSON boolean. When true, the AS <span class="bcp14">MUST</span> reject any token
 request from this client_id that does not include an actor_token of
 type urn:ietf:params:oauth:token-type:client-instance-jwt. The default
-is false.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
-<p id="section-4.3-2">This parameter lets a client class enforce that every issued access
-token is bound to an identifiable instance.<a href="#section-4.3-2" class="pilcrow">¶</a></p>
+is false.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<p id="section-5.3-2">This parameter lets a client class enforce that every issued access
+token is bound to an identifiable instance.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="as-metadata">
-<section id="section-5">
+<section id="section-6">
       <h2 id="name-authorization-server-metada">
-<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-authorization-server-metada" class="section-name selfRef">Authorization Server Metadata</a>
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-authorization-server-metada" class="section-name selfRef">Authorization Server Metadata</a>
       </h2>
-<p id="section-5-1">This document defines the following AS metadata parameter for
-<span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> (see <a href="#iana-as-metadata" class="auto internal xref">Section 10.3</a>):<a href="#section-5-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-5-2">
-        <dt id="section-5-2.1">actor_token_types_supported:</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.2">
-          <p id="section-5-2.2.1"><span class="bcp14">OPTIONAL</span>. A JSON array of actor_token_type values supported by the
+<p id="section-6-1">This document defines the following AS metadata parameter for
+<span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> (see <a href="#iana-as-metadata" class="auto internal xref">Section 11.3</a>):<a href="#section-6-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-6-2">
+        <dt id="section-6-2.1">actor_token_types_supported:</dt>
+        <dd style="margin-left: 1.5em" id="section-6-2.2">
+          <p id="section-6-2.2.1"><span class="bcp14">OPTIONAL</span>. A JSON array of actor_token_type values supported by the
 AS at the token endpoint. An AS implementing this profile <span class="bcp14">SHOULD</span>
-include urn:ietf:params:oauth:token-type:client-instance-jwt.<a href="#section-5-2.2.1" class="pilcrow">¶</a></p>
+include urn:ietf:params:oauth:token-type:client-instance-jwt.<a href="#section-6-2.2.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
-<p id="section-5-3">Clients use this metadata to determine whether the AS supports
-client-instance actor tokens before assembling token requests.<a href="#section-5-3" class="pilcrow">¶</a></p>
+<p id="section-6-3">Clients use this metadata to determine whether the AS supports
+client-instance actor tokens before assembling token requests.<a href="#section-6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="client-instance-jwt">
-<section id="section-6">
+<section id="section-7">
       <h2 id="name-the-client-instance-actor-t">
-<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-the-client-instance-actor-t" class="section-name selfRef">The Client Instance Actor Token</a>
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-the-client-instance-actor-t" class="section-name selfRef">The Client Instance Actor Token</a>
       </h2>
-<p id="section-6-1">A <em>Client Instance Actor Token</em> is a JWT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> that asserts the
+<p id="section-7-1">A <em>Client Instance Actor Token</em> is a JWT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> that asserts the
 identity of a client instance. Its actor_token_type is
 urn:ietf:params:oauth:token-type:client-instance-jwt (see
-<a href="#iana-token-type" class="auto internal xref">Section 10.1</a>).<a href="#section-6-1" class="pilcrow">¶</a></p>
-<div id="claims">
-<section id="section-6.1">
-        <h3 id="name-jwt-claims">
-<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-jwt-claims" class="section-name selfRef">JWT Claims</a>
+<a href="#iana-token-type" class="auto internal xref">Section 11.1</a>).<a href="#section-7-1" class="pilcrow">¶</a></p>
+<div id="layering">
+<section id="section-7.1">
+        <h3 id="name-layering-of-instance-identi">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-layering-of-instance-identi" class="section-name selfRef">Layering of Instance Identity and Actor Assertion</a>
         </h3>
-<p id="section-6.1-1">The following claims are defined for client instance actor tokens.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-6.1-2">
-          <dt id="section-6.1-2.1">iss (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.2">
-            <p id="section-6.1-2.2.1">The instance issuer identifier. <span class="bcp14">MUST</span> exactly match an issuer
+<p id="section-7.1-1">A client instance actor token serves two conceptually distinct
+purposes:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-7.1-2">
+<li id="section-7.1-2.1">
+            <p id="section-7.1-2.1.1">it authenticates the <em>runtime instance</em> (workload identity); and<a href="#section-7.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.1-2.2">
+            <p id="section-7.1-2.2.1">it asserts that the instance is a member of the named <em>client
+class</em>.<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-7.1-3">This document defines a single combined artifact: a JWT signed by the
+instance issuer that carries both. This matches the prevailing pattern
+in workload identity systems, which already issue audience-scoped,
+signed assertions of runtime identity (e.g., JWT-SVIDs in <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>).<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-4">The instance issuer is the trust authority for the combined assertion
+and <span class="bcp14">MUST</span>, before minting an actor token under this profile:<a href="#section-7.1-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.1-5.1">
+            <p id="section-7.1-5.1.1">Authenticate the runtime instance (e.g., via attestation,
+platform-level identity, or possession of an instance key); and<a href="#section-7.1-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.1-5.2">
+            <p id="section-7.1-5.2.1">Verify, under issuer-side policy, that the runtime is permitted to
+claim the client_id named in the token. This typically means that
+the runtime is operationally part of the client class's deployment.<a href="#section-7.1-5.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-7.1-6">Decoupled deployments -- in which a workload identity provider issues
+an <em>instance credential</em> and the runtime independently mints an
+actor assertion bound to that credential -- are out of scope for this
+document. A future profile <span class="bcp14">MAY</span> define such a layered model and re-use
+the actor_token_type registered here, or register an additional one.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="claims">
+<section id="section-7.2">
+        <h3 id="name-jwt-claims">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-jwt-claims" class="section-name selfRef">JWT Claims</a>
+        </h3>
+<p id="section-7.2-1">The following claims are defined for client instance actor tokens.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-7.2-2">
+          <dt id="section-7.2-2.1">iss (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.2">
+            <p id="section-7.2-2.2.1">The instance issuer identifier. <span class="bcp14">MUST</span> exactly match an issuer
 member of an instance_issuers descriptor in the client class CIMD
-metadata.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
+metadata.<a href="#section-7.2-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-6.1-2.3">sub (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.4">
-            <p id="section-6.1-2.4.1">The identifier of the client instance, in the syntax declared by
-the descriptor's subject_syntax (default: arbitrary StringOrURI).<a href="#section-6.1-2.4.1" class="pilcrow">¶</a></p>
+<dt id="section-7.2-2.3">sub (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.4">
+            <p id="section-7.2-2.4.1">The identifier of the client instance, in the syntax declared by
+the descriptor's subject_syntax (default: arbitrary StringOrURI).<a href="#section-7.2-2.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-6.1-2.5">aud (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.6">
-            <p id="section-6.1-2.6.1">The intended audience. <span class="bcp14">MUST</span> identify the AS. Per <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>
+<dt id="section-7.2-2.5">aud (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.6">
+            <p id="section-7.2-2.6.1">The intended audience. <span class="bcp14">MUST</span> identify the AS. Per <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>
 Section 3, the AS <span class="bcp14">MUST</span> verify aud and <span class="bcp14">SHOULD</span> use its issuer
 identifier or token endpoint URL. If multiple values are present,
-the AS <span class="bcp14">MUST</span> find one that matches.<a href="#section-6.1-2.6.1" class="pilcrow">¶</a></p>
+the AS <span class="bcp14">MUST</span> find one that matches.<a href="#section-7.2-2.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-6.1-2.7">client_id (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.8">
-            <p id="section-6.1-2.8.1">The client_id of the client class to which this instance belongs.
+<dt id="section-7.2-2.7">client_id (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.8">
+            <p id="section-7.2-2.8.1">The client_id of the client class to which this instance belongs.
 This claim binds the actor token to a specific client class; it is
 not part of the actor's identity (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, client_id
 identifies an OAuth client, not an actor). The AS <span class="bcp14">MUST</span> reject the
 token if this value does not exactly equal the client_id of the
-authenticated client.<a href="#section-6.1-2.8.1" class="pilcrow">¶</a></p>
+authenticated client.<a href="#section-7.2-2.8.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-6.1-2.9">exp (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.10">
-            <p id="section-6.1-2.10.1">Expiration time. Issuers <span class="bcp14">SHOULD</span> set short lifetimes (e.g., five
-minutes or less); see <a href="#security-replay" class="auto internal xref">Section 9.2</a>.<a href="#section-6.1-2.10.1" class="pilcrow">¶</a></p>
+<dt id="section-7.2-2.9">exp (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.10">
+            <p id="section-7.2-2.10.1">Expiration time. Issuers <span class="bcp14">SHOULD</span> set short lifetimes (e.g., five
+minutes or less); see <a href="#security-replay" class="auto internal xref">Section 10.3</a>.<a href="#section-7.2-2.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-6.1-2.11">iat (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.12">
-            <p id="section-6.1-2.12.1">Issued-at time.<a href="#section-6.1-2.12.1" class="pilcrow">¶</a></p>
+<dt id="section-7.2-2.11">iat (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.12">
+            <p id="section-7.2-2.12.1">Issued-at time.<a href="#section-7.2-2.12.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-6.1-2.13">jti (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.14">
-            <p id="section-6.1-2.14.1">A unique identifier used for replay prevention; see
-<a href="#security-replay" class="auto internal xref">Section 9.2</a>.<a href="#section-6.1-2.14.1" class="pilcrow">¶</a></p>
+<dt id="section-7.2-2.13">jti (<span class="bcp14">REQUIRED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.14">
+            <p id="section-7.2-2.14.1">A unique identifier used for replay prevention; see
+<a href="#security-replay" class="auto internal xref">Section 10.3</a>.<a href="#section-7.2-2.14.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-6.1-2.15">sub_profile (<span class="bcp14">RECOMMENDED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.16">
-            <p id="section-6.1-2.16.1">A space-delimited list of OAuth Entity Profile names
+<dt id="section-7.2-2.15">sub_profile (<span class="bcp14">RECOMMENDED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.16">
+            <p id="section-7.2-2.16.1">A space-delimited list of OAuth Entity Profile names
 <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span> classifying the actor. This document registers
-the value client_instance (<a href="#iana-entity-profile" class="auto internal xref">Section 10.4</a>). Issuers <span class="bcp14">MAY</span>
-include additional values such as service or ai_agent.<a href="#section-6.1-2.16.1" class="pilcrow">¶</a></p>
+the value client_instance (<a href="#iana-entity-profile" class="auto internal xref">Section 11.4</a>). Issuers <span class="bcp14">MAY</span>
+include additional values such as service or ai_agent.<a href="#section-7.2-2.16.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-6.1-2.17">cnf (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.18">
-            <p id="section-6.1-2.18.1">A confirmation claim <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> carrying a key bound to this
-instance, enabling proof-of-possession at the AS or downstream.
-See <a href="#security-binding" class="auto internal xref">Section 9.4</a>.<a href="#section-6.1-2.18.1" class="pilcrow">¶</a></p>
+<dt id="section-7.2-2.17">cnf (<span class="bcp14">RECOMMENDED</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.18">
+            <p id="section-7.2-2.18.1">A confirmation claim <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> carrying a key bound to this
+instance, enabling proof-of-possession at the AS and propagation to
+downstream resource servers. Issuers <span class="bcp14">SHOULD</span> include cnf so that
+access tokens whose act claim names the instance can be
+sender-constrained. See <a href="#sender-constrained" class="auto internal xref">Section 8.4</a> and
+<a href="#security-binding" class="auto internal xref">Section 10.5</a>.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-6.1-2.19">nbf (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-6.1-2.20">
-            <p id="section-6.1-2.20.1">Not-before time. If present, the AS <span class="bcp14">MUST</span> reject the token before
-this time.<a href="#section-6.1-2.20.1" class="pilcrow">¶</a></p>
+<dt id="section-7.2-2.19">nbf (<span class="bcp14">OPTIONAL</span>):</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.20">
+            <p id="section-7.2-2.20.1">Not-before time. If present, the AS <span class="bcp14">MUST</span> reject the token before
+this time.<a href="#section-7.2-2.20.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-6.1-3">Additional claims <span class="bcp14">MAY</span> be present and <span class="bcp14">MUST</span> be ignored if not
+<p id="section-7.2-3">Additional claims <span class="bcp14">MAY</span> be present and <span class="bcp14">MUST</span> be ignored if not
 understood, except where this document or <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> specifies
-processing rules.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+processing rules.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="signing">
-<section id="section-6.2">
+<section id="section-7.3">
         <h3 id="name-signing">
-<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-signing" class="section-name selfRef">Signing</a>
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-signing" class="section-name selfRef">Signing</a>
         </h3>
-<p id="section-6.2-1">The actor token <span class="bcp14">MUST</span> be signed using a JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> algorithm. The
+<p id="section-7.3-1">The actor token <span class="bcp14">MUST</span> be signed using a JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> algorithm. The
 "none" algorithm <span class="bcp14">MUST NOT</span> be used. Implementations <span class="bcp14">MUST</span> follow the
-guidance in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
-<p id="section-6.2-2">Verification keys are obtained from the descriptor's jwks_uri (or
+guidance in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-2">Verification keys are obtained from the descriptor's jwks_uri (or
 jwks) for the issuer that matches the iss claim. The AS <span class="bcp14">MUST</span> verify
-the alg against signing_alg_values_supported when present.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
+the alg against signing_alg_values_supported when present.<a href="#section-7.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="example-token">
-<section id="section-6.3">
+<section id="section-7.4">
         <h3 id="name-example">
-<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-example" class="section-name selfRef">Example</a>
+<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-example" class="section-name selfRef">Example</a>
         </h3>
-<p id="section-6.3-1">A decoded client instance actor token:<a href="#section-6.3-1" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-6.3-2">
+<p id="section-7.4-1">A decoded client instance actor token:<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-7.4-2">
 <pre>
 {
   "iss":          "https://workload.openai.example.com",
@@ -1789,32 +1937,33 @@ the alg against signing_alg_values_supported when present.<a href="#section-6.2-
   "iat":          1770000000,
   "nbf":          1770000000,
   "exp":          1770000300,
-  "jti":          "1a2b3c4d-5e6f"
+  "jti":          "1a2b3c4d-5e6f",
+  "cnf":          { "jkt": "0ZcOCORZNYy...iguA4I" }
 }
-</pre><a href="#section-6.3-2" class="pilcrow">¶</a>
+</pre><a href="#section-7.4-2" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
 </section>
 </div>
 <div id="token-endpoint">
-<section id="section-7">
+<section id="section-8">
       <h2 id="name-token-endpoint-processing">
-<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-token-endpoint-processing" class="section-name selfRef">Token Endpoint Processing</a>
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-token-endpoint-processing" class="section-name selfRef">Token Endpoint Processing</a>
       </h2>
 <div id="token-request">
-<section id="section-7.1">
+<section id="section-8.1">
         <h3 id="name-token-request">
-<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-token-request" class="section-name selfRef">Token Request</a>
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-token-request" class="section-name selfRef">Token Request</a>
         </h3>
-<p id="section-7.1-1">A client presents a client instance actor token at the token endpoint
+<p id="section-8.1-1">A client presents a client instance actor token at the token endpoint
 by adding the actor_token and actor_token_type parameters defined by
 <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> to a token request of any grant type listed in
-<a href="#grant-type-applicability" class="auto internal xref">Section 8</a>.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
-<p id="section-7.1-2">The following example shows a client credentials grant carrying a
+<a href="#grant-type-applicability" class="auto internal xref">Section 9</a>.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<p id="section-8.1-2">The following example shows a client credentials grant carrying a
 client instance actor token. The client class authenticates with
-private_key_jwt; line breaks are for readability:<a href="#section-7.1-2" class="pilcrow">¶</a></p>
-<div class="lang-http-message sourcecode" id="section-7.1-3">
+private_key_jwt; line breaks are for readability:<a href="#section-8.1-2" class="pilcrow">¶</a></p>
+<div class="lang-http-message sourcecode" id="section-8.1-3">
 <pre>
 POST /token HTTP/1.1
 Host: as.example.com
@@ -1829,104 +1978,180 @@ grant_type=client_credentials
 &amp;actor_token=eyJhbGciOiJFUzI1NiIsImtpZCI6...
 &amp;actor_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
-</pre><a href="#section-7.1-3" class="pilcrow">¶</a>
+</pre><a href="#section-8.1-3" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
 <div id="as-processing">
-<section id="section-7.2">
+<section id="section-8.2">
         <h3 id="name-authorization-server-proces">
-<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-authorization-server-proces" class="section-name selfRef">Authorization Server Processing</a>
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-authorization-server-proces" class="section-name selfRef">Authorization Server Processing</a>
         </h3>
-<p id="section-7.2-1">On receipt of a token request that includes actor_token and
+<p id="section-8.2-1">On receipt of a token request that includes actor_token and
 actor_token_type, an AS implementing this document <span class="bcp14">MUST</span> perform the
-following steps in addition to grant-type-specific processing:<a href="#section-7.2-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-7.2-2">
-<li id="section-7.2-2.1">
-            <p id="section-7.2-2.1.1"><strong>Authenticate the client.</strong> Authenticate the client class using
+following steps in addition to grant-type-specific processing:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-8.2-2">
+<li id="section-8.2-2.1">
+            <p id="section-8.2-2.1.1"><strong>Authenticate the client.</strong> Authenticate the client class using
 its registered token_endpoint_auth_method per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> and, if
-applicable, <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>. The CIMD client_id is the client class.<a href="#section-7.2-2.1.1" class="pilcrow">¶</a></p>
+applicable, <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>. The CIMD client_id is the client class.<a href="#section-8.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-7.2-2.2">
-            <p id="section-7.2-2.2.1"><strong>Match the token type.</strong> If actor_token_type is not
+          <li id="section-8.2-2.2">
+            <p id="section-8.2-2.2.1"><strong>Match the token type.</strong> If actor_token_type is not
 urn:ietf:params:oauth:token-type:client-instance-jwt, processing
 under this document does not apply. (Other actor token types <span class="bcp14">MAY</span>
-be processed under their own specifications.)<a href="#section-7.2-2.2.1" class="pilcrow">¶</a></p>
+be processed under their own specifications.)<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-7.2-2.3">
-            <p id="section-7.2-2.3.1"><strong>Resolve client metadata.</strong> Retrieve the CIMD document for the
-authenticated client_id, subject to caching rules in <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-7.2-2.3.1" class="pilcrow">¶</a></p>
+          <li id="section-8.2-2.3">
+            <p id="section-8.2-2.3.1"><strong>Resolve client metadata.</strong> Retrieve the CIMD document for the
+authenticated client_id, subject to caching rules in <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-8.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-7.2-2.4">
-            <p id="section-7.2-2.4.1"><strong>Locate the instance issuer descriptor.</strong> Parse the actor_token
+          <li id="section-8.2-2.4">
+            <p id="section-8.2-2.4.1"><strong>Locate the instance issuer descriptor.</strong> Parse the actor_token
 as a JWT and read its iss claim. Find the descriptor in
 instance_issuers whose issuer member exactly equals iss. If no
 descriptor is found, or instance_issuers is absent, reject the
-request with invalid_grant (<a href="#errors" class="auto internal xref">Section 7.5</a>).<a href="#section-7.2-2.4.1" class="pilcrow">¶</a></p>
+request with invalid_grant (<a href="#errors" class="auto internal xref">Section 8.7</a>).<a href="#section-8.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-7.2-2.5">
-            <p id="section-7.2-2.5.1"><strong>Verify the signature.</strong> Using the descriptor's jwks_uri or
-jwks, verify the JWS signature per <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> and <a href="#signing" class="auto internal xref">Section 6.2</a>.<a href="#section-7.2-2.5.1" class="pilcrow">¶</a></p>
+          <li id="section-8.2-2.5">
+            <p id="section-8.2-2.5.1"><strong>Verify the signature.</strong> Using the descriptor's jwks_uri or
+jwks, verify the JWS signature per <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> and <a href="#signing" class="auto internal xref">Section 7.3</a>.<a href="#section-8.2-2.5.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-7.2-2.6">
-            <p id="section-7.2-2.6.1"><strong>Validate JWT claims.</strong> Validate iss, sub, aud, exp, iat, nbf,
-and jti per <a href="#claims" class="auto internal xref">Section 6.1</a> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> Section 3. Enforce
+          <li id="section-8.2-2.6">
+            <p id="section-8.2-2.6.1"><strong>Validate JWT claims.</strong> Validate iss, sub, aud, exp, iat, nbf,
+and jti per <a href="#claims" class="auto internal xref">Section 7.2</a> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> Section 3. Enforce
 subject_syntax, trust_domain, signing_alg_values_supported, and
-actor_profiles_supported when present in the descriptor.<a href="#section-7.2-2.6.1" class="pilcrow">¶</a></p>
+actor_profiles_supported when present in the descriptor.<a href="#section-8.2-2.6.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-7.2-2.7">
-            <p id="section-7.2-2.7.1"><strong>Verify client_id binding.</strong> The actor token's client_id claim
+          <li id="section-8.2-2.7">
+            <p id="section-8.2-2.7.1"><strong>Verify client_id binding.</strong> The actor token's client_id claim
 <span class="bcp14">MUST</span> exactly equal the authenticated client_id. Reject with
-invalid_grant otherwise.<a href="#section-7.2-2.7.1" class="pilcrow">¶</a></p>
+invalid_grant otherwise.<a href="#section-8.2-2.7.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-7.2-2.8">
-            <p id="section-7.2-2.8.1"><strong>Enforce delegation policy.</strong> Apply max_actor_chain_depth, the
-AS's own policy, and the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-7.2-2.8.1" class="pilcrow">¶</a></p>
+          <li id="section-8.2-2.8">
+            <p id="section-8.2-2.8.1"><strong>Enforce delegation policy.</strong> Apply max_actor_chain_depth, the
+AS's own policy, and the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.2-2.8.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-7.2-2.9">
-            <p id="section-7.2-2.9.1"><strong>Bind the actor.</strong> If issuance succeeds, populate the access
-token's act claim per <a href="#access-token" class="auto internal xref">Section 7.3</a>. Reflect any prior actor
+          <li id="section-8.2-2.9">
+            <p id="section-8.2-2.9.1"><strong>Check authorization-time consistency.</strong> For grants that
+originate from a prior authorization step (notably
+authorization_code), apply the rules of
+<a href="#auth-time-consistency" class="auto internal xref">Section 8.3</a>.<a href="#section-8.2-2.9.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-8.2-2.10">
+            <p id="section-8.2-2.10.1"><strong>Bind the actor.</strong> If issuance succeeds, populate the access
+token's act claim per <a href="#access-token" class="auto internal xref">Section 8.5</a>, applying
+<a href="#sender-constrained" class="auto internal xref">Section 8.4</a> for token binding. Reflect any prior actor
 chain present in input tokens (e.g., the subject_token in a
-token-exchange request) by nesting per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-7.2-2.9.1" class="pilcrow">¶</a></p>
+token-exchange request) by nesting per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.2-2.10.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-7.2-3">If the client metadata sets actor_token_required to true and no
+<p id="section-8.2-3">If the client metadata sets actor_token_required to true and no
 actor_token of this type is presented, the AS <span class="bcp14">MUST</span> reject the request
-with invalid_request.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
-<p id="section-7.2-4">If validation succeeds, the AS issues an access token (and optionally
-a refresh token) per the requested grant.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+with invalid_request.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+<p id="section-8.2-4">If validation succeeds, the AS issues an access token (and optionally
+a refresh token) per the requested grant.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="auth-time-consistency">
+<section id="section-8.3">
+        <h3 id="name-authorization-time-consiste">
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-authorization-time-consiste" class="section-name selfRef">Authorization-Time Consistency</a>
+        </h3>
+<p id="section-8.3-1">When a token request is made under the authorization_code grant
+(<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 4.1), the user has authorized the <em>client class</em>
+identified by client_id, not any specific instance of that class. The
+AS <span class="bcp14">MUST</span> ensure that the actor introduced at the token endpoint is
+consistent with that authorization:<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8.3-2.1">
+            <p id="section-8.3-2.1.1">The client_id authenticated at the token endpoint <span class="bcp14">MUST</span> match the
+client_id that received the authorization_code (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section
+4.1.3). Combined with the client_id-binding requirement of
+<a href="#as-processing" class="auto internal xref">Section 8.2</a> step 7, this prevents an actor token from
+another client class being attached to a code.<a href="#section-8.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.3-2.2">
+            <p id="section-8.3-2.2.1">The AS <span class="bcp14">MUST NOT</span> permit the actor identity to bypass standard
+authorization-code controls (single-use redemption, redirect URI
+matching, and any code challenge bound to the original
+authorization request).<a href="#section-8.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.3-2.3">
+            <p id="section-8.3-2.3.1">If the AS has any authorization-time policy that depends on the
+actor (for example, a per-instance allow-list), the AS <span class="bcp14">MUST</span>
+evaluate that policy against the actor token presented at /token
+and reject inconsistent requests with invalid_grant.<a href="#section-8.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-8.3-3">User consent under this profile applies to the client class as a
+whole; consent thereby covers all instances attested by listed
+instance issuers. ASes <span class="bcp14">MAY</span> display the client class identifier and
+the trust domain of the instance issuer at consent time. Per-instance
+consent (asking the user to authorize a specific runtime) is out of
+scope for this document; deployments requiring it <span class="bcp14">MUST</span> define it via
+a separate extension.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sender-constrained">
+<section id="section-8.4">
+        <h3 id="name-sender-constrained-access-t">
+<a href="#section-8.4" class="section-number selfRef">8.4. </a><a href="#name-sender-constrained-access-t" class="section-name selfRef">Sender-Constrained Access Tokens</a>
+        </h3>
+<p id="section-8.4-1">When the AS issues an access token containing an act claim populated
+under this profile, the AS <span class="bcp14">MUST</span> issue a sender-constrained access
+token bound to a key the client instance possesses. Established
+mechanisms include DPoP <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> and Mutual-TLS-bound access
+tokens <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
+<p id="section-8.4-2">The AS <span class="bcp14">MUST NOT</span> issue a bearer access token under this profile.
+Deployments unable to sender-constrain access tokens for
+operational reasons are outside the scope of this profile; they
+should publish or reference a separate profile that addresses their
+constraints.<a href="#section-8.4-2" class="pilcrow">¶</a></p>
+<p id="section-8.4-3">If the actor token includes a cnf claim (<a href="#claims" class="auto internal xref">Section 7.2</a>), the AS <span class="bcp14">SHOULD</span>
+bind the issued access token to the same key by setting the access
+token's top-level cnf to that value, and <span class="bcp14">SHOULD</span> verify possession of
+the key at the token endpoint (for example, by requiring a DPoP
+proof in the same request) when the deployment supports it. If the
+actor token does not include a cnf claim, the AS <span class="bcp14">MUST</span> establish a
+sender-constrained binding through some other means (for example, by
+using the client's mTLS certificate as the bound key per
+<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>).<a href="#section-8.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="access-token">
-<section id="section-7.3">
+<section id="section-8.5">
         <h3 id="name-access-token-representation">
-<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-access-token-representation" class="section-name selfRef">Access Token Representation</a>
+<a href="#section-8.5" class="section-number selfRef">8.5. </a><a href="#name-access-token-representation" class="section-name selfRef">Access Token Representation</a>
         </h3>
-<p id="section-7.3-1">If the request is granted, the AS <span class="bcp14">MUST</span> set the act claim of the
+<p id="section-8.5-1">If the request is granted, the AS <span class="bcp14">MUST</span> set the act claim of the
 issued access token to an actor object as defined by
-<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, populated from the validated actor token:<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, populated from the validated actor token:<a href="#section-8.5-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-7.3-2.1">
-            <p id="section-7.3-2.1.1">act.iss = actor token iss<a href="#section-7.3-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-8.5-2.1">
+            <p id="section-8.5-2.1.1">act.iss = actor token iss<a href="#section-8.5-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-7.3-2.2">
-            <p id="section-7.3-2.2.1">act.sub = actor token sub<a href="#section-7.3-2.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-8.5-2.2">
+            <p id="section-8.5-2.2.1">act.sub = actor token sub<a href="#section-8.5-2.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-7.3-2.3">
-            <p id="section-7.3-2.3.1">act.sub_profile = actor token sub_profile (if present); the value
-client_instance <span class="bcp14">SHOULD</span> be included.<a href="#section-7.3-2.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-8.5-2.3">
+            <p id="section-8.5-2.3.1">act.sub_profile = actor token sub_profile (if present); the value
+client_instance <span class="bcp14">SHOULD</span> be included.<a href="#section-8.5-2.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-7.3-2.4">
-            <p id="section-7.3-2.4.1">act.cnf = actor token cnf (if present and the AS chooses to
-propagate proof-of-possession; see <a href="#security-binding" class="auto internal xref">Section 9.4</a>).<a href="#section-7.3-2.4.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-8.5-2.4">
+            <p id="section-8.5-2.4.1">act.cnf = actor token cnf, if present. When the AS issues a
+sender-constrained access token under <a href="#sender-constrained" class="auto internal xref">Section 8.4</a>, the
+AS <span class="bcp14">SHOULD</span> also propagate the cnf to the access token's top-level
+cnf so that resource servers can enforce possession.<a href="#section-8.5-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.3-3">If the upstream context already contains an actor (for example, a
+<p id="section-8.5-3">If the upstream context already contains an actor (for example, a
 token exchange request whose subject_token has its own act), the AS
 <span class="bcp14">MUST</span> nest as specified in <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, with the client instance
-becoming the immediate (outermost) actor.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
-<p id="section-7.3-4">Example issued access token (decoded payload, single-actor case):<a href="#section-7.3-4" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-7.3-5">
+becoming the immediate (outermost) actor.<a href="#section-8.5-3" class="pilcrow">¶</a></p>
+<p id="section-8.5-4">Example issued access token (decoded payload, single-actor case,
+sender-constrained):<a href="#section-8.5-4" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-8.5-5">
 <pre>
 {
   "iss":       "https://as.example.com",
@@ -1936,18 +2161,20 @@ becoming the immediate (outermost) actor.<a href="#section-7.3-3" class="pilcrow
   "scope":     "repo.write",
   "iat":       1770000005,
   "exp":       1770003605,
+  "cnf":       { "jkt": "0ZcOCORZNYy...iguA4I" },
   "act": {
     "iss":         "https://workload.openai.example.com",
     "sub":         "spiffe://openai.example.com/codex/session-abc",
-    "sub_profile": "client_instance ai_agent"
+    "sub_profile": "client_instance ai_agent",
+    "cnf":         { "jkt": "0ZcOCORZNYy...iguA4I" }
   }
 }
-</pre><a href="#section-7.3-5" class="pilcrow">¶</a>
+</pre><a href="#section-8.5-5" class="pilcrow">¶</a>
 </div>
-<p id="section-7.3-6">Example with a nested actor (the subject_token of a token-exchange
+<p id="section-8.5-6">Example with a nested actor (the subject_token of a token-exchange
 request was itself acting on behalf of the user through a prior
-service):<a href="#section-7.3-6" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-7.3-7">
+service):<a href="#section-8.5-6" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-8.5-7">
 <pre>
 {
   "iss":       "https://as.example.com",
@@ -1966,32 +2193,32 @@ service):<a href="#section-7.3-6" class="pilcrow">¶</a></p>
     }
   }
 }
-</pre><a href="#section-7.3-7" class="pilcrow">¶</a>
+</pre><a href="#section-8.5-7" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
 <div id="refresh">
-<section id="section-7.4">
+<section id="section-8.6">
         <h3 id="name-refresh-tokens">
-<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-refresh-tokens" class="section-name selfRef">Refresh Tokens</a>
+<a href="#section-8.6" class="section-number selfRef">8.6. </a><a href="#name-refresh-tokens" class="section-name selfRef">Refresh Tokens</a>
         </h3>
-<p id="section-7.4-1">When an access token issued under this profile is refreshed
+<p id="section-8.6-1">When an access token issued under this profile is refreshed
 (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 6), the AS <span class="bcp14">MAY</span> require a fresh actor token in
 the refresh request, or it <span class="bcp14">MAY</span> copy the previously validated actor
 identity into the refreshed access token's act claim. The choice is a
 matter of AS policy and <span class="bcp14">SHOULD</span> be documented by the deployment.
 Issuing access tokens with a stale act claim across long refresh
-windows is discouraged; see <a href="#security-replay" class="auto internal xref">Section 9.2</a>.<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+windows is discouraged; see <a href="#security-replay" class="auto internal xref">Section 10.3</a>.<a href="#section-8.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="errors">
-<section id="section-7.5">
+<section id="section-8.7">
         <h3 id="name-error-responses">
-<a href="#section-7.5" class="section-number selfRef">7.5. </a><a href="#name-error-responses" class="section-name selfRef">Error Responses</a>
+<a href="#section-8.7" class="section-number selfRef">8.7. </a><a href="#name-error-responses" class="section-name selfRef">Error Responses</a>
         </h3>
-<p id="section-7.5-1">Errors are returned per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 5.2 and <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>
+<p id="section-8.7-1">Errors are returned per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 5.2 and <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>
 Section 2.2.2. The following table maps the validation failures
-defined in <a href="#as-processing" class="auto internal xref">Section 7.2</a> to error codes:<a href="#section-7.5-1" class="pilcrow">¶</a></p>
+defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> to error codes:<a href="#section-8.7-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-2">
           <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
 <thead>
@@ -2043,259 +2270,305 @@ defined in <a href="#as-processing" class="auto internal xref">Section 7.2</a> t
             </tr>
           </tbody>
         </table>
-<p id="section-7.5-3">The AS <span class="bcp14">MAY</span> return additional information via the error_description
+<p id="section-8.7-3">The AS <span class="bcp14">MAY</span> return additional information via the error_description
 parameter; deployments <span class="bcp14">MUST NOT</span> include sensitive instance details
-(e.g., raw SPIFFE IDs of unrelated workloads) in error responses.<a href="#section-7.5-3" class="pilcrow">¶</a></p>
+(e.g., raw SPIFFE IDs of unrelated workloads) in error responses.<a href="#section-8.7-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="grant-type-applicability">
-<section id="section-8">
+<section id="section-9">
       <h2 id="name-grant-type-applicability">
-<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-grant-type-applicability" class="section-name selfRef">Grant Type Applicability</a>
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-grant-type-applicability" class="section-name selfRef">Grant Type Applicability</a>
       </h2>
-<p id="section-8-1">Token endpoint grant types that <span class="bcp14">MAY</span> carry an actor_token of type
-client-instance-jwt are:<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-9-1">Token endpoint grant types that <span class="bcp14">MAY</span> carry an actor_token of type
+client-instance-jwt are:<a href="#section-9-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-8-2.1">
-          <p id="section-8-2.1.1">authorization_code (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)<a href="#section-8-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-9-2.1">
+          <p id="section-9-2.1.1">authorization_code (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)<a href="#section-9-2.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-8-2.2">
-          <p id="section-8-2.2.1">client_credentials (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)<a href="#section-8-2.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-9-2.2">
+          <p id="section-9-2.2.1">client_credentials (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)<a href="#section-9-2.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-8-2.3">
-          <p id="section-8-2.3.1">refresh_token (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>; see <a href="#refresh" class="auto internal xref">Section 7.4</a>)<a href="#section-8-2.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-9-2.3">
+          <p id="section-9-2.3.1">refresh_token (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>; see <a href="#refresh" class="auto internal xref">Section 8.6</a>)<a href="#section-9-2.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-8-2.4">
-          <p id="section-8-2.4.1">urn:ietf:params:oauth:grant-type:jwt-bearer (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>)<a href="#section-8-2.4.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-9-2.4">
+          <p id="section-9-2.4.1">urn:ietf:params:oauth:grant-type:jwt-bearer (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>)<a href="#section-9-2.4.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-8-2.5">
-          <p id="section-8-2.5.1">urn:ietf:params:oauth:grant-type:token-exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>)<a href="#section-8-2.5.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-9-2.5">
+          <p id="section-9-2.5.1">urn:ietf:params:oauth:grant-type:token-exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>)<a href="#section-9-2.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-8-3">For the token-exchange grant, processing under <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> continues
+<p id="section-9-3">For the token-exchange grant, processing under <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> continues
 to apply; this document adds only the new actor_token_type and the
-CIMD-based trust resolution.<a href="#section-8-3" class="pilcrow">¶</a></p>
-<p id="section-8-4">This document does not define behavior for the implicit grant or for
+CIMD-based trust resolution.<a href="#section-9-3" class="pilcrow">¶</a></p>
+<p id="section-9-4">This document does not define behavior for the implicit grant or for
 the device authorization grant; specifying those is left to future
-work.<a href="#section-8-4" class="pilcrow">¶</a></p>
+work.<a href="#section-9-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security">
-<section id="section-9">
+<section id="section-10">
       <h2 id="name-security-considerations">
-<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
-<p id="section-9-1">This document inherits the security considerations of <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>,
+<p id="section-10-1">This document inherits the security considerations of <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>,
 <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>, <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>, <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>, and
-<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-9-1" class="pilcrow">¶</a></p>
-<div id="trust-model">
-<section id="section-9.1">
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<div id="security-trust-model">
+<section id="section-10.1">
         <h3 id="name-trust-model">
-<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-trust-model" class="section-name selfRef">Trust Model</a>
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-trust-model" class="section-name selfRef">Trust Model</a>
         </h3>
-<p id="section-9.1-1">A client class delegates the authentication of its instances to one
-or more instance issuers by listing them in its CIMD metadata. The AS
-relies on this delegation: a compromised or misconfigured instance
+<p id="section-10.1-1">The normative trust model for this profile is in <a href="#trust-model" class="auto internal xref">Section 4</a>.
+This subsection summarizes the security implications.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+<p id="section-10.1-2">A client class delegates the authentication of its instances to one
+or more instance issuers. A compromised or misconfigured instance
 issuer can mint actor tokens that the AS will accept as legitimate
-instances. Client classes <span class="bcp14">SHOULD</span> list only instance issuers under
-their own administrative control (or contractually equivalent) and
-<span class="bcp14">SHOULD</span> use trust_domain and actor_profiles_supported to constrain
-what each issuer is allowed to assert.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
-<p id="section-9.1-2">CIMD metadata changes are themselves trust-affecting. Per <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>,
-the AS detects key changes and may revoke prior tokens. AS
-implementations <span class="bcp14">SHOULD</span> apply the same diligence to changes in
-instance_issuers: an attacker who can modify the metadata document
-can add a new instance issuer under their control. Client classes
-publishing metadata <span class="bcp14">MUST</span> protect the publication channel.<a href="#section-9.1-2" class="pilcrow">¶</a></p>
+instances of the named client class. Client classes <span class="bcp14">SHOULD</span> list only
+instance issuers under their own administrative control (or
+contractually equivalent), and <span class="bcp14">SHOULD</span> set trust_domain,
+actor_profiles_supported, and signing_alg_values_supported to bound
+what each issuer is allowed to assert.<a href="#section-10.1-2" class="pilcrow">¶</a></p>
+<p id="section-10.1-3">The CIMD document is itself trust-affecting: an attacker who can
+modify it can add a new instance issuer under their control. Client
+classes publishing CIMD metadata <span class="bcp14">MUST</span> protect the publication channel
+(per <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>'s requirement of HTTPS) and the storage backing it.<a href="#section-10.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-lifecycle">
+<section id="section-10.2">
+        <h3 id="name-instance-lifecycle">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-instance-lifecycle" class="section-name selfRef">Instance Lifecycle</a>
+        </h3>
+<p id="section-10.2-1">Client instances are short-lived in many deployments (containers,
+function invocations, agent sessions). This profile relies on three
+mechanisms to keep actor identity current:<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-10.2-2">
+          <dt id="section-10.2-2.1">Rotation:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.2-2.2">
+            <p id="section-10.2-2.2.1">Instance issuers <span class="bcp14">MUST</span> mint short-lived actor tokens
+(<a href="#security-replay" class="auto internal xref">Section 10.3</a>). New tokens are issued continuously as
+instances start, restart, or rotate keys.<a href="#section-10.2-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.2-2.3">Revocation within the validity window:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.2-2.4">
+            <p id="section-10.2-2.4.1">Within an actor token's exp window, the AS prevents reuse via the
+jti replay rule (<a href="#security-replay" class="auto internal xref">Section 10.3</a>). A specific issued access
+token can be revoked only via the AS's own revocation mechanisms;
+this profile does not define an instance revocation list.<a href="#section-10.2-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.2-2.5">Trust withdrawal:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.2-2.6">
+            <p id="section-10.2-2.6.1">To stop accepting actor tokens from an issuer (e.g., after a
+workload identity compromise), the client class removes the issuer
+from instance_issuers, narrows trust_domain, or rotates jwks at
+the issuer level. The AS's response is governed by
+<a href="#trust-lifecycle" class="auto internal xref">Section 4.3</a>: previously issued access tokens whose act
+references the affected scope <span class="bcp14">SHOULD</span> be revoked.<a href="#section-10.2-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-10.2-3">Refresh windows are a particular concern: an access token refreshed
+without a new actor token may carry a stale act claim long after the
+original instance has terminated. ASes <span class="bcp14">SHOULD</span> prefer requiring a
+fresh actor token on refresh (<a href="#refresh" class="auto internal xref">Section 8.6</a>), or set short refresh
+intervals when act is present.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-replay">
-<section id="section-9.2">
+<section id="section-10.3">
         <h3 id="name-replay">
-<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-replay" class="section-name selfRef">Replay</a>
+<a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-replay" class="section-name selfRef">Replay</a>
         </h3>
-<p id="section-9.2-1">Actor tokens <span class="bcp14">MUST</span> include jti, exp, and iat (<a href="#claims" class="auto internal xref">Section 6.1</a>). The AS
+<p id="section-10.3-1">Actor tokens <span class="bcp14">MUST</span> include jti, exp, and iat (<a href="#claims" class="auto internal xref">Section 7.2</a>). The AS
 <span class="bcp14">MUST</span> reject tokens whose jti has been seen within their validity
 window. Issuers <span class="bcp14">SHOULD</span> use short lifetimes (five minutes or less)
 both to limit replay exposure and because client instances often
-have lifetimes of seconds to minutes.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
-<p id="section-9.2-2">When refreshing access tokens (<a href="#refresh" class="auto internal xref">Section 7.4</a>), AS implementations
+have lifetimes of seconds to minutes.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<p id="section-10.3-2">When refreshing access tokens (<a href="#refresh" class="auto internal xref">Section 8.6</a>), AS implementations
 <span class="bcp14">SHOULD</span> prefer requiring a fresh actor token rather than perpetuating
-a stale act claim, especially across long refresh windows.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
+a stale act claim, especially across long refresh windows.<a href="#section-10.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="audience-and-confused-deputy">
-<section id="section-9.3">
+<section id="section-10.4">
         <h3 id="name-audience-and-confused-deput">
-<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-audience-and-confused-deput" class="section-name selfRef">Audience and Confused Deputy</a>
+<a href="#section-10.4" class="section-number selfRef">10.4. </a><a href="#name-audience-and-confused-deput" class="section-name selfRef">Audience and Confused Deputy</a>
         </h3>
-<p id="section-9.3-1">The aud claim binds the actor token to a specific AS, preventing one
+<p id="section-10.4-1">The aud claim binds the actor token to a specific AS, preventing one
 AS from replaying it against another (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> Section 3). The
 client_id claim, which this document treats as a binding (not as
 actor identity), prevents an actor token issued for one client class
-from being presented under a different client class's authentication.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+from being presented under a different client class's authentication.<a href="#section-10.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-binding">
-<section id="section-9.4">
+<section id="section-10.5">
         <h3 id="name-binding">
-<a href="#section-9.4" class="section-number selfRef">9.4. </a><a href="#name-binding" class="section-name selfRef">Binding</a>
+<a href="#section-10.5" class="section-number selfRef">10.5. </a><a href="#name-binding" class="section-name selfRef">Binding</a>
         </h3>
-<p id="section-9.4-1">A client instance actor token by itself is a bearer credential
-during its short lifetime. Where possible, deployments <span class="bcp14">SHOULD</span> bind
-the actor token to a key the instance possesses by including a cnf
-claim <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>. The AS <span class="bcp14">MAY</span> then verify possession (for example,
-by requiring a DPoP-style proof in the same request) and <span class="bcp14">MAY</span>
-propagate the cnf into the act claim of the issued access token so
-that downstream resource servers can enforce possession.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
-<p id="section-9.4-2">This document does not define a particular proof-of-possession
-mechanism; that is a separate profile.<a href="#section-9.4-2" class="pilcrow">¶</a></p>
+<p id="section-10.5-1">Without sender-constraint, an act claim is an <em>assertion</em> about who
+acted, not a <em>binding</em> enforced at the resource server: any party in
+possession of the access token can present it as the named actor.
+For this reason <a href="#sender-constrained" class="auto internal xref">Section 8.4</a> requires sender-constrained
+access tokens whenever act is populated under this profile and
+forbids bearer issuance.<a href="#section-10.5-1" class="pilcrow">¶</a></p>
+<p id="section-10.5-2">This document does not specify a single proof-of-possession
+mechanism. DPoP <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> and Mutual TLS <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span> are the
+primary examples in current OAuth practice; other mechanisms may be
+defined elsewhere. Where the actor token itself carries cnf, the AS
+<span class="bcp14">SHOULD</span> propagate cnf to both the access token's top-level cnf and
+the act object so that downstream resource servers can verify
+possession against the same key the AS authenticated.<a href="#section-10.5-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="delegation-control">
-<section id="section-9.5">
+<section id="section-10.6">
         <h3 id="name-delegation-control">
-<a href="#section-9.5" class="section-number selfRef">9.5. </a><a href="#name-delegation-control" class="section-name selfRef">Delegation Control</a>
+<a href="#section-10.6" class="section-number selfRef">10.6. </a><a href="#name-delegation-control" class="section-name selfRef">Delegation Control</a>
         </h3>
-<p id="section-9.5-1">Unbounded delegation chains permit privilege amplification across
+<p id="section-10.6-1">Unbounded delegation chains permit privilege amplification across
 boundaries. Client classes <span class="bcp14">SHOULD</span> set max_actor_chain_depth, AS
 implementations <span class="bcp14">SHOULD</span> enforce their own ceiling, and both <span class="bcp14">MUST</span>
-honor the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-9.5-1" class="pilcrow">¶</a></p>
+honor the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-10.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="privacy">
-<section id="section-9.6">
+<section id="section-10.7">
         <h3 id="name-privacy">
-<a href="#section-9.6" class="section-number selfRef">9.6. </a><a href="#name-privacy" class="section-name selfRef">Privacy</a>
+<a href="#section-10.7" class="section-number selfRef">10.7. </a><a href="#name-privacy" class="section-name selfRef">Privacy</a>
         </h3>
-<p id="section-9.6-1">A client instance actor token reveals fine-grained workload identity
+<p id="section-10.7-1">A client instance actor token reveals fine-grained workload identity
 to the AS and, after issuance, to resource servers via the act claim.
 Issuers and client classes <span class="bcp14">SHOULD</span> avoid encoding sensitive
 information (e.g., human user identifiers, internal infrastructure
-details) in sub. The error response guidance in <a href="#errors" class="auto internal xref">Section 7.5</a> extends
+details) in sub. The error response guidance in <a href="#errors" class="auto internal xref">Section 8.7</a> extends
 to logs and audit trails: actor token contents <span class="bcp14">SHOULD</span> be logged at a
 level commensurate with the sensitivity of the workload identity
-they convey.<a href="#section-9.6-1" class="pilcrow">¶</a></p>
+they convey.<a href="#section-10.7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="iana">
-<section id="section-10">
+<section id="section-11">
       <h2 id="name-iana-considerations">
-<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
 <div id="iana-token-type">
-<section id="section-10.1">
+<section id="section-11.1">
         <h3 id="name-oauth-token-type">
-<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-oauth-token-type" class="section-name selfRef">OAuth Token Type</a>
+<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-oauth-token-type" class="section-name selfRef">OAuth Token Type</a>
         </h3>
-<p id="section-10.1-1">IANA is requested to register the following value in the "OAuth URI"
+<p id="section-11.1-1">IANA is requested to register the following value in the "OAuth URI"
 registry established by <span>[<a href="#RFC6755" class="cite xref">RFC6755</a>]</span> (and used by <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> for
-actor_token_type values):<a href="#section-10.1-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-10.1-2">
-          <dt id="section-10.1-2.1">URN:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.1-2.2">
-            <p id="section-10.1-2.2.1">urn:ietf:params:oauth:token-type:client-instance-jwt<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
+actor_token_type values):<a href="#section-11.1-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-11.1-2">
+          <dt id="section-11.1-2.1">URN:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.2">
+            <p id="section-11.1-2.2.1">urn:ietf:params:oauth:token-type:client-instance-jwt<a href="#section-11.1-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.1-2.3">Common Name:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.1-2.4">
-            <p id="section-10.1-2.4.1">OAuth 2.0 Client Instance Actor Token<a href="#section-10.1-2.4.1" class="pilcrow">¶</a></p>
+<dt id="section-11.1-2.3">Common Name:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.4">
+            <p id="section-11.1-2.4.1">OAuth 2.0 Client Instance Actor Token<a href="#section-11.1-2.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.1-2.5">Change Controller:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.1-2.6">
-            <p id="section-10.1-2.6.1">IETF<a href="#section-10.1-2.6.1" class="pilcrow">¶</a></p>
+<dt id="section-11.1-2.5">Change Controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.6">
+            <p id="section-11.1-2.6.1">IETF<a href="#section-11.1-2.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.1-2.7">Specification Document(s):</dt>
-          <dd style="margin-left: 1.5em" id="section-10.1-2.8">
-            <p id="section-10.1-2.8.1">This document<a href="#section-10.1-2.8.1" class="pilcrow">¶</a></p>
+<dt id="section-11.1-2.7">Specification Document(s):</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.8">
+            <p id="section-11.1-2.8.1">This document<a href="#section-11.1-2.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
 </section>
 </div>
 <div id="iana-client-metadata">
-<section id="section-10.2">
+<section id="section-11.2">
         <h3 id="name-oauth-dynamic-client-regist">
-<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-oauth-dynamic-client-regist" class="section-name selfRef">OAuth Dynamic Client Registration Metadata</a>
+<a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-oauth-dynamic-client-regist" class="section-name selfRef">OAuth Dynamic Client Registration Metadata</a>
         </h3>
-<p id="section-10.2-1">IANA is requested to register the following parameters in the "OAuth
+<p id="section-11.2-1">IANA is requested to register the following parameters in the "OAuth
 Dynamic Client Registration Metadata" registry established by
-<span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>. The Change Controller for each entry is IETF.<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>. The Change Controller for each entry is IETF.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
 <div id="instanceissuers">
-<section id="section-10.2.1">
+<section id="section-11.2.1">
           <h4 id="name-instance_issuers-2">
-<a href="#section-10.2.1" class="section-number selfRef">10.2.1. </a><a href="#name-instance_issuers-2" class="section-name selfRef">instance_issuers</a>
+<a href="#section-11.2.1" class="section-number selfRef">11.2.1. </a><a href="#name-instance_issuers-2" class="section-name selfRef">instance_issuers</a>
           </h4>
-<span class="break"></span><dl class="dlParallel" id="section-10.2.1-1">
-            <dt id="section-10.2.1-1.1">Client Metadata Name:</dt>
-            <dd style="margin-left: 1.5em" id="section-10.2.1-1.2">
-              <p id="section-10.2.1-1.2.1">instance_issuers<a href="#section-10.2.1-1.2.1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-11.2.1-1">
+            <dt id="section-11.2.1-1.1">Client Metadata Name:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.2.1-1.2">
+              <p id="section-11.2.1-1.2.1">instance_issuers<a href="#section-11.2.1-1.2.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
-<dt id="section-10.2.1-1.3">Client Metadata Description:</dt>
-            <dd style="margin-left: 1.5em" id="section-10.2.1-1.4">
-              <p id="section-10.2.1-1.4.1">Trusted issuers of client instance actor tokens for this client.<a href="#section-10.2.1-1.4.1" class="pilcrow">¶</a></p>
+<dt id="section-11.2.1-1.3">Client Metadata Description:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.2.1-1.4">
+              <p id="section-11.2.1-1.4.1">Trusted issuers of client instance actor tokens for this client.<a href="#section-11.2.1-1.4.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
-<dt id="section-10.2.1-1.5">Specification Document(s):</dt>
-            <dd style="margin-left: 1.5em" id="section-10.2.1-1.6">
-              <p id="section-10.2.1-1.6.1"><a href="#instance-issuers" class="auto internal xref">Section 4.1</a> of this document<a href="#section-10.2.1-1.6.1" class="pilcrow">¶</a></p>
+<dt id="section-11.2.1-1.5">Specification Document(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-11.2.1-1.6">
+              <p id="section-11.2.1-1.6.1"><a href="#instance-issuers" class="auto internal xref">Section 5.1</a> of this document<a href="#section-11.2.1-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
 </section>
 </div>
 <div id="maxactorchaindepth">
-<section id="section-10.2.2">
+<section id="section-11.2.2">
           <h4 id="name-max_actor_chain_depth-2">
-<a href="#section-10.2.2" class="section-number selfRef">10.2.2. </a><a href="#name-max_actor_chain_depth-2" class="section-name selfRef">max_actor_chain_depth</a>
+<a href="#section-11.2.2" class="section-number selfRef">11.2.2. </a><a href="#name-max_actor_chain_depth-2" class="section-name selfRef">max_actor_chain_depth</a>
           </h4>
-<span class="break"></span><dl class="dlParallel" id="section-10.2.2-1">
-            <dt id="section-10.2.2-1.1">Client Metadata Name:</dt>
-            <dd style="margin-left: 1.5em" id="section-10.2.2-1.2">
-              <p id="section-10.2.2-1.2.1">max_actor_chain_depth<a href="#section-10.2.2-1.2.1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-11.2.2-1">
+            <dt id="section-11.2.2-1.1">Client Metadata Name:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.2.2-1.2">
+              <p id="section-11.2.2-1.2.1">max_actor_chain_depth<a href="#section-11.2.2-1.2.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
-<dt id="section-10.2.2-1.3">Client Metadata Description:</dt>
-            <dd style="margin-left: 1.5em" id="section-10.2.2-1.4">
-              <p id="section-10.2.2-1.4.1">Maximum permitted delegation depth for act chains rooted at an
-instance of this client.<a href="#section-10.2.2-1.4.1" class="pilcrow">¶</a></p>
+<dt id="section-11.2.2-1.3">Client Metadata Description:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.2.2-1.4">
+              <p id="section-11.2.2-1.4.1">Maximum permitted delegation depth for act chains rooted at an
+instance of this client.<a href="#section-11.2.2-1.4.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
-<dt id="section-10.2.2-1.5">Specification Document(s):</dt>
-            <dd style="margin-left: 1.5em" id="section-10.2.2-1.6">
-              <p id="section-10.2.2-1.6.1"><a href="#max-actor-chain-depth" class="auto internal xref">Section 4.2</a> of this document<a href="#section-10.2.2-1.6.1" class="pilcrow">¶</a></p>
+<dt id="section-11.2.2-1.5">Specification Document(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-11.2.2-1.6">
+              <p id="section-11.2.2-1.6.1"><a href="#max-actor-chain-depth" class="auto internal xref">Section 5.2</a> of this document<a href="#section-11.2.2-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
 </section>
 </div>
 <div id="actortokenrequired">
-<section id="section-10.2.3">
+<section id="section-11.2.3">
           <h4 id="name-actor_token_required-2">
-<a href="#section-10.2.3" class="section-number selfRef">10.2.3. </a><a href="#name-actor_token_required-2" class="section-name selfRef">actor_token_required</a>
+<a href="#section-11.2.3" class="section-number selfRef">11.2.3. </a><a href="#name-actor_token_required-2" class="section-name selfRef">actor_token_required</a>
           </h4>
-<span class="break"></span><dl class="dlParallel" id="section-10.2.3-1">
-            <dt id="section-10.2.3-1.1">Client Metadata Name:</dt>
-            <dd style="margin-left: 1.5em" id="section-10.2.3-1.2">
-              <p id="section-10.2.3-1.2.1">actor_token_required<a href="#section-10.2.3-1.2.1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-11.2.3-1">
+            <dt id="section-11.2.3-1.1">Client Metadata Name:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.2.3-1.2">
+              <p id="section-11.2.3-1.2.1">actor_token_required<a href="#section-11.2.3-1.2.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
-<dt id="section-10.2.3-1.3">Client Metadata Description:</dt>
-            <dd style="margin-left: 1.5em" id="section-10.2.3-1.4">
-              <p id="section-10.2.3-1.4.1">When true, the AS rejects token requests for this client that lack
-a client instance actor token.<a href="#section-10.2.3-1.4.1" class="pilcrow">¶</a></p>
+<dt id="section-11.2.3-1.3">Client Metadata Description:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.2.3-1.4">
+              <p id="section-11.2.3-1.4.1">When true, the AS rejects token requests for this client that lack
+a client instance actor token.<a href="#section-11.2.3-1.4.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
-<dt id="section-10.2.3-1.5">Specification Document(s):</dt>
-            <dd style="margin-left: 1.5em" id="section-10.2.3-1.6">
-              <p id="section-10.2.3-1.6.1"><a href="#actor-token-required" class="auto internal xref">Section 4.3</a> of this document<a href="#section-10.2.3-1.6.1" class="pilcrow">¶</a></p>
+<dt id="section-11.2.3-1.5">Specification Document(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-11.2.3-1.6">
+              <p id="section-11.2.3-1.6.1"><a href="#actor-token-required" class="auto internal xref">Section 5.3</a> of this document<a href="#section-11.2.3-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
@@ -2304,70 +2577,70 @@ a client instance actor token.<a href="#section-10.2.3-1.4.1" class="pilcrow">¶
 </section>
 </div>
 <div id="iana-as-metadata">
-<section id="section-10.3">
+<section id="section-11.3">
         <h3 id="name-oauth-authorization-server-">
-<a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-oauth-authorization-server-" class="section-name selfRef">OAuth Authorization Server Metadata</a>
+<a href="#section-11.3" class="section-number selfRef">11.3. </a><a href="#name-oauth-authorization-server-" class="section-name selfRef">OAuth Authorization Server Metadata</a>
         </h3>
-<p id="section-10.3-1">IANA is requested to register the following parameter in the "OAuth
-Authorization Server Metadata" registry established by <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>:<a href="#section-10.3-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-10.3-2">
-          <dt id="section-10.3-2.1">Metadata Name:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.3-2.2">
-            <p id="section-10.3-2.2.1">actor_token_types_supported<a href="#section-10.3-2.2.1" class="pilcrow">¶</a></p>
+<p id="section-11.3-1">IANA is requested to register the following parameter in the "OAuth
+Authorization Server Metadata" registry established by <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>:<a href="#section-11.3-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-11.3-2">
+          <dt id="section-11.3-2.1">Metadata Name:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.3-2.2">
+            <p id="section-11.3-2.2.1">actor_token_types_supported<a href="#section-11.3-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.3-2.3">Metadata Description:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.3-2.4">
-            <p id="section-10.3-2.4.1">JSON array of actor_token_type values supported at the token
-endpoint.<a href="#section-10.3-2.4.1" class="pilcrow">¶</a></p>
+<dt id="section-11.3-2.3">Metadata Description:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.3-2.4">
+            <p id="section-11.3-2.4.1">JSON array of actor_token_type values supported at the token
+endpoint.<a href="#section-11.3-2.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.3-2.5">Change Controller:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.3-2.6">
-            <p id="section-10.3-2.6.1">IETF<a href="#section-10.3-2.6.1" class="pilcrow">¶</a></p>
+<dt id="section-11.3-2.5">Change Controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.3-2.6">
+            <p id="section-11.3-2.6.1">IETF<a href="#section-11.3-2.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.3-2.7">Specification Document(s):</dt>
-          <dd style="margin-left: 1.5em" id="section-10.3-2.8">
-            <p id="section-10.3-2.8.1"><a href="#as-metadata" class="auto internal xref">Section 5</a> of this document<a href="#section-10.3-2.8.1" class="pilcrow">¶</a></p>
+<dt id="section-11.3-2.7">Specification Document(s):</dt>
+          <dd style="margin-left: 1.5em" id="section-11.3-2.8">
+            <p id="section-11.3-2.8.1"><a href="#as-metadata" class="auto internal xref">Section 6</a> of this document<a href="#section-11.3-2.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
 </section>
 </div>
 <div id="iana-entity-profile">
-<section id="section-10.4">
+<section id="section-11.4">
         <h3 id="name-oauth-entity-profile">
-<a href="#section-10.4" class="section-number selfRef">10.4. </a><a href="#name-oauth-entity-profile" class="section-name selfRef">OAuth Entity Profile</a>
+<a href="#section-11.4" class="section-number selfRef">11.4. </a><a href="#name-oauth-entity-profile" class="section-name selfRef">OAuth Entity Profile</a>
         </h3>
-<p id="section-10.4-1">IANA is requested to register the following value in the "OAuth
+<p id="section-11.4-1">IANA is requested to register the following value in the "OAuth
 Entity Profiles" registry established by <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span>. This
-registration is contingent on the establishment of that registry.<a href="#section-10.4-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-10.4-2">
-          <dt id="section-10.4-2.1">Profile Name:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.4-2.2">
-            <p id="section-10.4-2.2.1">client_instance<a href="#section-10.4-2.2.1" class="pilcrow">¶</a></p>
+registration is contingent on the establishment of that registry.<a href="#section-11.4-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-11.4-2">
+          <dt id="section-11.4-2.1">Profile Name:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.4-2.2">
+            <p id="section-11.4-2.2.1">client_instance<a href="#section-11.4-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.4-2.3">Profile Description:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.4-2.4">
-            <p id="section-10.4-2.4.1">A concrete runtime instance of an OAuth client class identified by
-a Client ID Metadata Document.<a href="#section-10.4-2.4.1" class="pilcrow">¶</a></p>
+<dt id="section-11.4-2.3">Profile Description:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.4-2.4">
+            <p id="section-11.4-2.4.1">A concrete runtime instance of an OAuth client class identified by
+a Client ID Metadata Document.<a href="#section-11.4-2.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.4-2.5">Profile Usage Location:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.4-2.6">
-            <p id="section-10.4-2.6.1">Actor Profile<a href="#section-10.4-2.6.1" class="pilcrow">¶</a></p>
+<dt id="section-11.4-2.5">Profile Usage Location:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.4-2.6">
+            <p id="section-11.4-2.6.1">Actor Profile<a href="#section-11.4-2.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.4-2.7">Change Controller:</dt>
-          <dd style="margin-left: 1.5em" id="section-10.4-2.8">
-            <p id="section-10.4-2.8.1">IETF<a href="#section-10.4-2.8.1" class="pilcrow">¶</a></p>
+<dt id="section-11.4-2.7">Change Controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.4-2.8">
+            <p id="section-11.4-2.8.1">IETF<a href="#section-11.4-2.8.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-10.4-2.9">Specification Document(s):</dt>
-          <dd style="margin-left: 1.5em" id="section-10.4-2.10">
-            <p id="section-10.4-2.10.1">This document<a href="#section-10.4-2.10.1" class="pilcrow">¶</a></p>
+<dt id="section-11.4-2.9">Specification Document(s):</dt>
+          <dd style="margin-left: 1.5em" id="section-11.4-2.10">
+            <p id="section-11.4-2.10.1">This document<a href="#section-11.4-2.10.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -2376,14 +2649,14 @@ a Client ID Metadata Document.<a href="#section-10.4-2.4.1" class="pilcrow">¶</
 </section>
 </div>
 <div id="sec-combined-references">
-<section id="section-11">
+<section id="section-12">
       <h2 id="name-references">
-<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-references" class="section-name selfRef">References</a>
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
 <div id="sec-normative-references">
-<section id="section-11.1">
+<section id="section-12.1">
         <h3 id="name-normative-references">
-<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-12.1" class="section-number selfRef">12.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
 <dt id="RFC2119">[RFC2119]</dt>
@@ -2442,9 +2715,9 @@ a Client ID Metadata Document.<a href="#section-10.4-2.4.1" class="pilcrow">¶</
 </section>
 </div>
 <div id="sec-informative-references">
-<section id="section-11.2">
+<section id="section-12.2">
         <h3 id="name-informative-references">
-<a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+<a href="#section-12.2" class="section-number selfRef">12.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
 <dt id="ACTOR-PROFILE">[ACTOR-PROFILE]</dt>
@@ -2458,6 +2731,14 @@ a Client ID Metadata Document.<a href="#section-10.4-2.4.1" class="pilcrow">¶</
 <dt id="ENTITY-PROFILES">[ENTITY-PROFILES]</dt>
         <dd>
 <span class="refAuthor">Mora, S. C.</span>, <span class="refAuthor">Dingle, P.</span>, and <span class="refAuthor">K. McGuinness</span>, <span class="refTitle">"OAuth 2.0 Entity Profiles"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mora-oauth-entity-profiles-01</span>, <time datetime="2026-04-15" class="refDate">15 April 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-01">https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8705">[RFC8705]</dt>
+        <dd>
+<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Sakimura, N.</span>, and <span class="refAuthor">T. Lodderstedt</span>, <span class="refTitle">"OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens"</span>, <span class="seriesInfo">RFC 8705</span>, <span class="seriesInfo">DOI 10.17487/RFC8705</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8705">https://www.rfc-editor.org/rfc/rfc8705</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9449">[RFC9449]</dt>
+        <dd>
+<span class="refAuthor">Fett, D.</span>, <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Jones, M.</span>, and <span class="refAuthor">D. Waite</span>, <span class="refTitle">"OAuth 2.0 Demonstrating Proof of Possession (DPoP)"</span>, <span class="seriesInfo">RFC 9449</span>, <span class="seriesInfo">DOI 10.17487/RFC9449</span>, <time datetime="2023-09" class="refDate">September 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9449">https://www.rfc-editor.org/rfc/rfc9449</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="SPIFFE">[SPIFFE]</dt>
       <dd>
