@@ -1385,8 +1385,8 @@ act claim defined by the OAuth Actor Profile.<a href="#section-abstract-2" class
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
 <p id="section-1-1">OAuth 2.0 <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> defines client_id as the identifier of a client.
-In modern deployments -- agentic workloads, autoscaled services,
-ephemeral function executions -- a single logical client routinely
+In modern deployments such as agentic workloads, autoscaled services,
+and ephemeral function executions, a single logical client routinely
 corresponds to many concrete runtime instances that come and go on a
 short timescale. Resource servers and authorization servers
 increasingly need to know not only <em>which</em> client made a request but
@@ -1527,10 +1527,10 @@ combined pattern:<a href="#section-1.3-4" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.3-5.1">
             <p id="section-1.3-5.1.1"><span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> answers "may this workload act as this
-client?" -- a yes/no based on prefix match.<a href="#section-1.3-5.1.1" class="pilcrow">¶</a></p>
+client?": a yes/no based on prefix match.<a href="#section-1.3-5.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.3-5.2">
-            <p id="section-1.3-5.2.1">This document answers "which specific instance is acting?" -- a
+            <p id="section-1.3-5.2.1">This document answers "which specific instance is acting?": a
 named, bindable, propagatable identity.<a href="#section-1.3-5.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
@@ -1571,7 +1571,7 @@ instances.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
         <dd class="break"></dd>
 <dt id="section-2-3.3">Client Instance:</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.4">
-          <p id="section-2-3.4.1">A concrete runtime of a client class -- for example, a particular
+          <p id="section-2-3.4.1">A concrete runtime of a client class, for example a particular
 process, container, function invocation, or session.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -1710,10 +1710,10 @@ configuration <span class="bcp14">MUST</span> do so via a separate specification
 <a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-trust-update-handling" class="section-name selfRef">Trust Update Handling</a>
         </h3>
 <p id="section-4.3-1">The trust relationship between client class and instance issuer is
-mutable. When the CIMD document changes -- for example, when an
+mutable. When the CIMD document changes (for example, when an
 instance issuer is removed, its jwks_uri changes, or its descriptor's
-scope (trust_domain, actor_profiles_supported,
-signing_alg_values_supported) is narrowed -- the AS <span class="bcp14">SHOULD</span> apply the
+scope is narrowed via trust_domain, actor_profiles_supported, or
+signing_alg_values_supported), the AS <span class="bcp14">SHOULD</span> apply the
 diligence required by <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> for changes to client jwks. In
 particular, the AS <span class="bcp14">SHOULD</span> revoke previously issued access tokens
 whose act claim either:<a href="#section-4.3-1" class="pilcrow">¶</a></p>
@@ -1918,9 +1918,9 @@ claim the client_id named in the token. This typically means that
 the runtime is operationally part of the client class's deployment.<a href="#section-7.1-5.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.1-6">Decoupled deployments -- in which a workload identity provider issues
+<p id="section-7.1-6">Decoupled deployments, in which a workload identity provider issues
 an <em>instance credential</em> and the runtime independently mints an
-actor assertion bound to that credential -- are out of scope for this
+actor assertion bound to that credential, are out of scope for this
 document. A future profile <span class="bcp14">MAY</span> define such a layered model and re-use
 the actor_token_type registered here, or register an additional one.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
 </section>
@@ -2201,10 +2201,10 @@ a separate extension.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
         <h3 id="name-sender-constrained-access-t">
 <a href="#section-8.4" class="section-number selfRef">8.4. </a><a href="#name-sender-constrained-access-t" class="section-name selfRef">Sender-Constrained Access Tokens</a>
         </h3>
-<p id="section-8.4-1">When the AS issues an access token under this profile -- whether the
+<p id="section-8.4-1">When the AS issues an access token under this profile, whether the
 client instance is represented in act (delegation case;
 <a href="#access-token-delegation" class="auto internal xref">Section 8.5.2</a>) or in sub (self-acting case;
-<a href="#access-token-self-acting" class="auto internal xref">Section 8.5.3</a>) -- the AS <span class="bcp14">MUST</span> issue a
+<a href="#access-token-self-acting" class="auto internal xref">Section 8.5.3</a>), the AS <span class="bcp14">MUST</span> issue a
 sender-constrained access token bound to a key the client instance
 possesses. Established mechanisms include DPoP <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> and
 Mutual-TLS-bound access tokens <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
@@ -2642,7 +2642,7 @@ from being presented under a different client class's authentication.<a href="#s
 <p id="section-10.5-1">Whether an issued access token represents delegation or self-acting
 (<a href="#access-token-classification" class="auto internal xref">Section 8.5.1</a>) determines whether the instance is
 exposed to resource servers as act or as sub. An adversary that can
-influence classification could escalate privileges -- for example,
+influence classification could escalate privileges, for example by
 inducing the AS to drop a sub belonging to a user and re-anchor the
 token on the instance's sub. The classification rule in
 <a href="#access-token-classification" class="auto internal xref">Section 8.5.1</a> is byte-equality of subject
@@ -3026,7 +3026,7 @@ keeps the protocol surface unchanged.<a href="#appendix-A.1-1" class="pilcrow">�
 exactly: the instance acts on behalf of the subject (the human user
 or service principal) under the authority of the client class. The
 parameter machinery is already specified, deployed, and understood.
-The only normative move is permitting it on additional grants -- a
+The only normative move is permitting it on additional grants: a
 small, contained extension whose security analysis is the union of
 <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>'s and the underlying grant's.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
 </section>
