@@ -82,8 +82,8 @@ act claim defined by the OAuth Actor Profile.
 # Introduction
 
 OAuth 2.0 {{RFC6749}} defines client_id as the identifier of a client.
-In modern deployments -- agentic workloads, autoscaled services,
-ephemeral function executions -- a single logical client routinely
+In modern deployments such as agentic workloads, autoscaled services,
+and ephemeral function executions, a single logical client routinely
 corresponds to many concrete runtime instances that come and go on a
 short timescale. Resource servers and authorization servers
 increasingly need to know not only *which* client made a request but
@@ -177,8 +177,8 @@ access token to that instance ({{sender-constrained}}). In that
 combined pattern:
 
 * {{SPIFFE-CLIENT-AUTH}} answers "may this workload act as this
-  client?" -- a yes/no based on prefix match.
-* This document answers "which specific instance is acting?" -- a
+  client?": a yes/no based on prefix match.
+* This document answers "which specific instance is acting?": a
   named, bindable, propagatable identity.
 
 Where {{SPIFFE-CLIENT-AUTH}} alone is sufficient (no need to name
@@ -208,7 +208,7 @@ Client Class:
   instances.
 
 Client Instance:
-: A concrete runtime of a client class -- for example, a particular
+: A concrete runtime of a client class, for example a particular
   process, container, function invocation, or session.
 
 Instance Issuer:
@@ -300,10 +300,10 @@ configuration MUST do so via a separate specification.
 ## Trust Update Handling {#trust-lifecycle}
 
 The trust relationship between client class and instance issuer is
-mutable. When the CIMD document changes -- for example, when an
+mutable. When the CIMD document changes (for example, when an
 instance issuer is removed, its jwks_uri changes, or its descriptor's
-scope (trust_domain, actor_profiles_supported,
-signing_alg_values_supported) is narrowed -- the AS SHOULD apply the
+scope is narrowed via trust_domain, actor_profiles_supported, or
+signing_alg_values_supported), the AS SHOULD apply the
 diligence required by {{CIMD}} for changes to client jwks. In
 particular, the AS SHOULD revoke previously issued access tokens
 whose act claim either:
@@ -451,9 +451,9 @@ and MUST, before minting an actor token under this profile:
   claim the client_id named in the token. This typically means that
   the runtime is operationally part of the client class's deployment.
 
-Decoupled deployments -- in which a workload identity provider issues
+Decoupled deployments, in which a workload identity provider issues
 an *instance credential* and the runtime independently mints an
-actor assertion bound to that credential -- are out of scope for this
+actor assertion bound to that credential, are out of scope for this
 document. A future profile MAY define such a layered model and re-use
 the actor_token_type registered here, or register an additional one.
 
@@ -664,10 +664,10 @@ a separate extension.
 
 ## Sender-Constrained Access Tokens {#sender-constrained}
 
-When the AS issues an access token under this profile -- whether the
+When the AS issues an access token under this profile, whether the
 client instance is represented in act (delegation case;
 {{access-token-delegation}}) or in sub (self-acting case;
-{{access-token-self-acting}}) -- the AS MUST issue a
+{{access-token-self-acting}}), the AS MUST issue a
 sender-constrained access token bound to a key the client instance
 possesses. Established mechanisms include DPoP {{RFC9449}} and
 Mutual-TLS-bound access tokens {{RFC8705}}.
@@ -963,7 +963,7 @@ from being presented under a different client class's authentication.
 Whether an issued access token represents delegation or self-acting
 ({{access-token-classification}}) determines whether the instance is
 exposed to resource servers as act or as sub. An adversary that can
-influence classification could escalate privileges -- for example,
+influence classification could escalate privileges, for example by
 inducing the AS to drop a sub belonging to a user and re-anchor the
 token on the instance's sub. The classification rule in
 {{access-token-classification}} is byte-equality of subject
@@ -1133,7 +1133,7 @@ The actor concept in {{RFC8693}} fits client instance identity
 exactly: the instance acts on behalf of the subject (the human user
 or service principal) under the authority of the client class. The
 parameter machinery is already specified, deployed, and understood.
-The only normative move is permitting it on additional grants -- a
+The only normative move is permitting it on additional grants: a
 small, contained extension whose security analysis is the union of
 {{RFC8693}}'s and the underlying grant's.
 
