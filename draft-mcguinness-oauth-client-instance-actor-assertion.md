@@ -87,7 +87,9 @@ ephemeral function executions -- a single logical client routinely
 corresponds to many concrete runtime instances that come and go on a
 short timescale. Resource servers and authorization servers
 increasingly need to know not only *which* client made a request but
-*which instance* of that client made it.
+*which instance* of that client made it. Instances may be acting on a
+user's behalf or as the principal themselves; this profile covers
+both.
 
 OAuth 2.0 Token Exchange {{RFC8693}} defines the actor_token and
 actor_token_type token request parameters and the act claim for
@@ -662,11 +664,13 @@ a separate extension.
 
 ## Sender-Constrained Access Tokens {#sender-constrained}
 
-When the AS issues an access token containing an act claim populated
-under this profile, the AS MUST issue a sender-constrained access
-token bound to a key the client instance possesses. Established
-mechanisms include DPoP {{RFC9449}} and Mutual-TLS-bound access
-tokens {{RFC8705}}.
+When the AS issues an access token under this profile -- whether the
+client instance is represented in act (delegation case;
+{{access-token-delegation}}) or in sub (self-acting case;
+{{access-token-self-acting}}) -- the AS MUST issue a
+sender-constrained access token bound to a key the client instance
+possesses. Established mechanisms include DPoP {{RFC9449}} and
+Mutual-TLS-bound access tokens {{RFC8705}}.
 
 The AS MUST NOT issue a bearer access token under this profile.
 Deployments unable to sender-constrain access tokens for
@@ -686,26 +690,58 @@ using the client's mTLS certificate as the bound key per
 
 ## Access Token Representation {#access-token}
 
-If the request is granted, the AS MUST set the act claim of the
-issued access token to an actor object as defined by
-{{ACTOR-PROFILE}}, populated from the validated actor token:
+A client instance may be acting on behalf of another principal
+(*delegation case*; e.g., a user authorized the request through an
+authorization_code grant) or acting as itself with no other principal
+involved (*self-acting case*; e.g., a client_credentials grant). The
+AS MUST classify each request as delegation or self-acting before
+populating the issued access token's claims. Classification rules
+are in {{access-token-classification}}; representation rules differ
+between the two cases.
+
+In both cases, the access token's client_id remains the client
+class, the access token MUST be sender-constrained per
+{{sender-constrained}}, and any upstream actor chain (e.g., from a
+subject_token in a token-exchange request) MUST be preserved by
+nesting per {{ACTOR-PROFILE}}.
+
+### Classification {#access-token-classification}
+
+The AS classifies the request based on whether the grant produces a
+principal distinct from the instance presenting the actor_token:
+
+| Grant | Principal | Classification |
+| --- | --- | --- |
+| authorization_code ({{RFC6749}}) | the user who authorized the code | delegation |
+| client_credentials ({{RFC6749}}) | none | self-acting |
+| refresh_token ({{RFC6749}}) | inherited from the original grant | inherited |
+| jwt-bearer ({{RFC7523}}) | the assertion's sub | self-acting iff the assertion's sub is byte-equal to the actor token's sub; otherwise delegation |
+| token-exchange ({{RFC8693}}) | the subject_token's subject | self-acting iff no subject_token is present (uncommon); otherwise delegation |
+
+When neither delegation nor self-acting cleanly applies (for example,
+custom or experimental grants), the AS MUST refuse to issue the
+access token rather than guess; reject with invalid_grant
+({{errors}}).
+
+### Delegation Case {#access-token-delegation}
+
+When the request is classified as delegation, the AS MUST populate
+the issued access token's act claim per {{ACTOR-PROFILE}} from the
+validated actor token:
 
 * act.iss = actor token iss
 * act.sub = actor token sub
 * act.sub_profile = actor token sub_profile (if present); the value
   client_instance SHOULD be included.
-* act.cnf = actor token cnf, if present. When the AS issues a
-  sender-constrained access token under {{sender-constrained}}, the
-  AS SHOULD also propagate the cnf to the access token's top-level
-  cnf so that resource servers can enforce possession.
+* act.cnf = actor token cnf, if present.
 
-If the upstream context already contains an actor (for example, a
-token exchange request whose subject_token has its own act), the AS
-MUST nest as specified in {{ACTOR-PROFILE}}, with the client instance
-becoming the immediate (outermost) actor.
+The access token's sub MUST be the principal identified by the grant
+(e.g., the authenticated user). When the AS issues a
+sender-constrained access token, the AS SHOULD propagate the cnf to
+the access token's top-level cnf so that resource servers can enforce
+possession.
 
-Example issued access token (decoded payload, single-actor case,
-sender-constrained):
+Example access token (delegation, sender-constrained):
 
 ~~~ json
 {
@@ -749,6 +785,50 @@ service):
   }
 }
 ~~~
+
+### Self-Acting Case {#access-token-self-acting}
+
+When the request is classified as self-acting, the instance is the
+principal and there is no other party on whose behalf it acts. The
+AS MUST populate the issued access token from the validated actor
+token as follows:
+
+* sub = actor token sub
+* sub_profile = actor token sub_profile (if present); the value
+  client_instance SHOULD be included
+* cnf = actor token cnf, if present (required for sender-constrained
+  issuance per {{sender-constrained}})
+* act MUST be omitted, except that an upstream actor chain
+  (introduced by an inner act in a presented subject_token) MUST be
+  preserved.
+
+The instance issuer's identifier (the actor token's iss) is not
+represented as a claim in the self-acting access token. Trust in the
+instance issuer is structural: the AS validated the actor token
+against the descriptor in {{instance-issuers}} before issuance, and
+the resource server trusts the AS. Deployments that require
+in-token instance-issuer attribution for self-acting tokens may
+define a separate claim in a future profile.
+
+Example access token (self-acting, sender-constrained,
+client_credentials grant):
+
+~~~ json
+{
+  "iss":         "https://as.example.com",
+  "aud":         "https://api.example.com",
+  "sub":         "spiffe://openai.example.com/codex/session-abc",
+  "sub_profile": "client_instance ai_agent",
+  "client_id":   "https://openai.example.com/codex",
+  "scope":       "repo.write",
+  "iat":         1770000005,
+  "exp":         1770003605,
+  "cnf":         { "jkt": "0ZcOCORZNYy...iguA4I" }
+}
+~~~
+
+Note that client_id (the class) and sub (the instance) are distinct,
+and that act is absent.
 
 ## Refresh Tokens {#refresh}
 
@@ -877,6 +957,20 @@ AS from replaying it against another ({{RFC7523}} Section 3). The
 client_id claim, which this document treats as a binding (not as
 actor identity), prevents an actor token issued for one client class
 from being presented under a different client class's authentication.
+
+## Mode-Switch Between Delegation and Self-Acting
+
+Whether an issued access token represents delegation or self-acting
+({{access-token-classification}}) determines whether the instance is
+exposed to resource servers as act or as sub. An adversary that can
+influence classification could escalate privileges -- for example,
+inducing the AS to drop a sub belonging to a user and re-anchor the
+token on the instance's sub. The classification rule in
+{{access-token-classification}} is byte-equality of subject
+identifiers; ASes MUST NOT employ heuristic or fuzzy matching that
+could be manipulated by attacker-controlled assertion contents. When
+classification is ambiguous (for example, custom grants not listed in
+the table), the AS MUST refuse rather than guess.
 
 ## Binding {#security-binding}
 
