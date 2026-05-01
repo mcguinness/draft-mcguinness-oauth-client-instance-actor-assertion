@@ -288,6 +288,16 @@ trust to enforce these bounds. An instance issuer accepting delegation
 MUST NOT mint actor tokens naming this client_id outside the
 delegated scope.
 
+This delegation has a corollary for client authentication. Because
+the CIMD listing publicly endorses the issuer to mint tokens naming
+this client_id, an actor token signed by such an issuer is itself
+attributable to the client class. The AS MAY, when so configured by
+the class, treat the presented actor token as both the actor
+assertion and the client authentication credential
+({{auth-via-actor-token}}). In this mode the class need not control
+an online private key, which is necessary in deployments where
+instances cannot reach class-controlled credentials.
+
 ## Authority of the Authorization Server {#trust-model-as}
 
 The AS treats the CIMD instance_issuers list as authoritative: it
@@ -406,7 +416,10 @@ type urn:ietf:params:oauth:token-type:client-instance-jwt. The default
 is false.
 
 This parameter lets a client class enforce that every issued access
-token is bound to an identifiable instance.
+token is bound to an identifiable instance. It is redundant when
+token_endpoint_auth_method is client_instance_actor_token
+({{auth-via-actor-token}}); in that mode the actor token is
+implicitly required by the auth method itself.
 
 # Authorization Server Metadata {#as-metadata}
 
@@ -584,6 +597,9 @@ following steps in addition to grant-type-specific processing:
 1. **Authenticate the client.** Authenticate the client class using
    its registered token_endpoint_auth_method per {{RFC6749}} and, if
    applicable, {{RFC7523}}. The CIMD client_id is the client class.
+   When the registered method is client_instance_actor_token, follow
+   {{auth-via-actor-token}} instead of presenting a separate
+   client-controlled credential.
 
 2. **Match the token type.** If actor_token_type is not
    urn:ietf:params:oauth:token-type:client-instance-jwt, processing
@@ -631,6 +647,67 @@ with invalid_request.
 
 If validation succeeds, the AS issues an access token (and optionally
 a refresh token) per the requested grant.
+
+## Client Authentication via Actor Token {#auth-via-actor-token}
+
+A client class MAY register the token_endpoint_auth_method value
+client_instance_actor_token in its CIMD metadata to indicate that
+the AS authenticates the client implicitly from a presented actor
+token, without requiring a separate client_assertion or other
+credential controlled by the class itself.
+
+This mode is appropriate where the class has no online private key
+that an instance can use, for example when the class identifier is
+a logical CIMD URL with class-key custody centralized away from the
+runtime, or when the workload identity provider trusted to attest
+instances is also the only authority the class wishes to publish.
+The trust chain to the class is preserved: the class's CIMD listing
+of the instance issuer is itself the endorsement, and a token signed
+by such an issuer naming this client_id is attributable to the
+class.
+
+### Token Request {#auth-via-actor-token-request}
+
+A request using this auth method carries client_id, actor_token,
+and actor_token_type. It MUST NOT carry client_assertion or any
+other client authentication credential. Example, using the
+client_credentials grant:
+
+~~~ http-message
+POST /token HTTP/1.1
+Host: as.example.com
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&scope=repo.write
+&client_id=https%3A%2F%2Fopenai.example.com%2Fcodex
+&actor_token=eyJhbGciOiJFUzI1NiIsImtpZCI6...
+&actor_token_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
+~~~
+
+### Authorization Server Processing {#auth-via-actor-token-as}
+
+When the registered token_endpoint_auth_method for the client_id is
+client_instance_actor_token, the AS replaces step 1 of
+{{as-processing}} with the following procedure:
+
+1. Resolve CIMD metadata for client_id per {{as-processing}} step 3.
+2. Validate the presented actor_token per {{as-processing}} steps 2,
+   4, 5, and 6 (token type, instance issuer descriptor, signature,
+   and JWT claims).
+3. Verify that the actor_token's client_id claim exactly equals the
+   request's client_id parameter.
+4. Reject the request with invalid_client if any of the above fails.
+5. Treat the client as authenticated. The validated actor_token also
+   satisfies the actor_token requirement of this profile and is used
+   for instance representation per {{access-token}}.
+
+The actor_token's aud claim serves both purposes (the
+{{RFC7523}} client-assertion audience and this profile's actor-token
+audience). A single value identifying the AS satisfies both.
+
+The remaining steps of {{as-processing}} apply unchanged.
 
 ## Authorization-Time Consistency {#auth-time-consistency}
 
@@ -958,6 +1035,28 @@ client_id claim, which this document treats as a binding (not as
 actor identity), prevents an actor token issued for one client class
 from being presented under a different client class's authentication.
 
+## Defense in Depth in Implicit Client Authentication {#security-auth-via-actor-token}
+
+The client_instance_actor_token authentication method
+({{auth-via-actor-token}}) eliminates the requirement for the client
+class to control a private key used at the token endpoint. The
+trust chain to the class is preserved (the CIMD listing endorses the
+instance issuer), but the AS no longer requires possession of two
+independent keys to issue a token: compromise of any CIMD-listed
+instance issuer is sufficient to mint tokens that authenticate as
+the class.
+
+In contrast, modes such as private_key_jwt require an attacker to
+possess both an instance issuer's signing key (to mint the actor
+token) and the class's private key (to assert the client) before any
+token can be issued. Where the operational model permits, deployments
+SHOULD prefer two-key authentication.
+
+When client_instance_actor_token is used, classes SHOULD constrain
+each instance issuer's authority through trust_domain,
+actor_profiles_supported, and signing_alg_values_supported, and
+SHOULD list only the minimum set of instance_issuers necessary.
+
 ## Mode-Switch Between Delegation and Self-Acting
 
 Whether an issued access token represents delegation or self-acting
@@ -1067,6 +1166,20 @@ Client Metadata Description:
 
 Specification Document(s):
 : {{actor-token-required}} of this document
+
+## OAuth Token Endpoint Authentication Method {#iana-auth-method}
+
+IANA is requested to register the following value in the "OAuth Token
+Endpoint Authentication Methods" registry established by {{RFC8414}}:
+
+Token Endpoint Authentication Method Name:
+: client_instance_actor_token
+
+Change Controller:
+: IETF
+
+Specification Document(s):
+: {{auth-via-actor-token}} of this document
 
 ## OAuth Authorization Server Metadata {#iana-as-metadata}
 
