@@ -1261,6 +1261,17 @@ act claim defined by the OAuth Actor Profile.<a href="#section-abstract-2" class
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.5">
                 <p id="section-toc.1-1.8.2.5.1"><a href="#section-8.5" class="auto internal xref">8.5</a>.  <a href="#name-access-token-representation" class="internal xref">Access Token Representation</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.5.2.1">
+                    <p id="section-toc.1-1.8.2.5.2.1.1"><a href="#section-8.5.1" class="auto internal xref">8.5.1</a>.  <a href="#name-classification" class="internal xref">Classification</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.5.2.2">
+                    <p id="section-toc.1-1.8.2.5.2.2.1"><a href="#section-8.5.2" class="auto internal xref">8.5.2</a>.  <a href="#name-delegation-case" class="internal xref">Delegation Case</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.5.2.3">
+                    <p id="section-toc.1-1.8.2.5.2.3.1"><a href="#section-8.5.3" class="auto internal xref">8.5.3</a>.  <a href="#name-self-acting-case" class="internal xref">Self-Acting Case</a></p>
+</li>
+                </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.6">
                 <p id="section-toc.1-1.8.2.6.1"><a href="#section-8.6" class="auto internal xref">8.6</a>.  <a href="#name-refresh-tokens" class="internal xref">Refresh Tokens</a></p>
@@ -1289,13 +1300,16 @@ act claim defined by the OAuth Actor Profile.<a href="#section-abstract-2" class
                 <p id="section-toc.1-1.10.2.4.1"><a href="#section-10.4" class="auto internal xref">10.4</a>.  <a href="#name-audience-and-confused-deput" class="internal xref">Audience and Confused Deputy</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.5">
-                <p id="section-toc.1-1.10.2.5.1"><a href="#section-10.5" class="auto internal xref">10.5</a>.  <a href="#name-binding" class="internal xref">Binding</a></p>
+                <p id="section-toc.1-1.10.2.5.1"><a href="#section-10.5" class="auto internal xref">10.5</a>.  <a href="#name-mode-switch-between-delegat" class="internal xref">Mode-Switch Between Delegation and Self-Acting</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.6">
-                <p id="section-toc.1-1.10.2.6.1"><a href="#section-10.6" class="auto internal xref">10.6</a>.  <a href="#name-delegation-control" class="internal xref">Delegation Control</a></p>
+                <p id="section-toc.1-1.10.2.6.1"><a href="#section-10.6" class="auto internal xref">10.6</a>.  <a href="#name-binding" class="internal xref">Binding</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.7">
-                <p id="section-toc.1-1.10.2.7.1"><a href="#section-10.7" class="auto internal xref">10.7</a>.  <a href="#name-privacy" class="internal xref">Privacy</a></p>
+                <p id="section-toc.1-1.10.2.7.1"><a href="#section-10.7" class="auto internal xref">10.7</a>.  <a href="#name-delegation-control" class="internal xref">Delegation Control</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.8">
+                <p id="section-toc.1-1.10.2.8.1"><a href="#section-10.8" class="auto internal xref">10.8</a>.  <a href="#name-privacy" class="internal xref">Privacy</a></p>
 </li>
             </ul>
 </li>
@@ -1376,7 +1390,9 @@ ephemeral function executions -- a single logical client routinely
 corresponds to many concrete runtime instances that come and go on a
 short timescale. Resource servers and authorization servers
 increasingly need to know not only <em>which</em> client made a request but
-<em>which instance</em> of that client made it.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<em>which instance</em> of that client made it. Instances may be acting on a
+user's behalf or as the principal themselves; this profile covers
+both.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">OAuth 2.0 Token Exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines the actor_token and
 actor_token_type token request parameters and the act claim for
 representing an actor in an issued token. The OAuth Actor Profile
@@ -1979,7 +1995,7 @@ instance, enabling proof-of-possession at the AS and propagation to
 downstream resource servers. Issuers <span class="bcp14">SHOULD</span> include cnf so that
 access tokens whose act claim names the instance can be
 sender-constrained. See <a href="#sender-constrained" class="auto internal xref">Section 8.4</a> and
-<a href="#security-binding" class="auto internal xref">Section 10.5</a>.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
+<a href="#security-binding" class="auto internal xref">Section 10.6</a>.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.19">nbf (<span class="bcp14">OPTIONAL</span>):</dt>
@@ -2185,11 +2201,13 @@ a separate extension.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
         <h3 id="name-sender-constrained-access-t">
 <a href="#section-8.4" class="section-number selfRef">8.4. </a><a href="#name-sender-constrained-access-t" class="section-name selfRef">Sender-Constrained Access Tokens</a>
         </h3>
-<p id="section-8.4-1">When the AS issues an access token containing an act claim populated
-under this profile, the AS <span class="bcp14">MUST</span> issue a sender-constrained access
-token bound to a key the client instance possesses. Established
-mechanisms include DPoP <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> and Mutual-TLS-bound access
-tokens <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
+<p id="section-8.4-1">When the AS issues an access token under this profile -- whether the
+client instance is represented in act (delegation case;
+<a href="#access-token-delegation" class="auto internal xref">Section 8.5.2</a>) or in sub (self-acting case;
+<a href="#access-token-self-acting" class="auto internal xref">Section 8.5.3</a>) -- the AS <span class="bcp14">MUST</span> issue a
+sender-constrained access token bound to a key the client instance
+possesses. Established mechanisms include DPoP <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> and
+Mutual-TLS-bound access tokens <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
 <p id="section-8.4-2">The AS <span class="bcp14">MUST NOT</span> issue a bearer access token under this profile.
 Deployments unable to sender-constrain access tokens for
 operational reasons are outside the scope of this profile; they
@@ -2211,34 +2229,99 @@ using the client's mTLS certificate as the bound key per
         <h3 id="name-access-token-representation">
 <a href="#section-8.5" class="section-number selfRef">8.5. </a><a href="#name-access-token-representation" class="section-name selfRef">Access Token Representation</a>
         </h3>
-<p id="section-8.5-1">If the request is granted, the AS <span class="bcp14">MUST</span> set the act claim of the
-issued access token to an actor object as defined by
-<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, populated from the validated actor token:<a href="#section-8.5-1" class="pilcrow">¶</a></p>
+<p id="section-8.5-1">A client instance may be acting on behalf of another principal
+(<em>delegation case</em>; e.g., a user authorized the request through an
+authorization_code grant) or acting as itself with no other principal
+involved (<em>self-acting case</em>; e.g., a client_credentials grant). The
+AS <span class="bcp14">MUST</span> classify each request as delegation or self-acting before
+populating the issued access token's claims. Classification rules
+are in <a href="#access-token-classification" class="auto internal xref">Section 8.5.1</a>; representation rules differ
+between the two cases.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
+<p id="section-8.5-2">In both cases, the access token's client_id remains the client
+class, the access token <span class="bcp14">MUST</span> be sender-constrained per
+<a href="#sender-constrained" class="auto internal xref">Section 8.4</a>, and any upstream actor chain (e.g., from a
+subject_token in a token-exchange request) <span class="bcp14">MUST</span> be preserved by
+nesting per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.5-2" class="pilcrow">¶</a></p>
+<div id="access-token-classification">
+<section id="section-8.5.1">
+          <h4 id="name-classification">
+<a href="#section-8.5.1" class="section-number selfRef">8.5.1. </a><a href="#name-classification" class="section-name selfRef">Classification</a>
+          </h4>
+<p id="section-8.5.1-1">The AS classifies the request based on whether the grant produces a
+principal distinct from the instance presenting the actor_token:<a href="#section-8.5.1-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-3">
+            <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Grant</th>
+                <th class="text-left" rowspan="1" colspan="1">Principal</th>
+                <th class="text-left" rowspan="1" colspan="1">Classification</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">authorization_code (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)</td>
+                <td class="text-left" rowspan="1" colspan="1">the user who authorized the code</td>
+                <td class="text-left" rowspan="1" colspan="1">delegation</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">client_credentials (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)</td>
+                <td class="text-left" rowspan="1" colspan="1">none</td>
+                <td class="text-left" rowspan="1" colspan="1">self-acting</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">refresh_token (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)</td>
+                <td class="text-left" rowspan="1" colspan="1">inherited from the original grant</td>
+                <td class="text-left" rowspan="1" colspan="1">inherited</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">jwt-bearer (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>)</td>
+                <td class="text-left" rowspan="1" colspan="1">the assertion's sub</td>
+                <td class="text-left" rowspan="1" colspan="1">self-acting iff the assertion's sub is byte-equal to the actor token's sub; otherwise delegation</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">token-exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>)</td>
+                <td class="text-left" rowspan="1" colspan="1">the subject_token's subject</td>
+                <td class="text-left" rowspan="1" colspan="1">self-acting iff no subject_token is present (uncommon); otherwise delegation</td>
+              </tr>
+            </tbody>
+          </table>
+<p id="section-8.5.1-3">When neither delegation nor self-acting cleanly applies (for example,
+custom or experimental grants), the AS <span class="bcp14">MUST</span> refuse to issue the
+access token rather than guess; reject with invalid_grant
+(<a href="#errors" class="auto internal xref">Section 8.7</a>).<a href="#section-8.5.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="access-token-delegation">
+<section id="section-8.5.2">
+          <h4 id="name-delegation-case">
+<a href="#section-8.5.2" class="section-number selfRef">8.5.2. </a><a href="#name-delegation-case" class="section-name selfRef">Delegation Case</a>
+          </h4>
+<p id="section-8.5.2-1">When the request is classified as delegation, the AS <span class="bcp14">MUST</span> populate
+the issued access token's act claim per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> from the
+validated actor token:<a href="#section-8.5.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-8.5-2.1">
-            <p id="section-8.5-2.1.1">act.iss = actor token iss<a href="#section-8.5-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-8.5.2-2.1">
+              <p id="section-8.5.2-2.1.1">act.iss = actor token iss<a href="#section-8.5.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-8.5-2.2">
-            <p id="section-8.5-2.2.1">act.sub = actor token sub<a href="#section-8.5-2.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-8.5.2-2.2">
+              <p id="section-8.5.2-2.2.1">act.sub = actor token sub<a href="#section-8.5.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-8.5-2.3">
-            <p id="section-8.5-2.3.1">act.sub_profile = actor token sub_profile (if present); the value
-client_instance <span class="bcp14">SHOULD</span> be included.<a href="#section-8.5-2.3.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-8.5.2-2.3">
+              <p id="section-8.5.2-2.3.1">act.sub_profile = actor token sub_profile (if present); the value
+client_instance <span class="bcp14">SHOULD</span> be included.<a href="#section-8.5.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-8.5-2.4">
-            <p id="section-8.5-2.4.1">act.cnf = actor token cnf, if present. When the AS issues a
-sender-constrained access token under <a href="#sender-constrained" class="auto internal xref">Section 8.4</a>, the
-AS <span class="bcp14">SHOULD</span> also propagate the cnf to the access token's top-level
-cnf so that resource servers can enforce possession.<a href="#section-8.5-2.4.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-8.5.2-2.4">
+              <p id="section-8.5.2-2.4.1">act.cnf = actor token cnf, if present.<a href="#section-8.5.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
-        </ul>
-<p id="section-8.5-3">If the upstream context already contains an actor (for example, a
-token exchange request whose subject_token has its own act), the AS
-<span class="bcp14">MUST</span> nest as specified in <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, with the client instance
-becoming the immediate (outermost) actor.<a href="#section-8.5-3" class="pilcrow">¶</a></p>
-<p id="section-8.5-4">Example issued access token (decoded payload, single-actor case,
-sender-constrained):<a href="#section-8.5-4" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-8.5-5">
+          </ul>
+<p id="section-8.5.2-3">The access token's sub <span class="bcp14">MUST</span> be the principal identified by the grant
+(e.g., the authenticated user). When the AS issues a
+sender-constrained access token, the AS <span class="bcp14">SHOULD</span> propagate the cnf to
+the access token's top-level cnf so that resource servers can enforce
+possession.<a href="#section-8.5.2-3" class="pilcrow">¶</a></p>
+<p id="section-8.5.2-4">Example access token (delegation, sender-constrained):<a href="#section-8.5.2-4" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-8.5.2-5">
 <pre>
 {
   "iss":       "https://as.example.com",
@@ -2256,12 +2339,12 @@ sender-constrained):<a href="#section-8.5-4" class="pilcrow">¶</a></p>
     "cnf":         { "jkt": "0ZcOCORZNYy...iguA4I" }
   }
 }
-</pre><a href="#section-8.5-5" class="pilcrow">¶</a>
+</pre><a href="#section-8.5.2-5" class="pilcrow">¶</a>
 </div>
-<p id="section-8.5-6">Example with a nested actor (the subject_token of a token-exchange
+<p id="section-8.5.2-6">Example with a nested actor (the subject_token of a token-exchange
 request was itself acting on behalf of the user through a prior
-service):<a href="#section-8.5-6" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-8.5-7">
+service):<a href="#section-8.5.2-6" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-8.5.2-7">
 <pre>
 {
   "iss":       "https://as.example.com",
@@ -2280,7 +2363,64 @@ service):<a href="#section-8.5-6" class="pilcrow">¶</a></p>
     }
   }
 }
-</pre><a href="#section-8.5-7" class="pilcrow">¶</a>
+</pre><a href="#section-8.5.2-7" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="access-token-self-acting">
+<section id="section-8.5.3">
+          <h4 id="name-self-acting-case">
+<a href="#section-8.5.3" class="section-number selfRef">8.5.3. </a><a href="#name-self-acting-case" class="section-name selfRef">Self-Acting Case</a>
+          </h4>
+<p id="section-8.5.3-1">When the request is classified as self-acting, the instance is the
+principal and there is no other party on whose behalf it acts. The
+AS <span class="bcp14">MUST</span> populate the issued access token from the validated actor
+token as follows:<a href="#section-8.5.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8.5.3-2.1">
+              <p id="section-8.5.3-2.1.1">sub = actor token sub<a href="#section-8.5.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-8.5.3-2.2">
+              <p id="section-8.5.3-2.2.1">sub_profile = actor token sub_profile (if present); the value
+client_instance <span class="bcp14">SHOULD</span> be included<a href="#section-8.5.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-8.5.3-2.3">
+              <p id="section-8.5.3-2.3.1">cnf = actor token cnf, if present (required for sender-constrained
+issuance per <a href="#sender-constrained" class="auto internal xref">Section 8.4</a>)<a href="#section-8.5.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-8.5.3-2.4">
+              <p id="section-8.5.3-2.4.1">act <span class="bcp14">MUST</span> be omitted, except that an upstream actor chain
+(introduced by an inner act in a presented subject_token) <span class="bcp14">MUST</span> be
+preserved.<a href="#section-8.5.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-8.5.3-3">The instance issuer's identifier (the actor token's iss) is not
+represented as a claim in the self-acting access token. Trust in the
+instance issuer is structural: the AS validated the actor token
+against the descriptor in <a href="#instance-issuers" class="auto internal xref">Section 5.1</a> before issuance, and
+the resource server trusts the AS. Deployments that require
+in-token instance-issuer attribution for self-acting tokens may
+define a separate claim in a future profile.<a href="#section-8.5.3-3" class="pilcrow">¶</a></p>
+<p id="section-8.5.3-4">Example access token (self-acting, sender-constrained,
+client_credentials grant):<a href="#section-8.5.3-4" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-8.5.3-5">
+<pre>
+{
+  "iss":         "https://as.example.com",
+  "aud":         "https://api.example.com",
+  "sub":         "spiffe://openai.example.com/codex/session-abc",
+  "sub_profile": "client_instance ai_agent",
+  "client_id":   "https://openai.example.com/codex",
+  "scope":       "repo.write",
+  "iat":         1770000005,
+  "exp":         1770003605,
+  "cnf":         { "jkt": "0ZcOCORZNYy...iguA4I" }
+}
+</pre><a href="#section-8.5.3-5" class="pilcrow">¶</a>
+</div>
+<p id="section-8.5.3-6">Note that client_id (the class) and sub (the instance) are distinct,
+and that act is absent.<a href="#section-8.5.3-6" class="pilcrow">¶</a></p>
+</section>
 </div>
 </section>
 </div>
@@ -2306,8 +2446,8 @@ windows is discouraged; see <a href="#security-replay" class="auto internal xref
 <p id="section-8.7-1">Errors are returned per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 5.2 and <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>
 Section 2.2.2. The following table maps the validation failures
 defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> to error codes:<a href="#section-8.7-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-3">
-          <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
+<table class="center" id="table-4">
+          <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Failure</th>
@@ -2494,50 +2634,68 @@ actor identity), prevents an actor token issued for one client class
 from being presented under a different client class's authentication.<a href="#section-10.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="security-binding">
+<div id="mode-switch-between-delegation-and-self-acting">
 <section id="section-10.5">
-        <h3 id="name-binding">
-<a href="#section-10.5" class="section-number selfRef">10.5. </a><a href="#name-binding" class="section-name selfRef">Binding</a>
+        <h3 id="name-mode-switch-between-delegat">
+<a href="#section-10.5" class="section-number selfRef">10.5. </a><a href="#name-mode-switch-between-delegat" class="section-name selfRef">Mode-Switch Between Delegation and Self-Acting</a>
         </h3>
-<p id="section-10.5-1">Without sender-constraint, an act claim is an <em>assertion</em> about who
+<p id="section-10.5-1">Whether an issued access token represents delegation or self-acting
+(<a href="#access-token-classification" class="auto internal xref">Section 8.5.1</a>) determines whether the instance is
+exposed to resource servers as act or as sub. An adversary that can
+influence classification could escalate privileges -- for example,
+inducing the AS to drop a sub belonging to a user and re-anchor the
+token on the instance's sub. The classification rule in
+<a href="#access-token-classification" class="auto internal xref">Section 8.5.1</a> is byte-equality of subject
+identifiers; ASes <span class="bcp14">MUST NOT</span> employ heuristic or fuzzy matching that
+could be manipulated by attacker-controlled assertion contents. When
+classification is ambiguous (for example, custom grants not listed in
+the table), the AS <span class="bcp14">MUST</span> refuse rather than guess.<a href="#section-10.5-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-binding">
+<section id="section-10.6">
+        <h3 id="name-binding">
+<a href="#section-10.6" class="section-number selfRef">10.6. </a><a href="#name-binding" class="section-name selfRef">Binding</a>
+        </h3>
+<p id="section-10.6-1">Without sender-constraint, an act claim is an <em>assertion</em> about who
 acted, not a <em>binding</em> enforced at the resource server: any party in
 possession of the access token can present it as the named actor.
 For this reason <a href="#sender-constrained" class="auto internal xref">Section 8.4</a> requires sender-constrained
 access tokens whenever act is populated under this profile and
-forbids bearer issuance.<a href="#section-10.5-1" class="pilcrow">¶</a></p>
-<p id="section-10.5-2">This document does not specify a single proof-of-possession
+forbids bearer issuance.<a href="#section-10.6-1" class="pilcrow">¶</a></p>
+<p id="section-10.6-2">This document does not specify a single proof-of-possession
 mechanism. DPoP <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> and Mutual TLS <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span> are the
 primary examples in current OAuth practice; other mechanisms may be
 defined elsewhere. Where the actor token itself carries cnf, the AS
 <span class="bcp14">SHOULD</span> propagate cnf to both the access token's top-level cnf and
 the act object so that downstream resource servers can verify
-possession against the same key the AS authenticated.<a href="#section-10.5-2" class="pilcrow">¶</a></p>
+possession against the same key the AS authenticated.<a href="#section-10.6-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="delegation-control">
-<section id="section-10.6">
+<section id="section-10.7">
         <h3 id="name-delegation-control">
-<a href="#section-10.6" class="section-number selfRef">10.6. </a><a href="#name-delegation-control" class="section-name selfRef">Delegation Control</a>
+<a href="#section-10.7" class="section-number selfRef">10.7. </a><a href="#name-delegation-control" class="section-name selfRef">Delegation Control</a>
         </h3>
-<p id="section-10.6-1">Unbounded delegation chains permit privilege amplification across
+<p id="section-10.7-1">Unbounded delegation chains permit privilege amplification across
 boundaries. Client classes <span class="bcp14">SHOULD</span> set max_actor_chain_depth, AS
 implementations <span class="bcp14">SHOULD</span> enforce their own ceiling, and both <span class="bcp14">MUST</span>
-honor the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-10.6-1" class="pilcrow">¶</a></p>
+honor the floor of 4 from <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-10.7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="privacy">
-<section id="section-10.7">
+<section id="section-10.8">
         <h3 id="name-privacy">
-<a href="#section-10.7" class="section-number selfRef">10.7. </a><a href="#name-privacy" class="section-name selfRef">Privacy</a>
+<a href="#section-10.8" class="section-number selfRef">10.8. </a><a href="#name-privacy" class="section-name selfRef">Privacy</a>
         </h3>
-<p id="section-10.7-1">A client instance actor token reveals fine-grained workload identity
+<p id="section-10.8-1">A client instance actor token reveals fine-grained workload identity
 to the AS and, after issuance, to resource servers via the act claim.
 Issuers and client classes <span class="bcp14">SHOULD</span> avoid encoding sensitive
 information (e.g., human user identifiers, internal infrastructure
 details) in sub. The error response guidance in <a href="#errors" class="auto internal xref">Section 8.7</a> extends
 to logs and audit trails: actor token contents <span class="bcp14">SHOULD</span> be logged at a
 level commensurate with the sensitivity of the workload identity
-they convey.<a href="#section-10.7-1" class="pilcrow">¶</a></p>
+they convey.<a href="#section-10.8-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
