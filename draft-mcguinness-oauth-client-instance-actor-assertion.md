@@ -45,6 +45,8 @@ normative:
   RFC8725:
 
 informative:
+  RFC8705:
+  RFC9449:
   CIMD: I-D.ietf-oauth-client-id-metadata-document
   ACTOR-PROFILE: I-D.mcguinness-oauth-actor-profile
   ENTITY-PROFILES: I-D.mora-oauth-entity-profiles
@@ -204,6 +206,58 @@ the client class using its registered client authentication method
 (typically private_key_jwt with keys from the CIMD jwks_uri) and
 authenticates the instance through the actor token.
 
+# Trust Delegation Model {#trust-model}
+
+This profile defines a three-party trust delegation between the
+client class, the instance issuer, and the AS. The client class
+*delegates* attestation of its runtime instances to one or more
+instance issuers; the AS *relies on* that delegation as expressed in
+the CIMD document.
+
+## Delegation by the Client Class {#trust-model-delegation}
+
+By listing an instance issuer in its CIMD instance_issuers
+({{instance-issuers}}), a client class delegates to that issuer the
+authority to attest that a concrete runtime is an instance of the
+client class. This delegation is bounded by the descriptor; the AS
+MUST enforce, and the instance issuer MUST honor, the following
+limits:
+
+* The asserted sub MUST fall within trust_domain when present and
+  MUST conform to subject_syntax when present.
+* The asserted sub_profile values MUST be a subset of
+  actor_profiles_supported when present.
+* The signing alg MUST be among signing_alg_values_supported when
+  present.
+
+A client class MUST NOT list instance issuers it does not control or
+trust to enforce these bounds. An instance issuer accepting delegation
+MUST NOT mint actor tokens naming this client_id outside the
+delegated scope.
+
+## Authority of the Authorization Server {#trust-model-as}
+
+The AS treats the CIMD instance_issuers list as authoritative: it
+derives its trust in an actor token solely from the descriptor whose
+issuer member matches the actor token's iss claim. This document
+does not define out-of-band or AS-side configuration of additional
+instance issuers for a client_id; deployments requiring such
+configuration MUST do so via a separate specification.
+
+## Trust Update Handling {#trust-lifecycle}
+
+The trust relationship between client class and instance issuer is
+mutable. When the CIMD document changes -- for example, when an
+instance issuer is removed, its jwks_uri changes, or its descriptor's
+scope (trust_domain, actor_profiles_supported,
+signing_alg_values_supported) is narrowed -- the AS SHOULD apply the
+diligence required by {{CIMD}} for changes to client jwks. In
+particular, the AS SHOULD revoke previously issued access tokens
+whose act claim either:
+
+* names a removed instance issuer; or
+* falls outside the descriptor's narrowed scope.
+
 # CIMD Extensions {#cimd-extensions}
 
 This document extends the Client ID Metadata Document {{CIMD}} with
@@ -317,6 +371,35 @@ identity of a client instance. Its actor_token_type is
 urn:ietf:params:oauth:token-type:client-instance-jwt (see
 {{iana-token-type}}).
 
+## Layering of Instance Identity and Actor Assertion {#layering}
+
+A client instance actor token serves two conceptually distinct
+purposes:
+
+1. it authenticates the *runtime instance* (workload identity); and
+2. it asserts that the instance is a member of the named *client
+   class*.
+
+This document defines a single combined artifact: a JWT signed by the
+instance issuer that carries both. This matches the prevailing pattern
+in workload identity systems, which already issue audience-scoped,
+signed assertions of runtime identity (e.g., JWT-SVIDs in {{SPIFFE}}).
+
+The instance issuer is the trust authority for the combined assertion
+and MUST, before minting an actor token under this profile:
+
+* Authenticate the runtime instance (e.g., via attestation,
+  platform-level identity, or possession of an instance key); and
+* Verify, under issuer-side policy, that the runtime is permitted to
+  claim the client_id named in the token. This typically means that
+  the runtime is operationally part of the client class's deployment.
+
+Decoupled deployments -- in which a workload identity provider issues
+an *instance credential* and the runtime independently mints an
+actor assertion bound to that credential -- are out of scope for this
+document. A future profile MAY define such a layered model and re-use
+the actor_token_type registered here, or register an additional one.
+
 ## JWT Claims {#claims}
 
 The following claims are defined for client instance actor tokens.
@@ -361,10 +444,13 @@ sub_profile (RECOMMENDED):
   the value client_instance ({{iana-entity-profile}}). Issuers MAY
   include additional values such as service or ai_agent.
 
-cnf (OPTIONAL):
+cnf (RECOMMENDED):
 : A confirmation claim {{RFC7800}} carrying a key bound to this
-  instance, enabling proof-of-possession at the AS or downstream.
-  See {{security-binding}}.
+  instance, enabling proof-of-possession at the AS and propagation to
+  downstream resource servers. Issuers SHOULD include cnf so that
+  access tokens whose act claim names the instance can be
+  sender-constrained. See {{sender-constrained}} and
+  {{security-binding}}.
 
 nbf (OPTIONAL):
 : Not-before time. If present, the AS MUST reject the token before
@@ -398,7 +484,8 @@ A decoded client instance actor token:
   "iat":          1770000000,
   "nbf":          1770000000,
   "exp":          1770000300,
-  "jti":          "1a2b3c4d-5e6f"
+  "jti":          "1a2b3c4d-5e6f",
+  "cnf":          { "jkt": "0ZcOCORZNYy...iguA4I" }
 }
 ~~~
 
@@ -470,10 +557,16 @@ following steps in addition to grant-type-specific processing:
 8. **Enforce delegation policy.** Apply max_actor_chain_depth, the
    AS's own policy, and the floor of 4 from {{ACTOR-PROFILE}}.
 
-9. **Bind the actor.** If issuance succeeds, populate the access
-   token's act claim per {{access-token}}. Reflect any prior actor
-   chain present in input tokens (e.g., the subject_token in a
-   token-exchange request) by nesting per {{ACTOR-PROFILE}}.
+9. **Check authorization-time consistency.** For grants that
+   originate from a prior authorization step (notably
+   authorization_code), apply the rules of
+   {{auth-time-consistency}}.
+
+10. **Bind the actor.** If issuance succeeds, populate the access
+    token's act claim per {{access-token}}, applying
+    {{sender-constrained}} for token binding. Reflect any prior actor
+    chain present in input tokens (e.g., the subject_token in a
+    token-exchange request) by nesting per {{ACTOR-PROFILE}}.
 
 If the client metadata sets actor_token_required to true and no
 actor_token of this type is presented, the AS MUST reject the request
@@ -481,6 +574,60 @@ with invalid_request.
 
 If validation succeeds, the AS issues an access token (and optionally
 a refresh token) per the requested grant.
+
+## Authorization-Time Consistency {#auth-time-consistency}
+
+When a token request is made under the authorization_code grant
+({{RFC6749}} Section 4.1), the user has authorized the *client class*
+identified by client_id, not any specific instance of that class. The
+AS MUST ensure that the actor introduced at the token endpoint is
+consistent with that authorization:
+
+* The client_id authenticated at the token endpoint MUST match the
+  client_id that received the authorization_code ({{RFC6749}} Section
+  4.1.3). Combined with the client_id-binding requirement of
+  {{as-processing}} step 7, this prevents an actor token from
+  another client class being attached to a code.
+* The AS MUST NOT permit the actor identity to bypass standard
+  authorization-code controls (single-use redemption, redirect URI
+  matching, and any code challenge bound to the original
+  authorization request).
+* If the AS has any authorization-time policy that depends on the
+  actor (for example, a per-instance allow-list), the AS MUST
+  evaluate that policy against the actor token presented at /token
+  and reject inconsistent requests with invalid_grant.
+
+User consent under this profile applies to the client class as a
+whole; consent thereby covers all instances attested by listed
+instance issuers. ASes MAY display the client class identifier and
+the trust domain of the instance issuer at consent time. Per-instance
+consent (asking the user to authorize a specific runtime) is out of
+scope for this document; deployments requiring it MUST define it via
+a separate extension.
+
+## Sender-Constrained Access Tokens {#sender-constrained}
+
+When the AS issues an access token containing an act claim populated
+under this profile, the AS MUST issue a sender-constrained access
+token bound to a key the client instance possesses. Established
+mechanisms include DPoP {{RFC9449}} and Mutual-TLS-bound access
+tokens {{RFC8705}}.
+
+The AS MUST NOT issue a bearer access token under this profile.
+Deployments unable to sender-constrain access tokens for
+operational reasons are outside the scope of this profile; they
+should publish or reference a separate profile that addresses their
+constraints.
+
+If the actor token includes a cnf claim ({{claims}}), the AS SHOULD
+bind the issued access token to the same key by setting the access
+token's top-level cnf to that value, and SHOULD verify possession of
+the key at the token endpoint (for example, by requiring a DPoP
+proof in the same request) when the deployment supports it. If the
+actor token does not include a cnf claim, the AS MUST establish a
+sender-constrained binding through some other means (for example, by
+using the client's mTLS certificate as the bound key per
+{{RFC8705}}).
 
 ## Access Token Representation {#access-token}
 
@@ -492,15 +639,18 @@ issued access token to an actor object as defined by
 * act.sub = actor token sub
 * act.sub_profile = actor token sub_profile (if present); the value
   client_instance SHOULD be included.
-* act.cnf = actor token cnf (if present and the AS chooses to
-  propagate proof-of-possession; see {{security-binding}}).
+* act.cnf = actor token cnf, if present. When the AS issues a
+  sender-constrained access token under {{sender-constrained}}, the
+  AS SHOULD also propagate the cnf to the access token's top-level
+  cnf so that resource servers can enforce possession.
 
 If the upstream context already contains an actor (for example, a
 token exchange request whose subject_token has its own act), the AS
 MUST nest as specified in {{ACTOR-PROFILE}}, with the client instance
 becoming the immediate (outermost) actor.
 
-Example issued access token (decoded payload, single-actor case):
+Example issued access token (decoded payload, single-actor case,
+sender-constrained):
 
 ~~~ json
 {
@@ -511,10 +661,12 @@ Example issued access token (decoded payload, single-actor case):
   "scope":     "repo.write",
   "iat":       1770000005,
   "exp":       1770003605,
+  "cnf":       { "jkt": "0ZcOCORZNYy...iguA4I" },
   "act": {
     "iss":         "https://workload.openai.example.com",
     "sub":         "spiffe://openai.example.com/codex/session-abc",
-    "sub_profile": "client_instance ai_agent"
+    "sub_profile": "client_instance ai_agent",
+    "cnf":         { "jkt": "0ZcOCORZNYy...iguA4I" }
   }
 }
 ~~~
@@ -601,23 +753,55 @@ This document inherits the security considerations of {{RFC6749}},
 {{RFC7519}}, {{RFC7523}}, {{RFC8693}}, {{RFC8725}}, {{CIMD}}, and
 {{ACTOR-PROFILE}}.
 
-## Trust Model
+## Trust Model {#security-trust-model}
+
+The normative trust model for this profile is in {{trust-model}}.
+This subsection summarizes the security implications.
 
 A client class delegates the authentication of its instances to one
-or more instance issuers by listing them in its CIMD metadata. The AS
-relies on this delegation: a compromised or misconfigured instance
+or more instance issuers. A compromised or misconfigured instance
 issuer can mint actor tokens that the AS will accept as legitimate
-instances. Client classes SHOULD list only instance issuers under
-their own administrative control (or contractually equivalent) and
-SHOULD use trust_domain and actor_profiles_supported to constrain
+instances of the named client class. Client classes SHOULD list only
+instance issuers under their own administrative control (or
+contractually equivalent), and SHOULD set trust_domain,
+actor_profiles_supported, and signing_alg_values_supported to bound
 what each issuer is allowed to assert.
 
-CIMD metadata changes are themselves trust-affecting. Per {{CIMD}},
-the AS detects key changes and may revoke prior tokens. AS
-implementations SHOULD apply the same diligence to changes in
-instance_issuers: an attacker who can modify the metadata document
-can add a new instance issuer under their control. Client classes
-publishing metadata MUST protect the publication channel.
+The CIMD document is itself trust-affecting: an attacker who can
+modify it can add a new instance issuer under their control. Client
+classes publishing CIMD metadata MUST protect the publication channel
+(per {{CIMD}}'s requirement of HTTPS) and the storage backing it.
+
+## Instance Lifecycle {#security-lifecycle}
+
+Client instances are short-lived in many deployments (containers,
+function invocations, agent sessions). This profile relies on three
+mechanisms to keep actor identity current:
+
+Rotation:
+: Instance issuers MUST mint short-lived actor tokens
+  ({{security-replay}}). New tokens are issued continuously as
+  instances start, restart, or rotate keys.
+
+Revocation within the validity window:
+: Within an actor token's exp window, the AS prevents reuse via the
+  jti replay rule ({{security-replay}}). A specific issued access
+  token can be revoked only via the AS's own revocation mechanisms;
+  this profile does not define an instance revocation list.
+
+Trust withdrawal:
+: To stop accepting actor tokens from an issuer (e.g., after a
+  workload identity compromise), the client class removes the issuer
+  from instance_issuers, narrows trust_domain, or rotates jwks at
+  the issuer level. The AS's response is governed by
+  {{trust-lifecycle}}: previously issued access tokens whose act
+  references the affected scope SHOULD be revoked.
+
+Refresh windows are a particular concern: an access token refreshed
+without a new actor token may carry a stale act claim long after the
+original instance has terminated. ASes SHOULD prefer requiring a
+fresh actor token on refresh ({{refresh}}), or set short refresh
+intervals when act is present.
 
 ## Replay {#security-replay}
 
@@ -641,16 +825,20 @@ from being presented under a different client class's authentication.
 
 ## Binding {#security-binding}
 
-A client instance actor token by itself is a bearer credential
-during its short lifetime. Where possible, deployments SHOULD bind
-the actor token to a key the instance possesses by including a cnf
-claim {{RFC7800}}. The AS MAY then verify possession (for example,
-by requiring a DPoP-style proof in the same request) and MAY
-propagate the cnf into the act claim of the issued access token so
-that downstream resource servers can enforce possession.
+Without sender-constraint, an act claim is an *assertion* about who
+acted, not a *binding* enforced at the resource server: any party in
+possession of the access token can present it as the named actor.
+For this reason {{sender-constrained}} requires sender-constrained
+access tokens whenever act is populated under this profile and
+forbids bearer issuance.
 
-This document does not define a particular proof-of-possession
-mechanism; that is a separate profile.
+This document does not specify a single proof-of-possession
+mechanism. DPoP {{RFC9449}} and Mutual TLS {{RFC8705}} are the
+primary examples in current OAuth practice; other mechanisms may be
+defined elsewhere. Where the actor token itself carries cnf, the AS
+SHOULD propagate cnf to both the access token's top-level cnf and
+the act object so that downstream resource servers can verify
+possession against the same key the AS authenticated.
 
 ## Delegation Control
 
