@@ -99,7 +99,7 @@ Table of Contents
      2.4.  Relationship to WIMSE Workload Credentials
    3.  Conventions and Definitions
    4.  Actor Token Grant Extension
-     4.1.  Grant Types
+     4.1.  Permitted Grant Types
      4.2.  Other Actor Token Types
    5.  Client Instance Model
      5.1.  Architecture
@@ -114,30 +114,30 @@ Table of Contents
        6.1.1.  instance_issuers
      6.2.  Authorization Server Metadata
    7.  Client Instance Assertion Format
-     7.1.  Layering: Authentication and Class Membership
+     7.1.  Identity and Class Membership
      7.2.  JWT Claims
      7.3.  Signing and JOSE Header
      7.4.  Example
    8.  Token Endpoint Processing
      8.1.  Token Request
-     8.2.  Authorization Server Processing
-     8.3.  Authorization-Time Consistency
-     8.4.  Sender Constraint
-     8.5.  Access Token Representation
-       8.5.1.  Classification
-       8.5.2.  Delegation Case
-       8.5.3.  Self-Acting Case
-       8.5.4.  Actor Chain Merging
-     8.6.  Refresh Tokens
-     8.7.  Client Authentication
-       8.7.1.  Token Request
-       8.7.2.  Authorization Server Processing
-     8.8.  SPIFFE Compatibility
-       8.8.1.  Client ID Claim Omission
-       8.8.2.  SPIFFE Trust Bundle Resolution
-       8.8.3.  Combined Authentication and Actor Identity
-     8.9.  Error Responses
-     8.10. Processing Summary
+     8.2.  Processing Summary
+     8.3.  Authorization Server Processing
+     8.4.  Client Authentication
+       8.4.1.  Request Format
+       8.4.2.  Validation Procedure
+     8.5.  Authorization-Time Consistency
+     8.6.  Sender Constraint
+     8.7.  Access Token Representation
+       8.7.1.  Classification
+       8.7.2.  Delegation Case
+       8.7.3.  Self-Acting Case
+       8.7.4.  Actor Chain Merging
+     8.8.  Refresh Tokens
+     8.9.  SPIFFE Compatibility
+       8.9.1.  Client ID Claim Omission
+       8.9.2.  SPIFFE Trust Bundle Resolution
+       8.9.3.  Combined Authentication and Actor Identity
+     8.10. Error Responses
    9.  Resource Server Processing
      9.1.  Delegation Case
      9.2.  Self-Acting Case
@@ -302,12 +302,12 @@ Table of Contents
    tokens is defined by the applicable actor_token_type profile.  For
    the client-instance-jwt token type defined by this document,
    delegation requests represent the instance in the act claim
-   (Section 8.5.2).  Use of these parameters on a token-exchange request
+   (Section 8.7.2).  Use of these parameters on a token-exchange request
    remains fully governed by [RFC8693] and the applicable actor-token-
    type profile.
 
    This document additionally defines a _self-acting_ case
-   (Section 8.5.3) for grants that produce no principal distinct from
+   (Section 8.7.3) for grants that produce no principal distinct from
    the instance (notably client_credentials).  In that case the
    validated instance identity is the principal: the issued access
    token's sub names the instance and act is not populated.  [RFC8693]'s
@@ -396,11 +396,11 @@ Table of Contents
       [SPIFFE-CLIENT-AUTH]'s spiffe_id matching for client auth); and
 
    *  the actor_token's client_id claim is OPTIONAL when the matched
-      descriptor uses these SPIFFE features (Section 8.8.1).
+      descriptor uses these SPIFFE features (Section 8.9.1).
 
    A SPIFFE deployment combining [SPIFFE-CLIENT-AUTH] with this profile
    MAY present the same SVID as both client_assertion and actor_token in
-   a single token request (Section 8.8.3).  An end-to-end deployment
+   a single token request (Section 8.9.3).  An end-to-end deployment
    recipe is in Appendix "SPIFFE Deployment Recipe".
 
 2.4.  Relationship to WIMSE Workload Credentials
@@ -439,7 +439,7 @@ Table of Contents
    workloads).  WPT operates at a different layer than this profile and
    does not interact with the OAuth token endpoint; sender-constraint of
    access tokens issued under this profile remains DPoP- or mTLS- based
-   per Section 8.4.
+   per Section 8.6.
 
 3.  Conventions and Definitions
 
@@ -505,7 +505,7 @@ Table of Contents
    representation; those remain the responsibility of each
    actor_token_type profile.
 
-4.1.  Grant Types
+4.1.  Permitted Grant Types
 
    [RFC8693] defines actor_token and actor_token_type only on the token-
    exchange grant.  This document permits these parameters on the
@@ -563,11 +563,19 @@ Table of Contents
    actor_token and actor_token_type on the grant types listed in
    Section 4.1.
 
+   The token endpoint processing rules for the client-instance-jwt token
+   type (Section 8) are written in a way that may serve as a template
+   for future actor token type profiles.  In particular, Section 8.5,
+   Section 8.6, Section 8.7, and Section 8.8 are largely token-type-
+   agnostic and MAY be adopted verbatim or adapted by other profiles;
+   their token-type-specific hooks (descriptor lookup, JWT claim
+   validation, client_id binding) are the parts a new profile is
+   expected to redefine.
+
 5.  Client Instance Model
 
-   This section describes the client instance model and trust
-   relationship before defining concrete metadata, assertion, endpoint,
-   and resource server processing.
+   This section describes the architecture, registration models, and
+   trust delegation that underpin the client-instance-jwt profile.
 
 5.1.  Architecture
 
@@ -625,7 +633,7 @@ Table of Contents
    the instance assertion.
 
    When the client class registers token_endpoint_auth_method
-   client_instance_jwt (Section 8.7), these two trust anchors collapse
+   client_instance_jwt (Section 8.4), these two trust anchors collapse
    onto a single artifact: the instance assertion both authenticates the
    client class (via the CIMD endorsement of its issuer) and identifies
    the instance.  In that mode the request carries no separate
@@ -680,9 +688,9 @@ Table of Contents
       registration toolchains.
 
    The runtime behavior is identical in both models.  The descriptor
-   format (Section 6.1.1), the auth-via-actor-token mode (Section 8.7),
-   the SPIFFE compatibility features (Section 8.8), and the AS
-   processing rules (Section 8.2) all apply uniformly.  The only
+   format (Section 6.1.1), the auth-via-actor-token mode (Section 8.4),
+   the SPIFFE compatibility features (Section 8.9), and the AS
+   processing rules (Section 8.3) all apply uniformly.  The only
    difference is whether the AS obtains the metadata by dereferencing
    the CIMD URL or from stored registration data.
 
@@ -737,7 +745,7 @@ Table of Contents
    Because the CIMD listing endorses the issuer to mint tokens naming
    this client_id, an instance assertion signed by such an issuer is
    itself attributable to the client class.  A class MAY exploit this to
-   use the instance assertion as its client credential; see Section 8.7.
+   use the instance assertion as its client credential; see Section 8.4.
 
 5.3.2.  Authority of the Authorization Server
 
@@ -906,7 +914,7 @@ Table of Contents
       with the prefix's path.  If both spiffe_id and trust_domain are
       present, the trust domain in spiffe_id MUST equal trust_domain.
       This member, when present, structurally binds a workload subtree
-      to this client class; see Section 8.8.1.
+      to this client class; see Section 8.9.1.
 
    actor_profiles_supported (OPTIONAL):  A JSON array of sub_profile
       values from the OAuth Entity Profiles registry [ENTITY-PROFILES]
@@ -984,7 +992,7 @@ Table of Contents
       clients MUST assume the AS supports at least the default value
       "uri".
 
-   In addition, an AS that supports Section 8.7 MUST advertise
+   In addition, an AS that supports Section 8.4 MUST advertise
    client_instance_jwt in token_endpoint_auth_methods_supported
    ([RFC8414]).
 
@@ -1002,7 +1010,7 @@ Table of Contents
    urn:ietf:params:oauth:token-type:client-instance-jwt (see
    Section 13.1).
 
-7.1.  Layering: Authentication and Class Membership
+7.1.  Identity and Class Membership
 
    A client instance assertion serves two conceptually distinct
    purposes:
@@ -1067,7 +1075,7 @@ Table of Contents
       aud JWT, to limit the replay surface.
 
    client_id (REQUIRED unless the SPIFFE compatibility conditions of
-   Section 8.8.1 are met):  The client_id of the client class to which
+   Section 8.9.1 are met):  The client_id of the client class to which
       this instance belongs.  This claim uses the JSON Web Token
       client_id claim registered by [RFC9068] Section 2.2 (which itself
       defers to [RFC8693] Section 4.3 for the underlying definition).
@@ -1078,7 +1086,7 @@ Table of Contents
       of the actor's identity (per [ACTOR-PROFILE], client_id identifies
       an OAuth client, not an actor).  When present, the AS MUST reject
       the token if this value does not exactly equal the client_id of
-      the authenticated client.  When omitted under Section 8.8.1, the
+      the authenticated client.  When omitted under Section 8.9.1, the
       binding is established structurally by the matched descriptor's
       spiffe_id rather than by a JWT claim, and a SPIFFE JWT-SVID may be
       presented as the actor_token directly without re-minting.
@@ -1108,7 +1116,7 @@ Table of Contents
       possesses (e.g., an instance-attested key, a per-instance workload
       key, or a DPoP public key presented to the issuer at attestation
       time).  Binding rules and AS verification are defined in
-      Section 8.4.
+      Section 8.6.
 
    nbf (OPTIONAL):  Not-before time.  If present, the AS MUST reject the
       token before this time.
@@ -1118,7 +1126,7 @@ Table of Contents
    (the instance); per [ACTOR-PROFILE], an actor_token that carries an
    act claim represents a delegation chain rather than a direct
    identity, and the AS MUST reject such a token with invalid_grant
-   (Section 8.5.4, Section 8.9).
+   (Section 8.7.4, Section 8.10).
 
    Additional claims MAY be present and MUST be ignored if not
    understood, except where this document or [ACTOR-PROFILE] specifies
@@ -1146,10 +1154,10 @@ Table of Contents
    or an OAuth JWT access token [RFC9068]) is mistaken for a Client
    Instance Assertion.
 
-   The only exception is the SPIFFE compatibility mode in Section 8.8.1,
+   The only exception is the SPIFFE compatibility mode in Section 8.9.1,
    where a raw JWT-SVID is intentionally presented without re-minting.
    In that mode, the AS MUST validate the token as a JWT-SVID according
-   to [SPIFFE-CLIENT-AUTH] and Section 8.8.2, and MUST NOT require the
+   to [SPIFFE-CLIENT-AUTH] and Section 8.9.2, and MUST NOT require the
    JWS typ header to be client-instance+jwt.
 
    Verification keys are obtained from the descriptor's jwks_uri, jwks,
@@ -1193,8 +1201,9 @@ Table of Contents
    This section specifies AS-side processing for token requests carrying
    an actor_token of type urn:ietf:params:oauth:token-type:client-
    instance-jwt.  It builds on the actor token grant extension in
-   Section 4 by defining the validation, sender-constraint,
-   representation, refresh, and error rules specific to the client-
+   Section 4 by defining the validation, authorization-time consistency,
+   sender- constraint, representation, refresh, client authentication,
+   SPIFFE compatibility, and error rules specific to the client-
    instance-jwt token type.
 
 8.1.  Token Request
@@ -1221,7 +1230,48 @@ Table of Contents
    &actor_token_type=
      urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
 
-8.2.  Authorization Server Processing
+8.2.  Processing Summary
+
+   This non-normative summary shows how an AS dispatches token endpoint
+   requests.  The normative processing rules are in Section 8.3 and the
+   sections it references.
+
+   +================================+=================================+
+   | Request shape                  | AS behavior                     |
+   +================================+=================================+
+   | No actor_token                 | Process using existing grant-   |
+   |                                | type rules only.                |
+   +--------------------------------+---------------------------------+
+   | Exactly one of actor_token and | Reject with invalid_request.    |
+   | actor_token_type               |                                 |
+   +--------------------------------+---------------------------------+
+   | actor_token_type other than    | Process under that token type's |
+   | urn:ietf:params:oauth:token-   | specification, if supported;    |
+   | type:client-instance-jwt       | otherwise use the applicable    |
+   |                                | error for the grant.            |
+   +--------------------------------+---------------------------------+
+   | actor_token_type is            | Authenticate the client         |
+   | urn:ietf:params:oauth:token-   | normally, validate the Client   |
+   | type:client-instance-jwt with  | Instance Assertion, classify    |
+   | separate client authentication | the grant, and issue a sender-  |
+   |                                | constrained access token.       |
+   +--------------------------------+---------------------------------+
+   | token_endpoint_auth_method is  | Use the Client Instance         |
+   | client_instance_jwt            | Assertion as both client        |
+   |                                | authentication and actor token, |
+   |                                | subject to Section 8.4.         |
+   +--------------------------------+---------------------------------+
+   | Grant classifies as delegation | Put the actor in act; keep the  |
+   |                                | grant principal in top-level    |
+   |                                | sub.                            |
+   +--------------------------------+---------------------------------+
+   | Grant classifies as self-      | Put the actor in top-level sub; |
+   | acting                         | omit top-level act.             |
+   +--------------------------------+---------------------------------+
+
+                                 Table 3
+
+8.3.  Authorization Server Processing
 
    When evaluating a token request for this profile, an AS implementing
    this document MUST perform the following checks and steps in addition
@@ -1243,7 +1293,7 @@ Table of Contents
         its registered token_endpoint_auth_method per [RFC6749] and, if
         applicable, [RFC7523].  The CIMD client_id is the client class.
         When the registered method is client_instance_jwt, follow
-        Section 8.7 instead of presenting a separate client-controlled
+        Section 8.4 instead of presenting a separate client-controlled
         credential.
 
    2.   *Match the token type.* If actor_token_type is not
@@ -1263,11 +1313,11 @@ Table of Contents
         as a JWT and read its iss claim.  Find the descriptor in
         instance_issuers whose issuer member exactly equals iss.  If no
         descriptor is found, or instance_issuers is absent, reject the
-        request with invalid_grant (Section 8.9).
+        request with invalid_grant (Section 8.10).
 
    5.   *Verify the signature.* Using the descriptor's jwks_uri, jwks,
         or spiffe_bundle_endpoint, verify the JWS signature per
-        [RFC7515], Section 7.3, and, when applicable, Section 8.8.2.
+        [RFC7515], Section 7.3, and, when applicable, Section 8.9.2.
 
    6.   *Validate JWT claims.* Validate iss, sub, aud, exp, iat, nbf,
         and jti per Section 7.2 and [RFC7523] Section 3.  Enforce
@@ -1279,7 +1329,7 @@ Table of Contents
         client_id; reject with invalid_grant otherwise.  If the instance
         assertion has no client_id claim, the AS MUST verify that the
         matched descriptor satisfies the SPIFFE compatibility conditions
-        (Section 8.8.1); if not, reject with invalid_grant.  When the
+        (Section 8.9.1); if not, reject with invalid_grant.  When the
         descriptor satisfies those conditions, the AS MUST verify that
         the actor_token's sub falls under the descriptor's spiffe_id
         (with wildcard expansion if any); if not, reject with
@@ -1290,18 +1340,95 @@ Table of Contents
 
    9.   *Check authorization-time consistency.* For grants that
         originate from a prior authorization step (notably
-        authorization_code), apply the rules of Section 8.3.
+        authorization_code), apply the rules of Section 8.5.
 
    10.  *Bind the instance.* If issuance succeeds, represent the
-        instance in the access token per Section 8.5, applying
-        Section 8.4 for token binding.  Reflect any prior actor chain
+        instance in the access token per Section 8.7, applying
+        Section 8.6 for token binding.  Reflect any prior actor chain
         present in input tokens by nesting per [ACTOR-PROFILE]; chain
-        merging rules are given in Section 8.5.4.
+        merging rules are given in Section 8.7.4.
 
    If validation succeeds, the AS issues an access token (and optionally
    a refresh token) per the requested grant.
 
-8.3.  Authorization-Time Consistency
+8.4.  Client Authentication
+
+   A client class MAY register the token_endpoint_auth_method value
+   client_instance_jwt in its CIMD metadata to indicate that the AS
+   authenticates the client implicitly from a presented instance
+   assertion, without requiring a separate client_assertion or other
+   credential controlled by the class itself.
+
+   This mode is appropriate where the class has no online private key
+   that an instance can use, for example when the class identifier is a
+   logical CIMD URL with class-key custody centralized away from the
+   runtime, or when the workload identity provider trusted to attest
+   instances is also the only authority the class wishes to publish.
+   The trust chain to the class is preserved: the class's CIMD listing
+   of the instance issuer is itself the endorsement, and a token signed
+   by such an issuer naming this client_id is attributable to the class.
+
+8.4.1.  Request Format
+
+   A request using this auth method carries client_id, actor_token, and
+   actor_token_type.  It MUST NOT carry client_assertion or any other
+   client authentication credential.  Example, using the
+   client_credentials grant:
+
+   POST /token HTTP/1.1
+   Host: as.example.com
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=client_credentials
+   &scope=repo.write
+   &client_id=https%3A%2F%2Fopenai.example.com%2Fcodex
+   &actor_token=eyJhbGciOiJFUzI1NiIsImtpZCI6...
+   &actor_token_type=
+     urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
+
+8.4.2.  Validation Procedure
+
+   When the registered token_endpoint_auth_method for the client_id is
+   client_instance_jwt, the AS replaces step 1 of Section 8.3
+   ("Authenticate the client") with the following procedure:
+
+   1.  Resolve CIMD metadata for client_id.
+
+   2.  Validate the presented actor_token using the token-type check,
+       instance issuer descriptor lookup, signature verification, and
+       JWT claim validation rules in Section 8.3.
+
+   3.  Verify that the actor_token's client_id claim exactly equals the
+       request's client_id parameter.
+
+   4.  Verify proof-of-possession of the actor_token at presentation per
+       Section 8.6.  In this mode the actor_token serves as the sole
+       client authentication credential, so the bearer-replay
+       considerations in Section 12.3 apply with no fallback credential;
+       ASes SHOULD reject requests in this mode whose actor_token lacks
+       a cnf claim, and MUST verify possession of the cnf key when
+       present.
+
+   5.  Reject the request with invalid_client if any of the above fails.
+
+   6.  Treat the client as authenticated.  The validated actor_token
+       also satisfies the actor_token requirement of this profile and is
+       used for instance representation per Section 8.7.
+
+   The actor_token's aud claim serves both purposes (the [RFC7523]
+   client-assertion audience and this profile's actor-token audience).
+   A single value identifying the AS satisfies both.
+
+   The SPIFFE client_id claim omission mode (Section 8.9.1) does not
+   apply to client_instance_jwt client authentication.  Because the same
+   JWT is the sole client authentication credential, the assertion MUST
+   contain the client_id claim and the AS MUST verify it exactly as
+   described above.
+
+   After this procedure completes, processing continues with step 2 of
+   Section 8.3 ("Match the token type") and onward.
+
+8.5.  Authorization-Time Consistency
 
    When a token request is made under the authorization_code grant
    ([RFC6749] Section 4.1), the user has authorized the _client class_
@@ -1312,7 +1439,7 @@ Table of Contents
    *  The client_id authenticated at the token endpoint MUST match the
       client_id that received the authorization_code ([RFC6749]
       Section 4.1.3).  Combined with the client_id-binding requirement
-      in Section 8.2, this prevents an instance assertion from another
+      in Section 8.3, this prevents an instance assertion from another
       client class from being attached to a code.
 
    *  The AS MUST NOT permit the instance identity to bypass standard
@@ -1365,11 +1492,11 @@ Table of Contents
    runtime) is out of scope for this document; deployments requiring it
    MUST define it via a separate extension.
 
-8.4.  Sender Constraint
+8.6.  Sender Constraint
 
    When the AS issues an access token under this profile, whether the
-   instance is represented in act (delegation case; Section 8.5.2) or in
-   sub (self-acting case; Section 8.5.3), the AS MUST issue a sender-
+   instance is represented in act (delegation case; Section 8.7.2) or in
+   sub (self-acting case; Section 8.7.3), the AS MUST issue a sender-
    constrained access token bound to a key the instance possesses.
    Established mechanisms include DPoP [RFC9449] and Mutual-TLS-bound
    access tokens [RFC8705].
@@ -1420,7 +1547,7 @@ Table of Contents
       assertion's sub.
 
    If the AS cannot establish such an instance-specific binding, it MUST
-   reject the request with invalid_request (Section 8.9).  For this
+   reject the request with invalid_request (Section 8.10).  For this
    reason, instance issuers SHOULD include cnf in instance assertions so
    that the binding key is supplied by the same authority that named the
    instance.
@@ -1437,7 +1564,7 @@ Table of Contents
    instance binding only if the AS treats it as belonging to the
    instance for binding purposes.
 
-8.5.  Access Token Representation
+8.7.  Access Token Representation
 
    A client instance may be acting on behalf of another principal
    (_delegation case_; e.g., a user authorized the request through an
@@ -1446,12 +1573,12 @@ Table of Contents
    AS MUST classify each request as delegation or self-acting before
    populating the issued access token's claims.  In both cases the
    access token's client_id remains the client class, the access token
-   MUST be sender- constrained per Section 8.4, and any upstream actor
+   MUST be sender- constrained per Section 8.6, and any upstream actor
    chain MUST be preserved by nesting per [ACTOR-PROFILE] (merge rules
-   in Section 8.5.4).  The classification rule, the two representation
+   in Section 8.7.4).  The classification rule, the two representation
    cases, and the chain-merging rule appear as peer subsections below.
 
-8.5.1.  Classification
+8.7.1.  Classification
 
    The AS classifies the request based on whether the grant produces a
    principal distinct from the client instance presenting the
@@ -1476,7 +1603,7 @@ Table of Contents
        | ([RFC8693])        | subject             |                |
        +--------------------+---------------------+----------------+
 
-                                  Table 3
+                                  Table 4
 
    The jwt-bearer and token-exchange rows always classify as delegation
    under this profile.  [RFC7523] requires a JWT-bearer assertion that
@@ -1489,9 +1616,9 @@ Table of Contents
    When neither delegation nor self-acting cleanly applies (for example,
    custom or experimental grants), the AS MUST refuse to issue the
    access token rather than guess; reject with invalid_grant
-   (Section 8.9).
+   (Section 8.10).
 
-8.5.2.  Delegation Case
+8.7.2.  Delegation Case
 
    When the request is classified as delegation, the AS MUST populate
    the issued access token's act claim per [ACTOR-PROFILE] from the
@@ -1508,7 +1635,7 @@ Table of Contents
 
    The access token's sub MUST be the principal identified by the grant
    (e.g., the authenticated user).  Sender-constraint binding (top-level
-   cnf and PoP verification) is governed by Section 8.4.
+   cnf and PoP verification) is governed by Section 8.6.
 
    Example (delegation, sender-constrained).  The validated source
    client instance assertion, with all claims required by Section 7.2:
@@ -1553,7 +1680,7 @@ Table of Contents
    subject_token already carries an act chain), see the worked example
    in Appendix "Token Exchange with Prior Delegation Chain".
 
-8.5.3.  Self-Acting Case
+8.7.3.  Self-Acting Case
 
    When the request is classified as self-acting, the instance is the
    principal and there is no other party on whose behalf it acts.  The
@@ -1565,7 +1692,7 @@ Table of Contents
    *  sub_profile = actor_token's sub_profile (if present); the value
       client_instance SHOULD be included
 
-   *  cnf is set per Section 8.4
+   *  cnf is set per Section 8.6
 
    *  act MUST be omitted, except that an upstream actor chain
       (introduced by an inner act in a presented subject_token) MUST be
@@ -1614,7 +1741,7 @@ Table of Contents
    and that act is absent.  The instance assertion's iss is not
    represented in the access token (see preceding paragraph).
 
-8.5.4.  Actor Chain Merging
+8.7.4.  Actor Chain Merging
 
    Per [ACTOR-PROFILE], a Client Instance Assertion presented as an
    actor_token MUST NOT itself carry an act claim; if it does, the AS
@@ -1639,17 +1766,17 @@ Table of Contents
    preserved delegation chain (when present) nested inside.  The
    resulting depth MUST NOT exceed the AS's local maximum delegation
    depth; otherwise the AS MUST reject the request with invalid_request
-   (Section 8.9), per [ACTOR-PROFILE].
+   (Section 8.10), per [ACTOR-PROFILE].
 
-   In the self-acting case (Section 8.5.3) the act claim is omitted at
+   In the self-acting case (Section 8.7.3) the act claim is omitted at
    top level.  When a subject_token is present (uncommon outside token-
    exchange, which this profile classifies as delegation in any case),
    any act chain it carries is preserved verbatim per [ACTOR-PROFILE].
 
-8.6.  Refresh Tokens
+8.8.  Refresh Tokens
 
    When an access token is refreshed ([RFC6749] Section 6), the AS
-   reuses the classification (Section 8.5.1) of the original grant to
+   reuses the classification (Section 8.7.1) of the original grant to
    shape the refreshed access token; the original classification is
    _inherited_ and is not re-derived from the refresh request itself.
 
@@ -1660,7 +1787,7 @@ Table of Contents
    *  actor_token_type MUST be urn:ietf:params:oauth:token-type:client-
       instance-jwt;
 
-   *  the actor_token MUST validate per Section 8.2, including token-
+   *  the actor_token MUST validate per Section 8.3, including token-
       type checking, instance issuer descriptor lookup, signature
       verification, JWT claim validation, client_id binding, and aud
       validation;
@@ -1676,7 +1803,7 @@ Table of Contents
       assertion, preserving any nested upstream actor chain per
       [ACTOR-PROFILE];
 
-   *  the AS MUST re-establish sender-constraint per Section 8.4 against
+   *  the AS MUST re-establish sender-constraint per Section 8.6 against
       the new key.
 
    If actor_token is absent on a refresh request, the AS MAY either copy
@@ -1687,7 +1814,7 @@ Table of Contents
 
    Refresh tokens issued under this profile SHOULD be sender-constrained
    to the originating instance's cnf key, by the same mechanism used to
-   sender-constrain the access token (Section 8.4).  A refresh token
+   sender-constrain the access token (Section 8.6).  A refresh token
    shared across successor instances of a class is a credential-theft
    amplifier: any present-or-future instance of the class can use it to
    obtain access tokens by presenting its own instance assertion.  Where
@@ -1703,83 +1830,7 @@ Table of Contents
    Issuing access tokens with stale instance identity across long
    refresh windows is discouraged; see Section 12.3.
 
-8.7.  Client Authentication
-
-   A client class MAY register the token_endpoint_auth_method value
-   client_instance_jwt in its CIMD metadata to indicate that the AS
-   authenticates the client implicitly from a presented instance
-   assertion, without requiring a separate client_assertion or other
-   credential controlled by the class itself.
-
-   This mode is appropriate where the class has no online private key
-   that an instance can use, for example when the class identifier is a
-   logical CIMD URL with class-key custody centralized away from the
-   runtime, or when the workload identity provider trusted to attest
-   instances is also the only authority the class wishes to publish.
-   The trust chain to the class is preserved: the class's CIMD listing
-   of the instance issuer is itself the endorsement, and a token signed
-   by such an issuer naming this client_id is attributable to the class.
-
-8.7.1.  Token Request
-
-   A request using this auth method carries client_id, actor_token, and
-   actor_token_type.  It MUST NOT carry client_assertion or any other
-   client authentication credential.  Example, using the
-   client_credentials grant:
-
-   POST /token HTTP/1.1
-   Host: as.example.com
-   Content-Type: application/x-www-form-urlencoded
-
-   grant_type=client_credentials
-   &scope=repo.write
-   &client_id=https%3A%2F%2Fopenai.example.com%2Fcodex
-   &actor_token=eyJhbGciOiJFUzI1NiIsImtpZCI6...
-   &actor_token_type=
-     urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
-
-8.7.2.  Authorization Server Processing
-
-   When the registered token_endpoint_auth_method for the client_id is
-   client_instance_jwt, the AS replaces the separate client
-   authentication step of Section 8.2 with the following procedure:
-
-   1.  Resolve CIMD metadata for client_id.
-
-   2.  Validate the presented actor_token using the token-type check,
-       instance issuer descriptor lookup, signature verification, and
-       JWT claim validation rules in Section 8.2.
-
-   3.  Verify that the actor_token's client_id claim exactly equals the
-       request's client_id parameter.
-
-   4.  Verify proof-of-possession of the actor_token at presentation per
-       Section 8.4.  In this mode the actor_token serves as the sole
-       client authentication credential, so the bearer-replay
-       considerations in Section 12.3 apply with no fallback credential;
-       ASes SHOULD reject requests in this mode whose actor_token lacks
-       a cnf claim, and MUST verify possession of the cnf key when
-       present.
-
-   5.  Reject the request with invalid_client if any of the above fails.
-
-   6.  Treat the client as authenticated.  The validated actor_token
-       also satisfies the actor_token requirement of this profile and is
-       used for instance representation per Section 8.5.
-
-   The actor_token's aud claim serves both purposes (the [RFC7523]
-   client-assertion audience and this profile's actor-token audience).
-   A single value identifying the AS satisfies both.
-
-   The SPIFFE client_id claim omission mode (Section 8.8.1) does not
-   apply to client_instance_jwt client authentication.  Because the same
-   JWT is the sole client authentication credential, the assertion MUST
-   contain the client_id claim and the AS MUST verify it exactly as
-   described above.
-
-   The remaining steps of Section 8.2 apply unchanged.
-
-8.8.  SPIFFE Compatibility
+8.9.  SPIFFE Compatibility
 
    A SPIFFE workload typically obtains a JWT-SVID from the SPIFFE
    Workload API.  JWT-SVIDs carry iss (the trust domain), sub (the
@@ -1796,7 +1847,7 @@ Table of Contents
    Instance Assertion MUST use typ = client-instance+jwt per
    Section 7.3.
 
-8.8.1.  Client ID Claim Omission
+8.9.1.  Client ID Claim Omission
 
    When all of the following hold for the descriptor that matches the
    actor_token's iss:
@@ -1815,7 +1866,7 @@ Table of Contents
       descriptor's spiffe_id (after applying the wildcard, if any).
 
    *  If the actor_token has a client_id claim, it MUST still equal the
-      request's client_id parameter (Section 8.2); the exception narrows
+      request's client_id parameter (Section 8.3); the exception narrows
       the _requirement_ that the claim be present, not the _consistency_
       of the claim when present.
 
@@ -1829,7 +1880,7 @@ Table of Contents
    This is the same model SPIFFE-CLIENT-AUTH uses for client
    authentication, applied here to actor identity.
 
-8.8.2.  SPIFFE Trust Bundle Resolution
+8.9.2.  SPIFFE Trust Bundle Resolution
 
    When a descriptor specifies spiffe_bundle_endpoint instead of
    jwks_uri or jwks, the AS resolves verification keys via the SPIFFE
@@ -1842,7 +1893,7 @@ Table of Contents
    [SPIFFE-CLIENT-AUTH] for the analogous handling in client
    authentication.
 
-8.8.3.  Combined Authentication and Actor Identity
+8.9.3.  Combined Authentication and Actor Identity
 
    A SPIFFE deployment that uses [SPIFFE-CLIENT-AUTH] for client
    authentication MAY use the same JWT-SVID as the actor_token under
@@ -1866,11 +1917,11 @@ Table of Contents
    [SPIFFE-CLIENT-AUTH] nor this document requires it.  A future profile
    MAY define a single auth method that subsumes both roles.
 
-8.9.  Error Responses
+8.10.  Error Responses
 
    Errors are returned per [RFC6749] Section 5.2 and [RFC8693]
    Section 2.2.2.  The following table maps the validation failures
-   defined in Section 8.2 to error codes:
+   defined in Section 8.3 to error codes:
 
       +===================================+========================+
       | Failure                           | Error code             |
@@ -1889,11 +1940,11 @@ Table of Contents
       | client-instance+jwt (Section 7.3) |                        |
       +-----------------------------------+------------------------+
       | cnf possession verification fails | invalid_request        |
-      | (Section 8.4)                     |                        |
+      | (Section 8.6)                     |                        |
       +-----------------------------------+------------------------+
       | instance-specific binding key     | invalid_request        |
       | cannot be established             |                        |
-      | (Section 8.4)                     |                        |
+      | (Section 8.6)                     |                        |
       +-----------------------------------+------------------------+
       | actor_token_type not understood   | unsupported_token_type |
       | and required for the grant        | ([RFC8693])            |
@@ -1916,7 +1967,7 @@ Table of Contents
       +-----------------------------------+------------------------+
       | client_id claim absent and SPIFFE | invalid_grant          |
       | compatibility conditions not met  |                        |
-      | (Section 8.8.1)                   |                        |
+      | (Section 8.9.1)                   |                        |
       +-----------------------------------+------------------------+
       | spiffe_id prefix match fails      | invalid_grant          |
       | (Section 6.1.1)                   |                        |
@@ -1934,55 +1985,14 @@ Table of Contents
       | ([ACTOR-PROFILE])                 |                        |
       +-----------------------------------+------------------------+
       | classification ambiguous          | invalid_grant          |
-      | (Section 8.5.1)                   |                        |
+      | (Section 8.7.1)                   |                        |
       +-----------------------------------+------------------------+
 
-                                 Table 4
+                                 Table 5
 
    The AS MAY return additional information via the error_description
    parameter; deployments MUST NOT include sensitive instance details
    (e.g., raw SPIFFE IDs of unrelated workloads) in error responses.
-
-8.10.  Processing Summary
-
-   This non-normative summary shows how an AS dispatches token endpoint
-   requests.  The normative processing rules are in Section 8.2 and the
-   sections it references.
-
-   +================================+=================================+
-   | Request shape                  | AS behavior                     |
-   +================================+=================================+
-   | No actor_token                 | Process using existing grant-   |
-   |                                | type rules only.                |
-   +--------------------------------+---------------------------------+
-   | Exactly one of actor_token and | Reject with invalid_request.    |
-   | actor_token_type               |                                 |
-   +--------------------------------+---------------------------------+
-   | actor_token_type other than    | Process under that token type's |
-   | urn:ietf:params:oauth:token-   | specification, if supported;    |
-   | type:client-instance-jwt       | otherwise use the applicable    |
-   |                                | error for the grant.            |
-   +--------------------------------+---------------------------------+
-   | actor_token_type is            | Authenticate the client         |
-   | urn:ietf:params:oauth:token-   | normally, validate the Client   |
-   | type:client-instance-jwt with  | Instance Assertion, classify    |
-   | separate client authentication | the grant, and issue a sender-  |
-   |                                | constrained access token.       |
-   +--------------------------------+---------------------------------+
-   | token_endpoint_auth_method is  | Use the Client Instance         |
-   | client_instance_jwt            | Assertion as both client        |
-   |                                | authentication and actor token, |
-   |                                | subject to Section 8.7.         |
-   +--------------------------------+---------------------------------+
-   | Grant classifies as delegation | Put the actor in act; keep the  |
-   |                                | grant principal in top-level    |
-   |                                | sub.                            |
-   +--------------------------------+---------------------------------+
-   | Grant classifies as self-      | Put the actor in top-level sub; |
-   | acting                         | omit top-level act.             |
-   +--------------------------------+---------------------------------+
-
-                                 Table 5
 
 9.  Resource Server Processing
 
@@ -1997,7 +2007,7 @@ Table of Contents
 
 9.1.  Delegation Case
 
-   When the access token carries an act claim (Section 8.5.2), the
+   When the access token carries an act claim (Section 8.7.2), the
    resource server processes it per [ACTOR-PROFILE].  This profile does
    not add new RS-side requirements for the delegation case.  Resource
    servers MAY use act.sub_profile = client_instance as a signal that
@@ -2010,7 +2020,7 @@ Table of Contents
 
 9.2.  Self-Acting Case
 
-   In the self-acting case (Section 8.5.3), the access token carries no
+   In the self-acting case (Section 8.7.3), the access token carries no
    act claim.  From the resource server's perspective, the access token
    is a non-delegated token whose top-level claims have the following
    semantics under this profile:
@@ -2113,10 +2123,10 @@ Table of Contents
 10.1.4.  Revocation and Refresh Tokens
 
    When a refresh token is sender-constrained to the originating
-   instance (Section 8.6), per-instance revocation MUST also revoke the
+   instance (Section 8.8), per-instance revocation MUST also revoke the
    refresh token (and prevent any further access tokens it would mint).
    A deployment that intentionally permits successor-instance refresh
-   (Section 8.6) MUST decide whether per-instance revocation cascades to
+   (Section 8.8) MUST decide whether per-instance revocation cascades to
    successors and document its choice; the safe default is that
    revocation of any successor in a chain revokes the chain.
 
@@ -2134,7 +2144,7 @@ Table of Contents
    the token endpoint as usual; the actor_token and actor_token_type
    parameters are presented at /token in the same way as for a non-PAR/
    JAR flow.  ASes implementing per-actor authorization-time policy
-   (Section 8.3) evaluate that policy at the token endpoint, after the
+   (Section 8.5) evaluate that policy at the token endpoint, after the
    instance assertion has been validated; PAR and JAR do not change
    this.
 
@@ -2151,7 +2161,7 @@ Table of Contents
    require or define them.  When such a policy applies, the AS MUST
    evaluate it against the validated instance assertion before issuing
    the access token, and reject inconsistent requests with invalid_grant
-   (Section 8.9).
+   (Section 8.10).
 
 10.2.3.  Token Introspection
 
@@ -2196,7 +2206,7 @@ Table of Contents
       other token type's specification, not this profile.
 
    *  actor_token_type == urn:ietf:params:oauth:token-type:client-
-      instance-jwt: this profile's processing applies (Section 8.2).
+      instance-jwt: this profile's processing applies (Section 8.3).
 
    ASes SHOULD advertise support via actor_token_types_supported
    (Section 6.2) so clients can discover whether to assemble token
@@ -2210,7 +2220,7 @@ Table of Contents
    present an actor_token of the registered type.  A class that wants to
    mandate instance assertions for every issued access token can
    register token_endpoint_auth_method = client_instance_jwt
-   (Section 8.7), which intrinsically requires the actor_token.
+   (Section 8.4), which intrinsically requires the actor_token.
 
 10.3.4.  Migration without cnf
 
@@ -2218,14 +2228,14 @@ Table of Contents
    of-possession keys, but the bearer-replay protection in Section 12.3
    requires an instance-specific binding.  Until the instance issuer can
    populate cnf on instance assertions, deployments MUST establish an
-   instance-specific binding through some other means per Section 8.4
+   instance-specific binding through some other means per Section 8.6
    (per-instance mTLS certificates provisioned by the issuer being the
    most common alternative), or the AS will reject the request.  Short
    access-token lifetimes (e.g., five minutes or less) further bound
    exposure during this transition.
 
    ASes and class operators SHOULD NOT enable the client_instance_jwt
-   authentication method (Section 8.7) until cnf is present in instance
+   authentication method (Section 8.4) until cnf is present in instance
    assertions: that mode has no fallback client credential, so an
    instance assertion without cnf is fully bearer at presentation
    (Section 12.5).
@@ -2236,7 +2246,7 @@ Table of Contents
    deployment or implementation claiming conformance MUST identify which
    of the following capabilities it supports.
 
-   Grant-Type Extension AS:  An AS that supports presentation of
+   Actor Token Grant Extension AS:  An AS that supports presentation of
       actor_token and actor_token_type on the grant types listed in
       Section 4.1.  Such an AS MUST dispatch by actor_token_type and
       MUST NOT apply client-instance-jwt token validation rules to other
@@ -2244,13 +2254,13 @@ Table of Contents
 
    Client Instance Assertion AS:  An AS that supports
       urn:ietf:params:oauth:token-type:client-instance-jwt.  Such an AS
-      MUST implement Section 8.2, Section 8.4, Section 8.5,
-      Section 8.5.4, and Section 8.9.  It MUST also implement
+      MUST implement Section 8.3, Section 8.6, Section 8.7,
+      Section 8.7.4, and Section 8.10.  It MUST also implement
       [ACTOR-PROFILE].
 
    Client Instance Assertion Auth Method AS:  An AS that supports the
       client_instance_jwt token_endpoint_auth_method.  Such an AS MUST
-      implement Section 8.7 in addition to the Client Instance Assertion
+      implement Section 8.4 in addition to the Client Instance Assertion
       AS capability.
 
    Client Class:  A client class using this profile MUST publish or
@@ -2321,7 +2331,7 @@ Table of Contents
    Refresh windows are a particular concern: an access token refreshed
    without a new instance assertion may carry stale instance identity
    long after the original instance has terminated.  ASes SHOULD prefer
-   requiring a fresh instance assertion on refresh (Section 8.6), or set
+   requiring a fresh instance assertion on refresh (Section 8.8), or set
    short refresh intervals when instance identity is present.
 
 12.3.  Replay
@@ -2335,21 +2345,21 @@ Table of Contents
    or less) both to limit replay exposure and because client instances
    often have lifetimes of seconds to minutes.
 
-   When refreshing access tokens (Section 8.6), AS implementations
+   When refreshing access tokens (Section 8.8), AS implementations
    SHOULD prefer requiring a fresh instance assertion rather than
    perpetuating stale instance identity, especially across long refresh
    windows.
 
    The replay surface depends on whether the instance assertion carries
    cnf (Section 7.2) and whether the AS verifies possession at
-   presentation (Section 8.4).  When cnf is present and verified, the
+   presentation (Section 8.6).  When cnf is present and verified, the
    instance assertion is non-bearer at presentation: an attacker with
    only the JWT cannot use it without also possessing the cnf private
    key.  When cnf is absent, an attacker who captures a live instance
    assertion within its exp window can present it once before the jti
    cache rejects replays (and not at all against a different AS thanks
    to aud binding).  For the auth-via-actor-token mode in particular
-   (Section 8.7), where the instance assertion is the only client
+   (Section 8.4), where the instance assertion is the only client
    credential, ASes SHOULD reject requests whose instance assertion
    lacks cnf; classes deploying this mode SHOULD ensure their instance
    issuers populate cnf.
@@ -2366,7 +2376,7 @@ Table of Contents
 12.5.  Defense in Depth for the client_instance_jwt Authentication
        Method
 
-   The client_instance_jwt authentication method (Section 8.7)
+   The client_instance_jwt authentication method (Section 8.4)
    eliminates the requirement for the client class to control a private
    key used at the token endpoint.  The trust chain to the class is
    preserved (the CIMD listing endorses the instance issuer), but the AS
@@ -2388,11 +2398,11 @@ Table of Contents
 12.6.  Mode-Switch Between Delegation and Self-Acting
 
    Whether an issued access token represents delegation or self-acting
-   (Section 8.5.1) determines whether the instance is exposed to
+   (Section 8.7.1) determines whether the instance is exposed to
    resource servers as act or as sub.  An adversary that can influence
    classification could escalate privileges, for example by inducing the
    AS to drop a sub belonging to a user and re-anchor the token on the
-   instance's sub.  The classification rule in Section 8.5.1 is
+   instance's sub.  The classification rule in Section 8.7.1 is
    determined by the grant type, not by comparison of attacker-
    influenceable subject strings; ASes MUST NOT employ heuristic or
    fuzzy matching of assertion contents to override the table.  In
@@ -2408,7 +2418,7 @@ Table of Contents
    Without sender-constraint, an act claim is an assertion about who
    acted, not a binding enforced at the resource server: any party in
    possession of the access token can present it as the named actor.
-   Section 8.4 therefore requires sender-constrained access tokens and
+   Section 8.6 therefore requires sender-constrained access tokens and
    forbids bearer issuance under this profile.  Per [ACTOR-PROFILE], the
    resource server validates proof of possession against the access
    token's top-level cnf only; confirmation members inside an act object
@@ -2448,7 +2458,7 @@ Table of Contents
       hierarchical identifiers (e.g., a SPIFFE path) whose minimum
       granularity matches the auditing need.
 
-   The error response guidance in Section 8.9 extends to logs and audit
+   The error response guidance in Section 8.10 extends to logs and audit
    trails: instance assertion contents SHOULD be logged at a level
    commensurate with the sensitivity of the workload identity they
    convey.
@@ -2514,7 +2524,7 @@ Table of Contents
 
    Change Controller:  IETF
 
-   Specification Document(s):  Section 8.7 of this document
+   Specification Document(s):  Section 8.4 of this document
 
 13.4.  OAuth Authorization Server Metadata
 
@@ -2817,7 +2827,7 @@ Why a dedicated actor_token_type URN?
 
 Why reuse actor_token in the self-acting case?
 
-   In the self-acting case (Section 8.5.3) the issued access token's
+   In the self-acting case (Section 8.7.3) the issued access token's
    principal is the instance itself, not a separate party.  RFC 8693's
    "actor" framing literally describes the actor as the party acting on
    behalf of the subject; with no other subject present, the framing is
@@ -2830,12 +2840,12 @@ Why reuse actor_token in the self-acting case?
        provider issues to a runtime is the same JWT regardless of
        whether the runtime then asks the AS for a user-delegated token
        or a client_credentials token.  Validation rules (Section 7.2,
-       Section 8.2) are also identical.  A second parameter would double
+       Section 8.3) are also identical.  A second parameter would double
        the wire surface without changing the validation.
 
    2.  _Classification belongs to the grant._ Whether the issued access
        token represents delegation or self-acting is determined by the
-       grant (Section 8.5.1), not by the instance assertion.  The same
+       grant (Section 8.7.1), not by the instance assertion.  The same
        instance assertion can correctly produce either shape depending
        on the grant it accompanies.
 
@@ -2849,13 +2859,13 @@ Why reuse actor_token in the self-acting case?
    specification readers should treat actor_token in this profile as
    "validated instance identity assertion," with the understanding that
    its placement in the issued access token (act vs. sub) is governed by
-   Section 8.5.1.
+   Section 8.7.1.
 
 Why a token_endpoint_auth_method rather than a client_assertion_type?
 
    [SPIFFE-CLIENT-AUTH] models its workload-identity-as-client-auth
    mechanism as a client_assertion_type.  The natural question is why
-   Section 8.7 does not.
+   Section 8.4 does not.
 
    The two cases differ in what the JWT names.  A SPIFFE JWT-SVID
    presented as a client_assertion under [SPIFFE-CLIENT-AUTH] names _the
@@ -3016,7 +3026,7 @@ Workload Token Request
    }
 
    The SVID has no client_id claim and is not re-minted; SPIFFE
-   compatibility (Section 8.8.1) handles the binding structurally via
+   compatibility (Section 8.9.1) handles the binding structurally via
    the descriptor's spiffe_id.
 
 AS Processing
@@ -3035,7 +3045,7 @@ AS Processing
        descriptor (issuer = spiffe://example.com), verifies the
        signature against the same SPIFFE bundle, validates JWT claims,
        confirms the sub falls under the descriptor's spiffe_id, and
-       accepts the absence of a client_id claim per Section 8.8.1.
+       accepts the absence of a client_id claim per Section 8.9.1.
 
    4.  Classifies as self-acting (client_credentials grant).
 
@@ -3094,7 +3104,7 @@ Authorization Code with User Delegation
 
    Authorization request from the agent (abridged). dpop_jkt carries the
    thumbprint of inst-01's DPoP key (matching the instance assertion's
-   cnf.jkt) to establish key-bound continuity per Section 8.3:
+   cnf.jkt) to establish key-bound continuity per Section 8.5:
 
    GET /authorize?response_type=code
      &client_id=https%3A%2F%2Fapp.example.com%2Fagent
@@ -3107,7 +3117,7 @@ Authorization Code with User Delegation
    Host: as.example.com
 
    The AS authenticates Alice, displays consent for the client class
-   (per Section 8.3 consent applies to the class as a whole, not per-
+   (per Section 8.5 consent applies to the class as a whole, not per-
    instance), binds the authorization code to the dpop_jkt value per
    [RFC9449], and redirects with an authorization_code.
 
@@ -3162,7 +3172,7 @@ Authorization Code with User Delegation
 
    8.   Applies AS-local maximum delegation depth.
 
-   9.   Section 8.3: the request's client_id matches the client_id that
+   9.   Section 8.5: the request's client_id matches the client_id that
         received the code, and the DPoP proof's thumbprint matches both
         the code's dpop_jkt and the actor token's cnf.jkt.
 
@@ -3276,7 +3286,7 @@ Token Exchange with Prior Delegation Chain
    The actor_token is the agent instance inst-03, with no act of its own
    (per [ACTOR-PROFILE], actor_token MUST NOT carry act).
 
-   Chain construction per Section 8.5.4:
+   Chain construction per Section 8.7.4:
 
    *  Outermost: the validated actor_token (inst-03).
 
@@ -3333,7 +3343,7 @@ Refresh Token with Instance Succession
    &actor_token_type=
      urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
 
-   Per Section 8.6, classification is inherited from the original grant
+   Per Section 8.8, classification is inherited from the original grant
    (authorization_code → delegation).  The actor identity changes from
    inst-01 to inst-04.
 
@@ -3358,7 +3368,7 @@ Refresh Token with Instance Succession
 
    The act.sub has switched from inst-01 to inst-04.  Audit pipelines
    reading act.sub will see this change; the deployment SHOULD have
-   documented this behavior per Section 8.6, and SHOULD have considered
+   documented this behavior per Section 8.8, and SHOULD have considered
    whether the refresh token should have been sender-constrained to
    prevent transfer between instances.
 
