@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>OAuth 2.0 Client Instance Actor Assertion Profile</title>
+<title>OAuth 2.0 Client Instance Assertion Profile</title>
 <meta content="Karl McGuinness" name="author">
 <meta content="
        This specification defines a profile for representing client instance
@@ -20,7 +20,7 @@ parameters defined by OAuth 2.0 Token Exchange (RFC 8693) and permits
 their use with grant types other than token exchange. It registers a
 new  actor_token_type ,  urn:ietf:params:oauth:token-type:client-instance-jwt ,
 that carries the instance identity as a signed JWT. The Authorization
-Server validates the actor token and represents the instance either
+Server validates the instance assertion and represents the instance either
 as an  act  claim, when another principal is present (e.g., a user
 delegating to the instance), or as the access token's  sub , when
 the instance itself is the principal (e.g., a client credentials
@@ -1066,7 +1066,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <table class="ears">
 <thead><tr>
 <td class="left">Internet-Draft</td>
-<td class="center">oauth-client-instance-actor</td>
+<td class="center">oauth-client-instance-assertion</td>
 <td class="right">May 2026</td>
 </tr></thead>
 <tfoot><tr>
@@ -1099,7 +1099,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </dd>
 </dl>
 </div>
-<h1 id="title">OAuth 2.0 Client Instance Actor Assertion Profile</h1>
+<h1 id="title">OAuth 2.0 Client Instance Assertion Profile</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">This specification defines a profile for representing client instance
@@ -1115,7 +1115,7 @@ parameters defined by OAuth 2.0 Token Exchange (RFC 8693) and permits
 their use with grant types other than token exchange. It registers a
 new <code>actor_token_type</code>, <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>,
 that carries the instance identity as a signed JWT. The Authorization
-Server validates the actor token and represents the instance either
+Server validates the instance assertion and represents the instance either
 as an <code>act</code> claim, when another principal is present (e.g., a user
 delegating to the instance), or as the access token's <code>sub</code>, when
 the instance itself is the principal (e.g., a client credentials
@@ -1198,6 +1198,9 @@ instance possesses.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.3">
                 <p id="section-toc.1-1.1.2.3.1" class="keepWithNext"><a href="#section-1.3" class="auto internal xref">1.3</a>.  <a href="#name-relationship-to-spiffe-clie" class="internal xref">Relationship to SPIFFE Client Authentication</a></p>
 </li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.4">
+                <p id="section-toc.1-1.1.2.4.1"><a href="#section-1.4" class="auto internal xref">1.4</a>.  <a href="#name-relationship-to-wimse-workl" class="internal xref">Relationship to WIMSE Workload Credentials</a></p>
+</li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
@@ -1234,28 +1237,22 @@ instance possesses.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
                 <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-instance_issuers" class="internal xref">instance_issuers</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
-                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-max_actor_chain_depth" class="internal xref">max_actor_chain_depth</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
-                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-actor_token_required" class="internal xref">actor_token_required</a></p>
-</li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
             <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-authorization-server-metada" class="internal xref">Authorization Server Metadata</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-the-client-instance-actor-t" class="internal xref">The Client Instance Actor Token</a></p>
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-the-client-instance-asserti" class="internal xref">The Client Instance Assertion</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
-                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-layering-of-instance-identi" class="internal xref">Layering of Instance Identity and Actor Assertion</a></p>
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-layering-authentication-and" class="internal xref">Layering: Authentication and Class Membership</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
                 <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-jwt-claims" class="internal xref">JWT Claims</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
-                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-signing" class="internal xref">Signing</a></p>
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-signing-and-jose-header" class="internal xref">Signing and JOSE Header</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
                 <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-example" class="internal xref">Example</a></p>
@@ -1272,7 +1269,7 @@ instance possesses.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-authorization-server-proces" class="internal xref">Authorization Server Processing</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
-                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-client-authentication-via-a" class="internal xref">Client Authentication via Actor Token</a></p>
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-client-authentication-via-i" class="internal xref">Client Authentication via Instance Assertion</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3.2.1">
                     <p id="section-toc.1-1.8.2.3.2.1.1"><a href="#section-8.3.1" class="auto internal xref">8.3.1</a>.  <a href="#name-token-request-2" class="internal xref">Token Request</a></p>
@@ -1436,12 +1433,6 @@ instance possesses.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.2.2.1">
                     <p id="section-toc.1-1.15.2.2.2.1.1"><a href="#section-15.2.1" class="auto internal xref">15.2.1</a>.  <a href="#name-instance_issuers-2" class="internal xref">instance_issuers</a></p>
 </li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.2.2.2">
-                    <p id="section-toc.1-1.15.2.2.2.2.1"><a href="#section-15.2.2" class="auto internal xref">15.2.2</a>.  <a href="#name-max_actor_chain_depth-2" class="internal xref">max_actor_chain_depth</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.2.2.3">
-                    <p id="section-toc.1-1.15.2.2.2.3.1"><a href="#section-15.2.3" class="auto internal xref">15.2.3</a>.  <a href="#name-actor_token_required-2" class="internal xref">actor_token_required</a></p>
-</li>
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.3">
@@ -1459,7 +1450,10 @@ instance possesses.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.5">
-                <p id="section-toc.1-1.15.2.5.1"><a href="#section-15.5" class="auto internal xref">15.5</a>.  <a href="#name-oauth-entity-profile" class="internal xref">OAuth Entity Profile</a></p>
+                <p id="section-toc.1-1.15.2.5.1"><a href="#section-15.5" class="auto internal xref">15.5</a>.  <a href="#name-media-type" class="internal xref">Media Type</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.6">
+                <p id="section-toc.1-1.15.2.6.1"><a href="#section-15.6" class="auto internal xref">15.6</a>.  <a href="#name-oauth-entity-profile" class="internal xref">OAuth Entity Profile</a></p>
 </li>
             </ul>
 </li>
@@ -1586,14 +1580,14 @@ issuer published in the client's metadata.<a href="#section-1-4.3.1" class="pilc
 </li>
         <li class="normal" id="section-1-4.4">
           <p id="section-1-4.4.1">It requires issued access tokens to be sender-constrained to a key
-the instance possesses, and specifies how the actor token's <code>cnf</code>
+the instance possesses, and specifies how the instance assertion's <code>cnf</code>
 claim drives that binding.<a href="#section-1-4.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-4.5">
           <p id="section-1-4.5.1">It registers <code>client_instance_jwt</code> as a
 <code>token_endpoint_auth_method</code> value, allowing deployments without an
 online class-controlled credential to authenticate the client via
-the actor token alone.<a href="#section-1-4.5.1" class="pilcrow">¶</a></p>
+the instance assertion alone.<a href="#section-1-4.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-4.6">
           <p id="section-1-4.6.1">It defines first-class support for SPIFFE workload identity,
@@ -1642,7 +1636,7 @@ access token's <code>sub</code> names the instance and <code>act</code> is not p
 does not strictly apply to self-acting requests, but this profile
 reuses the <code>actor_token</code> wire artifact and validation rules unchanged
 because the same JWT correctly produces either shape; classification
-is determined by the grant, not by the actor token. See
+is determined by the grant, not by the instance assertion. See
 <a href="#rationale-self-acting" class="auto internal xref">Appendix "Why reuse actor_token in the self-acting case?"</a>.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1724,7 +1718,7 @@ and bind the access token to it. Where <span>[<a href="#SPIFFE-CLIENT-AUTH" clas
 alone suffices (no need to name instances downstream), this
 profile is not needed.<a href="#section-1.3-4" class="pilcrow">¶</a></p>
 <p id="section-1.3-5">This document does not require SPIFFE. Instance issuers may issue
-non-SPIFFE JWT actor tokens (any <code>subject_syntax</code> other than
+non-SPIFFE JWT instance assertions (any <code>subject_syntax</code> other than
 "spiffe"), and the client class itself may authenticate via
 <code>private_key_jwt</code>, <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>, or any other registered
 method.<a href="#section-1.3-5" class="pilcrow">¶</a></p>
@@ -1752,6 +1746,49 @@ descriptor uses these SPIFFE features (<a href="#spiffe-client-id-omission" clas
 profile <span class="bcp14">MAY</span> present the same SVID as both <code>client_assertion</code> and
 <code>actor_token</code> in a single token request (<a href="#spiffe-combined" class="auto internal xref">Section 8.7.3</a>). An
 end-to-end deployment recipe is in <a href="#appendix-spiffe-recipe" class="auto internal xref">Appendix "SPIFFE Deployment Recipe"</a>.<a href="#section-1.3-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="relationship-wimse">
+<section id="section-1.4">
+        <h3 id="name-relationship-to-wimse-workl">
+<a href="#section-1.4" class="section-number selfRef">1.4. </a><a href="#name-relationship-to-wimse-workl" class="section-name selfRef">Relationship to WIMSE Workload Credentials</a>
+        </h3>
+<p id="section-1.4-1">The IETF Workload Identity in Multi System Environments (WIMSE)
+working group is defining specifications for workload identity,
+including the Workload Identity Token (WIT) <span>[<a href="#WIMSE-CREDS" class="cite xref">WIMSE-CREDS</a>]</span>, a JWT
+credential that asserts a workload's identity, and the broader
+WIMSE architecture <span>[<a href="#WIMSE-ARCH" class="cite xref">WIMSE-ARCH</a>]</span>. SPIFFE is the dominant deployed
+instance of this model; WIMSE generalizes it.<a href="#section-1.4-1" class="pilcrow">¶</a></p>
+<p id="section-1.4-2">This profile and WIMSE address adjacent layers:<a href="#section-1.4-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.4-3.1">
+            <p id="section-1.4-3.1.1"><strong>WIMSE WIT</strong>: a general-purpose workload identity credential.
+Carries <code>sub</code>, <code>cnf</code>, <code>exp</code>, optionally <code>iss</code> and <code>jti</code>. Media
+type <code>application/wit+jwt</code>. Designed for any HTTP endpoint, not
+specifically for OAuth.<a href="#section-1.4-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.4-3.2">
+            <p id="section-1.4-3.2.1"><strong>This profile's Client Instance Assertion</strong>: the OAuth-aware
+projection of the same workload identity model. Carries WIT-style
+claims plus the OAuth-specific bindings (<code>client_id</code> for class
+membership, <code>aud</code> identifying the AS) needed to be presented as
+<code>actor_token</code> at the OAuth token endpoint.<a href="#section-1.4-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-1.4-4">A WIT alone cannot be presented as <code>actor_token</code> under this profile
+because it lacks the OAuth-specific claims. Deployments that already
+hold a WIT (or a SPIFFE JWT-SVID, a Kubernetes projected service-
+account token, or other workload credential) <span class="bcp14">SHOULD</span> use the
+OAuth-aware adapter pattern (<a href="#layering" class="auto internal xref">Section 7.1</a>) to mint a Client Instance
+Assertion carrying the underlying credential's identity together
+with the required OAuth claims. From the AS's perspective, the
+adapter is the instance issuer.<a href="#section-1.4-4" class="pilcrow">¶</a></p>
+<p id="section-1.4-5">The WIMSE Workload Proof Token (WPT) <span>[<a href="#WIMSE-WPT" class="cite xref">WIMSE-WPT</a>]</span> is a workload-to-
+workload HTTP signing mechanism (analogous to <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> DPoP for
+workloads). WPT operates at a different layer than this profile and
+does not interact with the OAuth token endpoint; sender-constraint
+of access tokens issued under this profile remains DPoP- or mTLS-
+based per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>.<a href="#section-1.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1785,15 +1822,21 @@ process, container, function invocation, or session.<a href="#section-2-3.4.1" c
 <dt id="section-2-3.5">Instance Issuer:</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.6">
           <p id="section-2-3.6.1">An authority trusted by the client class to authenticate client
-instances and issue actor tokens on their behalf. Examples include
+instances and issue instance assertions on their behalf. Examples include
 workload identity providers (e.g., a SPIFFE control plane
 <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>) and platform-managed identity services.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-2-3.7">Client Instance Actor Token:</dt>
+<dt id="section-2-3.7">Client Instance Assertion:</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.8">
           <p id="section-2-3.8.1">A JWT issued by an instance issuer asserting the identity of a
-client instance, presented as the <code>actor_token</code> in a token request.<a href="#section-2-3.8.1" class="pilcrow">¶</a></p>
+client instance, presented as the <code>actor_token</code> in a token request.
+This document distinguishes "<code>actor_token</code>" (the RFC 8693 request
+parameter, always typeset in backticks) from "Client Instance
+Assertion" or "instance assertion" in prose (the JWT artifact
+defined by this profile, which is what the <code>actor_token</code> parameter
+carries when its <code>actor_token_type</code> is
+<code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>).<a href="#section-2-3.8.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
@@ -1820,11 +1863,11 @@ client instance, presented as the <code>actor_token</code> in a token request.<a
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">Instance Issuer</td>
-            <td class="text-left" rowspan="1" colspan="1">Authenticates concrete runtime instances and issues short-lived JWT actor tokens describing them.</td>
+            <td class="text-left" rowspan="1" colspan="1">Authenticates concrete runtime instances and issues short-lived JWT instance assertions describing them.</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">Authorization Server (AS)</td>
-            <td class="text-left" rowspan="1" colspan="1">Authenticates the client per its registered client authentication method; resolves the client metadata (via CIMD dereference or local registration storage); verifies the actor token against a trusted instance issuer; mints an access token whose <code>act</code> claim represents the instance.</td>
+            <td class="text-left" rowspan="1" colspan="1">Authenticates the client per its registered client authentication method; resolves the client metadata (via CIMD dereference or local registration storage); verifies the instance assertion against a trusted instance issuer; mints an access token whose <code>act</code> claim represents the instance.</td>
           </tr>
         </tbody>
       </table>
@@ -1851,18 +1894,18 @@ client instance, presented as the <code>actor_token</code> in a token request.<a
 </div>
 <p id="section-3-5">The client class identifier (the CIMD URL or RFC 7591 <code>client_id</code>) is
 the OAuth client identifier; the instance issuer identifier is the
-JWT <code>iss</code> of the actor token. They are distinct trust anchors: the AS
+JWT <code>iss</code> of the instance assertion. They are distinct trust anchors: the AS
 authenticates the client class using its registered client
 authentication method (typically <code>private_key_jwt</code> with keys from the
 client's registered <code>jwks_uri</code>) and authenticates the instance
-through the actor token.<a href="#section-3-5" class="pilcrow">¶</a></p>
+through the instance assertion.<a href="#section-3-5" class="pilcrow">¶</a></p>
 <p id="section-3-6">When the client class registers <code>token_endpoint_auth_method</code>
         <code>client_instance_jwt</code> (<a href="#auth-via-actor-token" class="auto internal xref">Section 8.3</a>), these two
-trust anchors collapse onto a single artifact: the actor token both
+trust anchors collapse onto a single artifact: the instance assertion both
 authenticates the client class (via the CIMD endorsement of its
 issuer) and identifies the instance. In that mode the request
-carries no separate <code>client_assertion</code>; the client authentication and
-the actor assertion are the same JWT.<a href="#section-3-6" class="pilcrow">¶</a></p>
+carries no separate <code>client_assertion</code>; the client authentication
+and the instance assertion are the same JWT.<a href="#section-3-6" class="pilcrow">¶</a></p>
 <div class="alignLeft art-ascii-art art-text artwork" id="section-3-7">
 <pre>
 +-----------+   actor token   +------------+
@@ -1973,17 +2016,17 @@ present.<a href="#section-4.1-2.3.1" class="pilcrow">¶</a></p>
         </ul>
 <p id="section-4.1-3">A client class <span class="bcp14">MUST NOT</span> list instance issuers it does not control or
 trust to enforce these bounds. An instance issuer accepting delegation
-<span class="bcp14">MUST NOT</span> mint actor tokens naming this <code>client_id</code> outside the
-delegated scope, and <span class="bcp14">MUST NOT</span> mint actor tokens whose <code>client_id</code> names
+<span class="bcp14">MUST NOT</span> mint instance assertions naming this <code>client_id</code> outside the
+delegated scope, and <span class="bcp14">MUST NOT</span> mint instance assertions whose <code>client_id</code> names
 a class for which the runtime has not been authorized as a member
 (<a href="#layering" class="auto internal xref">Section 7.1</a>). This per-class minting requirement is what prevents
 cross-class instance impersonation when the same instance issuer is
 listed by multiple client classes (for example, in multi-tenant
 SaaS).<a href="#section-4.1-3" class="pilcrow">¶</a></p>
 <p id="section-4.1-4">Because the CIMD listing endorses the issuer to mint tokens naming
-this <code>client_id</code>, an actor token signed by such an issuer is itself
+this <code>client_id</code>, an instance assertion signed by such an issuer is itself
 attributable to the client class. A class <span class="bcp14">MAY</span> exploit this to use
-the actor token as its client credential; see
+the instance assertion as its client credential; see
 <a href="#auth-via-actor-token" class="auto internal xref">Section 8.3</a>.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1993,8 +2036,8 @@ the actor token as its client credential; see
 <a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-authority-of-the-authorizat" class="section-name selfRef">Authority of the Authorization Server</a>
         </h3>
 <p id="section-4.2-1">The AS treats the CIMD <code>instance_issuers</code> list as authoritative: it
-derives its trust in an actor token solely from the descriptor whose
-issuer member matches the actor token's <code>iss</code> claim. This document
+derives its trust in an instance assertion solely from the descriptor whose
+issuer member matches the instance assertion's <code>iss</code> claim. This document
 does not define out-of-band or AS-side configuration of additional
 instance issuers for a <code>client_id</code>; deployments requiring such
 configuration <span class="bcp14">MUST</span> do so via a separate specification.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
@@ -2025,7 +2068,7 @@ revoke such tokens per <span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]<
 mechanism described in <a href="#revocation" class="auto internal xref">Section 10</a>.<a href="#section-4.3-2" class="pilcrow">¶</a></p>
 <p id="section-4.3-3">To bound the compromise recovery window, ASes issuing access tokens
 under this profile <span class="bcp14">SHOULD</span> set the access token TTL no longer than
-the AS's CIMD cache TTL plus the actor token's <code>exp</code> window.
+the AS's CIMD cache TTL plus the instance assertion's <code>exp</code> window.
 Deployments that cannot satisfy this bound <span class="bcp14">MUST</span> support active
 access-token revocation (<a href="#revocation" class="auto internal xref">Section 10</a>) and <span class="bcp14">SHOULD</span> support
 introspection-based status checks at the resource server.<a href="#section-4.3-3" class="pilcrow">¶</a></p>
@@ -2111,7 +2154,7 @@ two registration models.<a href="#section-5-3" class="pilcrow">¶</a></p>
 <p id="section-5.1-1"><span class="bcp14">OPTIONAL</span>. A non-empty JSON array of <em>instance issuer descriptor</em>
 objects. Each descriptor declares an issuer that the client class
 trusts to authenticate its instances. If this parameter is absent,
-or is present as an empty array, the AS <span class="bcp14">MUST NOT</span> accept actor tokens
+or is present as an empty array, the AS <span class="bcp14">MUST NOT</span> accept instance assertions
 of type <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code> for this
 client; the AS <span class="bcp14">SHOULD</span> treat an empty array as a metadata error and
 log it for the client class operator.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
@@ -2120,7 +2163,7 @@ log it for the client class operator.<a href="#section-5.1-1" class="pilcrow">¶
           <dt id="section-5.1-3.1">issuer (<span class="bcp14">REQUIRED</span>):</dt>
           <dd style="margin-left: 1.5em" id="section-5.1-3.2">
             <p id="section-5.1-3.2.1">A StringOrURI <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> identifying the instance issuer. This
-value <span class="bcp14">MUST</span> exactly match the <code>iss</code> claim of accepted actor tokens.<a href="#section-5.1-3.2.1" class="pilcrow">¶</a></p>
+value <span class="bcp14">MUST</span> exactly match the <code>iss</code> claim of accepted instance assertions.<a href="#section-5.1-3.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -2132,7 +2175,7 @@ absent, the AS <span class="bcp14">MUST</span> reject the descriptor as invalid 
 <code>jwks_uri</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-5.1-5.2">
             <p id="section-5.1-5.2.1">An HTTPS URL of a JWK Set <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span> containing the public keys
-used to verify signatures of actor tokens issued by this issuer.<a href="#section-5.1-5.2.1" class="pilcrow">¶</a></p>
+used to verify signatures of instance assertions issued by this issuer.<a href="#section-5.1-5.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-5.1-5.3">
@@ -2145,7 +2188,7 @@ used to verify signatures of actor tokens issued by this issuer.<a href="#sectio
 <code>spiffe_bundle_endpoint</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-5.1-5.6">
             <p id="section-5.1-5.6.1">An HTTPS URL of a SPIFFE trust bundle endpoint <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span> from
-which the AS resolves verification keys for actor tokens issued by
+which the AS resolves verification keys for instance assertions issued by
 this issuer. When present, <code>subject_syntax</code> <span class="bcp14">MUST</span> be "spiffe". The
 bundle endpoint format and resolution rules are governed by SPIFFE;
 see <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> for the analogous use in client
@@ -2156,7 +2199,7 @@ authentication.<a href="#section-5.1-5.6.1" class="pilcrow">¶</a></p>
 <code>signing_alg_values_supported</code> (<span class="bcp14">OPTIONAL</span>):</dt>
           <dd style="margin-left: 1.5em" id="section-5.1-5.8">
             <p id="section-5.1-5.8.1">A JSON array of JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> <code>alg</code> values that this issuer uses to
-sign actor tokens. If present, the AS <span class="bcp14">MUST</span> reject actor tokens
+sign instance assertions. If present, the AS <span class="bcp14">MUST</span> reject instance assertions
 whose <code>alg</code> is not listed.<a href="#section-5.1-5.8.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
@@ -2169,14 +2212,14 @@ arbitrary StringOrURI) and "spiffe" (a SPIFFE ID <span>[<a href="#SPIFFE" class=
 also <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> for the related SPIFFE-based client
 authentication profile). Other values <span class="bcp14">MAY</span> be defined by future
 specifications. An AS that does not understand the value <span class="bcp14">MUST</span> reject
-actor tokens for that descriptor with <code>invalid_grant</code>.<a href="#section-5.1-5.10.1" class="pilcrow">¶</a></p>
+instance assertions for that descriptor with <code>invalid_grant</code>.<a href="#section-5.1-5.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-5.1-5.11">
 <code>trust_domain</code> (<span class="bcp14">OPTIONAL</span>):</dt>
           <dd style="margin-left: 1.5em" id="section-5.1-5.12">
             <p id="section-5.1-5.12.1">When <code>subject_syntax</code> is "spiffe", a SPIFFE trust domain that the
-<code>sub</code> claim <span class="bcp14">MUST</span> belong to. The AS <span class="bcp14">MUST</span> reject any actor token
+<code>sub</code> claim <span class="bcp14">MUST</span> belong to. The AS <span class="bcp14">MUST</span> reject any instance assertion
 whose <code>sub</code> does not lie within this trust domain. A descriptor's
 <code>trust_domain</code> is independent of any SPIFFE trust domain associated
 with the client class itself under <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>; the two
@@ -2190,8 +2233,8 @@ with the client class itself under <span>[<a href="#SPIFFE-CLIENT-AUTH" class="c
 which workloads this issuer may attest as instances of this class.
 The value is a SPIFFE ID, optionally with a trailing "/<em>" wildcard,
 using the same syntax and matching rules as <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>.
-Without "/</em>", the actor token's <code>sub</code> <span class="bcp14">MUST</span> equal this value exactly;
-with "/*", the actor token's <code>sub</code> <span class="bcp14">MUST</span> be a SPIFFE ID whose prefix
+Without "/</em>", the instance assertion's <code>sub</code> <span class="bcp14">MUST</span> equal this value exactly;
+with "/*", the instance assertion's <code>sub</code> <span class="bcp14">MUST</span> be a SPIFFE ID whose prefix
 before the wildcard matches this value's prefix and whose path
 begins with the prefix's path. If both <code>spiffe_id</code> and <code>trust_domain</code>
 are present, the trust domain in <code>spiffe_id</code> <span class="bcp14">MUST</span> equal <code>trust_domain</code>.
@@ -2204,7 +2247,7 @@ to this client class; see <a href="#spiffe-client-id-omission" class="auto inter
           <dd style="margin-left: 1.5em" id="section-5.1-5.16">
             <p id="section-5.1-5.16.1">A JSON array of <code>sub_profile</code> values from the OAuth Entity Profiles
 registry <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span> that this issuer is authorized to
-assert. If present, the AS <span class="bcp14">MUST</span> reject any actor token whose
+assert. If present, the AS <span class="bcp14">MUST</span> reject any instance assertion whose
 <code>sub_profile</code> contains values not listed.<a href="#section-5.1-5.16.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -2225,8 +2268,7 @@ assert. If present, the AS <span class="bcp14">MUST</span> reject any actor toke
       "signing_alg_values_supported": ["ES256"],
       "actor_profiles_supported": ["client_instance", "ai_agent"]
     }
-  ],
-  "max_actor_chain_depth": 4
+  ]
 }
 </pre><a href="#section-5.1-7" class="pilcrow">¶</a>
 </div>
@@ -2252,45 +2294,6 @@ assert. If present, the AS <span class="bcp14">MUST</span> reject any actor toke
 </div>
 </section>
 </div>
-<div id="max-actor-chain-depth">
-<section id="section-5.2">
-        <h3 id="name-max_actor_chain_depth">
-<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-max_actor_chain_depth" class="section-name selfRef">max_actor_chain_depth</a>
-        </h3>
-<p id="section-5.2-1"><span class="bcp14">OPTIONAL</span>. A positive integer specifying the maximum delegation depth
-(<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>) the client class permits in actor chains
-originating from one of its instances. If absent, the AS applies its
-own policy. The AS <span class="bcp14">MUST</span> reject requests whose resulting <code>act</code> chain
-would exceed the lower of (a) this value, when present, and (b) the
-AS-imposed maximum, with <code>invalid_request</code> per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
-<p id="section-5.2-2">ASes implementing this profile <span class="bcp14">SHOULD</span> support a local maximum of at
-least depth 4, consistent with the cross-domain interoperability
-recommendation in <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="actor-token-required">
-<section id="section-5.3">
-        <h3 id="name-actor_token_required">
-<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-actor_token_required" class="section-name selfRef">actor_token_required</a>
-        </h3>
-<p id="section-5.3-1"><span class="bcp14">OPTIONAL</span>. A JSON boolean. When true, the AS <span class="bcp14">MUST</span> reject any token
-request from this <code>client_id</code> that does not include an <code>actor_token</code> of
-type <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>. The default
-is false.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
-<p id="section-5.3-2">This requirement applies uniformly across grant types, including
-<code>refresh_token</code> and token-exchange. In particular, a token-exchange
-request whose <code>actor_token</code> is of a different type (for example, the
-generic <code>urn:ietf:params:oauth:token-type:jwt</code>) does not satisfy this
-requirement, and the AS <span class="bcp14">MUST</span> reject it with <code>invalid_request</code> even if
-that other <code>actor_token</code> would otherwise be processable under
-<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
-<p id="section-5.3-3">This parameter lets a client class enforce that every issued access
-token is bound to an identifiable instance. It is redundant when
-<code>token_endpoint_auth_method</code> is <code>client_instance_jwt</code>
-(<a href="#auth-via-actor-token" class="auto internal xref">Section 8.3</a>); in that mode the actor token is
-implicitly required by the auth method itself.<a href="#section-5.3-3" class="pilcrow">¶</a></p>
-</section>
-</div>
 </section>
 </div>
 <div id="as-metadata">
@@ -2310,7 +2313,7 @@ parameter and <span class="bcp14">MUST</span> include
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code> in it. This is
 the only AS-side discovery signal for support of this profile;
 clients use it to decide whether to assemble token requests
-carrying an actor token.<a href="#section-6-2.2.1" class="pilcrow">¶</a></p>
+carrying an instance assertion.<a href="#section-6-2.2.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
@@ -2333,7 +2336,7 @@ distinguished by its CIMD-based <code>instance_issuers</code> trust resolution
         <dd style="margin-left: 1.5em" id="section-6-4.2">
           <p id="section-6-4.2.1"><span class="bcp14">OPTIONAL</span>. A JSON array of <code>subject_syntax</code> values
 (<a href="#instance-issuers" class="auto internal xref">Section 5.1</a>) that the AS understands when validating
-client instance actor tokens. If the AS publishes this array, a
+client instance assertions. If the AS publishes this array, a
 client class <span class="bcp14">SHOULD</span> only register <code>instance_issuers</code> descriptors
 whose <code>subject_syntax</code> appears in it. If absent, clients <span class="bcp14">MUST</span> assume
 the AS supports at least the default value "uri".<a href="#section-6-4.2.1" class="pilcrow">¶</a></p>
@@ -2347,19 +2350,20 @@ advertise <code>client_instance_jwt</code> in
 </div>
 <div id="client-instance-jwt">
 <section id="section-7">
-      <h2 id="name-the-client-instance-actor-t">
-<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-the-client-instance-actor-t" class="section-name selfRef">The Client Instance Actor Token</a>
+      <h2 id="name-the-client-instance-asserti">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-the-client-instance-asserti" class="section-name selfRef">The Client Instance Assertion</a>
       </h2>
-<p id="section-7-1">A <em>Client Instance Actor Token</em> is a JWT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> that asserts the
-identity of a client instance. Its <code>actor_token_type</code> is
+<p id="section-7-1">A <em>Client Instance Assertion</em> is a JWT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> that asserts the
+identity of a client instance. It is presented as the <code>actor_token</code>
+parameter (RFC 8693) with <code>actor_token_type</code> set to
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code> (see
 <a href="#iana-token-type" class="auto internal xref">Section 15.1</a>).<a href="#section-7-1" class="pilcrow">¶</a></p>
 <div id="layering">
 <section id="section-7.1">
-        <h3 id="name-layering-of-instance-identi">
-<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-layering-of-instance-identi" class="section-name selfRef">Layering of Instance Identity and Actor Assertion</a>
+        <h3 id="name-layering-authentication-and">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-layering-authentication-and" class="section-name selfRef">Layering: Authentication and Class Membership</a>
         </h3>
-<p id="section-7.1-1">A client instance actor token serves two conceptually distinct
+<p id="section-7.1-1">A client instance assertion serves two conceptually distinct
 purposes:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-7.1-2">
 <li id="section-7.1-2.1">
@@ -2375,7 +2379,7 @@ instance issuer that carries both. This matches the prevailing pattern
 in workload identity systems, which already issue audience-scoped,
 signed assertions of runtime identity (e.g., JWT-SVIDs in <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>).<a href="#section-7.1-3" class="pilcrow">¶</a></p>
 <p id="section-7.1-4">The instance issuer is the trust authority for the combined assertion
-and <span class="bcp14">MUST</span>, before minting an actor token under this profile:<a href="#section-7.1-4" class="pilcrow">¶</a></p>
+and <span class="bcp14">MUST</span>, before minting an instance assertion under this profile:<a href="#section-7.1-4" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-7.1-5.1">
             <p id="section-7.1-5.1.1">Authenticate the runtime instance (e.g., via attestation,
@@ -2385,7 +2389,7 @@ platform-level identity, or possession of an instance key); and<a href="#section
             <p id="section-7.1-5.2.1">Verify, under issuer-side policy, that the runtime is permitted to
 claim the <code>client_id</code> named in the token. This typically means that
 the runtime is operationally part of the client class's deployment.
-An instance issuer <span class="bcp14">MUST</span> refuse to mint an actor token whose
+An instance issuer <span class="bcp14">MUST</span> refuse to mint an instance assertion whose
 <code>client_id</code> claim names a class for which the runtime has not been
 authorized, by issuer-side policy, as a member.<a href="#section-7.1-5.2.1" class="pilcrow">¶</a></p>
 </li>
@@ -2395,7 +2399,7 @@ A common deployment pattern wraps an underlying workload identity
 system (Kubernetes projected service-account tokens, AWS IMDS, GCP
 metadata server, Azure managed identity, a SPIFFE control plane,
 etc.) in a thin OAuth-aware adapter that re-mints a client instance
-actor token by adding the claims required by this profile and
+instance assertion by adding the claims required by this profile and
 signing with a key registered in the issuer's descriptor. From the
 AS's perspective, the adapter is the instance issuer; the adapter
 <span class="bcp14">SHOULD</span> enforce the per-class authorization rule above, since
@@ -2408,7 +2412,7 @@ OAuth client classes.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
         <h3 id="name-jwt-claims">
 <a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-jwt-claims" class="section-name selfRef">JWT Claims</a>
         </h3>
-<p id="section-7.2-1">The following claims are defined for client instance actor tokens.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.2-1">The following claims are defined for client instance assertions.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-7.2-2">
           <dt id="section-7.2-2.1">
 <code>iss</code> (<span class="bcp14">REQUIRED</span>):</dt>
@@ -2433,8 +2437,8 @@ the descriptor's <code>subject_syntax</code> (default: arbitrary StringOrURI).<a
 token endpoint URL; if multiple values are present, at least one
 <span class="bcp14">MUST</span> match. Each AS <span class="bcp14">SHOULD</span> specify a single canonical <code>aud</code> format
 (typically its issuer identifier) and document it; instance issuers
-<span class="bcp14">SHOULD</span> use that canonical form. Where actor tokens are scoped per
-AS, instance issuers <span class="bcp14">SHOULD</span> mint an AS-specific actor token rather
+<span class="bcp14">SHOULD</span> use that canonical form. Where instance assertions are scoped per
+AS, instance issuers <span class="bcp14">SHOULD</span> mint an AS-specific instance assertion rather
 than a multi-<code>aud</code> JWT, to limit the replay surface.<a href="#section-7.2-2.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
@@ -2488,7 +2492,7 @@ profile names) is the one defined by <span>[<a href="#ACTOR-PROFILE" class="cite
 matches the format of the <code>actor_profiles_supported</code> descriptor
 member (<a href="#instance-issuers" class="auto internal xref">Section 5.1</a>) when each member of that array is
 treated as a single profile name. This document registers the
-value <code>client_instance</code> (<a href="#iana-entity-profile" class="auto internal xref">Section 15.5</a>). Issuers <span class="bcp14">MAY</span>
+value <code>client_instance</code> (<a href="#iana-entity-profile" class="auto internal xref">Section 15.6</a>). Issuers <span class="bcp14">MAY</span>
 include additional values registered with the "Actor Profile"
 usage location in the OAuth Entity Profiles registry, or
 privately defined collision-resistant values, per
@@ -2514,8 +2518,8 @@ this time.<a href="#section-7.2-2.20.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-7.2-3">A client instance actor token <span class="bcp14">MUST NOT</span> contain an <code>act</code> claim. The
-actor token is a direct identity assertion of a single party (the
+<p id="section-7.2-3">A client instance assertion <span class="bcp14">MUST NOT</span> contain an <code>act</code> claim. The
+instance assertion is a direct identity assertion of a single party (the
 instance); per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, an <code>actor_token</code> that carries an
 <code>act</code> claim represents a delegation chain rather than a direct
 identity, and the AS <span class="bcp14">MUST</span> reject such a token with <code>invalid_grant</code>
@@ -2524,25 +2528,33 @@ identity, and the AS <span class="bcp14">MUST</span> reject such a token with <c
 understood, except where this document or <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> specifies
 processing rules. Future profiles requiring AS understanding of a
 new claim <span class="bcp14">SHOULD</span> use the JWS <code>crit</code> header parameter (<span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>
-Section 4.1.11) to mark it must-understand; ASes <span class="bcp14">MUST</span> reject actor
-tokens whose <code>crit</code> header includes claims they do not implement.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+Section 4.1.11) to mark it must-understand; ASes <span class="bcp14">MUST</span> reject
+assertions whose <code>crit</code> header includes claims they do not implement.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="signing">
 <section id="section-7.3">
-        <h3 id="name-signing">
-<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-signing" class="section-name selfRef">Signing</a>
+        <h3 id="name-signing-and-jose-header">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-signing-and-jose-header" class="section-name selfRef">Signing and JOSE Header</a>
         </h3>
-<p id="section-7.3-1">The actor token <span class="bcp14">MUST</span> be signed using a JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> algorithm;
-"none" <span class="bcp14">MUST NOT</span> be used. Implementations <span class="bcp14">MUST</span> follow the guidance
-in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>. For interoperability, ASes <span class="bcp14">SHOULD</span> support at least
-<code>RS256</code> and <code>ES256</code>, and <span class="bcp14">MAY</span> support other asymmetric algorithms
-permitted by the descriptor's <code>signing_alg_values_supported</code>. Issuers
-<span class="bcp14">SHOULD</span> include a <code>kid</code> in the JWS protected header; ASes <span class="bcp14">SHOULD</span> use
-<code>kid</code> for key selection. Verification keys are obtained from the
-descriptor's <code>jwks_uri</code> or <code>jwks</code> for the issuer that matches the <code>iss</code>
-claim; the AS <span class="bcp14">MUST</span> verify <code>alg</code> against <code>signing_alg_values_supported</code>
-when present.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-1">A Client Instance Assertion <span class="bcp14">MUST</span> be signed using a JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>
+algorithm; "none" <span class="bcp14">MUST NOT</span> be used. Implementations <span class="bcp14">MUST</span> follow the
+guidance in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>. For interoperability, ASes <span class="bcp14">SHOULD</span> support
+at least <code>RS256</code> and <code>ES256</code>, and <span class="bcp14">MAY</span> support other asymmetric
+algorithms permitted by the descriptor's
+<code>signing_alg_values_supported</code>. Issuers <span class="bcp14">SHOULD</span> include a <code>kid</code> in
+the JWS protected header; ASes <span class="bcp14">SHOULD</span> use <code>kid</code> for key selection.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-2">Issuers <span class="bcp14">MUST</span> set the JWS <code>typ</code> (type) protected header parameter to
+<code>client-instance+jwt</code> per <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> Section 3.11, and ASes <span class="bcp14">MUST</span>
+reject assertions whose <code>typ</code> is anything else. Explicit typing
+prevents JWT confusion attacks where a token of a different type
+(for example, a WIT <span>[<a href="#WIMSE-CREDS" class="cite xref">WIMSE-CREDS</a>]</span>, a JWT-SVID, or an OAuth JWT
+access token <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>) is mistaken for a Client Instance
+Assertion.<a href="#section-7.3-2" class="pilcrow">¶</a></p>
+<p id="section-7.3-3">Verification keys are obtained from the descriptor's <code>jwks_uri</code>,
+<code>jwks</code>, or <code>spiffe_bundle_endpoint</code> for the issuer that matches the
+<code>iss</code> claim; the AS <span class="bcp14">MUST</span> verify <code>alg</code> against
+<code>signing_alg_values_supported</code> when present.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="example-token">
@@ -2550,7 +2562,9 @@ when present.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
         <h3 id="name-example">
 <a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-example" class="section-name selfRef">Example</a>
         </h3>
-<p id="section-7.4-1">A decoded client instance actor token:<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+<p id="section-7.4-1">A decoded client instance assertion. The JWS protected header
+includes <code>"typ": "client-instance+jwt"</code> per <a href="#signing" class="auto internal xref">Section 7.3</a>; the payload
+follows:<a href="#section-7.4-1" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-7.4-2">
 <pre>
 {
@@ -2569,7 +2583,7 @@ when present.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
 </div>
 <p id="section-7.4-3">The <code>sub_profile</code> value "<code>ai_agent</code>" is illustrative; only
 "<code>client_instance</code>" is registered by this document
-(<a href="#iana-entity-profile" class="auto internal xref">Section 15.5</a>). Other values require their own
+(<a href="#iana-entity-profile" class="auto internal xref">Section 15.6</a>). Other values require their own
 registration in the OAuth Entity Profiles registry
 <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span>.<a href="#section-7.4-3" class="pilcrow">¶</a></p>
 </section>
@@ -2586,12 +2600,12 @@ registration in the OAuth Entity Profiles registry
         <h3 id="name-token-request">
 <a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-token-request" class="section-name selfRef">Token Request</a>
         </h3>
-<p id="section-8.1-1">A client presents a client instance actor token at the token endpoint
+<p id="section-8.1-1">A client presents a client instance assertion at the token endpoint
 by adding the <code>actor_token</code> and <code>actor_token_type</code> parameters defined by
 <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> to a token request of any grant type listed in
 <a href="#grant-type-applicability" class="auto internal xref">Section 12</a>.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
 <p id="section-8.1-2">The following example shows a client credentials grant carrying a
-client instance actor token. The client class authenticates with
+client instance assertion. The client class authenticates with
 <code>private_key_jwt</code>; line breaks are for readability:<a href="#section-8.1-2" class="pilcrow">¶</a></p>
 <div class="lang-http-message sourcecode" id="section-8.1-3">
 <pre>
@@ -2647,7 +2661,7 @@ client-controlled credential.<a href="#section-8.2-4.1.1" class="pilcrow">¶</a>
           <li id="section-8.2-4.2">
             <p id="section-8.2-4.2.1"><strong>Match the token type.</strong> If <code>actor_token_type</code> is not
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>, processing
-under this document does not apply. (Other actor token types <span class="bcp14">MAY</span>
+under this document does not apply. (Other instance assertion types <span class="bcp14">MAY</span>
 be processed under their own specifications.)<a href="#section-8.2-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-4.3">
@@ -2676,10 +2690,10 @@ and <code>jti</code> per <a href="#claims" class="auto internal xref">Section 7.
 <code>actor_profiles_supported</code> when present in the descriptor.<a href="#section-8.2-4.6.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-4.7">
-            <p id="section-8.2-4.7.1"><strong>Verify <code>client_id</code> binding.</strong> If the actor token contains a
+            <p id="section-8.2-4.7.1"><strong>Verify <code>client_id</code> binding.</strong> If the instance assertion contains a
 <code>client_id</code> claim, it <span class="bcp14">MUST</span> exactly equal the authenticated
 <code>client_id</code>; reject with <code>invalid_grant</code> otherwise. If the
-actor token has no <code>client_id</code> claim, the AS <span class="bcp14">MUST</span> verify that the
+instance assertion has no <code>client_id</code> claim, the AS <span class="bcp14">MUST</span> verify that the
 matched descriptor satisfies the SPIFFE compatibility conditions
 (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.7.1</a>); if not, reject with
 <code>invalid_grant</code>. When the descriptor satisfies those conditions,
@@ -2688,9 +2702,8 @@ descriptor's <code>spiffe_id</code> (with wildcard expansion if any); if not,
 reject with <code>invalid_grant</code>.<a href="#section-8.2-4.7.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-4.8">
-            <p id="section-8.2-4.8.1"><strong>Enforce delegation policy.</strong> Apply <code>max_actor_chain_depth</code> and the
-AS's own maximum, subject to the minimum supported depth required by
-<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.2-4.8.1" class="pilcrow">¶</a></p>
+            <p id="section-8.2-4.8.1"><strong>Enforce delegation policy.</strong> Apply the AS's local maximum
+delegation depth per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.2-4.8.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-4.9">
             <p id="section-8.2-4.9.1"><strong>Check authorization-time consistency.</strong> For grants that
@@ -2701,27 +2714,25 @@ authorization_code), apply the rules of
           <li id="section-8.2-4.10">
             <p id="section-8.2-4.10.1"><strong>Bind the instance.</strong> If issuance succeeds, represent the
 instance in the access token per <a href="#access-token" class="auto internal xref">Section 8.6</a>, applying
-<a href="#sender-constrained" class="auto internal xref">Section 8.5</a> for token binding. Reflect any prior actor
-chain present in input tokens by nesting per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>;
-chain merging rules are given in <a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>.<a href="#section-8.2-4.10.1" class="pilcrow">¶</a></p>
+<a href="#sender-constrained" class="auto internal xref">Section 8.5</a> for token binding. Reflect any prior
+actor chain present in input tokens by nesting per
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>; chain merging rules are given in
+<a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>.<a href="#section-8.2-4.10.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-8.2-5">If the client metadata sets <code>actor_token_required</code> to true and no
-<code>actor_token</code> of this type is presented, the AS <span class="bcp14">MUST</span> reject the request
-with <code>invalid_request</code>.<a href="#section-8.2-5" class="pilcrow">¶</a></p>
-<p id="section-8.2-6">If validation succeeds, the AS issues an access token (and optionally
-a refresh token) per the requested grant.<a href="#section-8.2-6" class="pilcrow">¶</a></p>
+<p id="section-8.2-5">If validation succeeds, the AS issues an access token (and optionally
+a refresh token) per the requested grant.<a href="#section-8.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="auth-via-actor-token">
 <section id="section-8.3">
-        <h3 id="name-client-authentication-via-a">
-<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-client-authentication-via-a" class="section-name selfRef">Client Authentication via Actor Token</a>
+        <h3 id="name-client-authentication-via-i">
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-client-authentication-via-i" class="section-name selfRef">Client Authentication via Instance Assertion</a>
         </h3>
 <p id="section-8.3-1">A client class <span class="bcp14">MAY</span> register the <code>token_endpoint_auth_method</code> value
 <code>client_instance_jwt</code> in its CIMD metadata to indicate that
-the AS authenticates the client implicitly from a presented actor
-token, without requiring a separate <code>client_assertion</code> or other
+the AS authenticates the client implicitly from a presented
+instance assertion, without requiring a separate <code>client_assertion</code> or other
 credential controlled by the class itself.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
 <p id="section-8.3-2">This mode is appropriate where the class has no online private key
 that an instance can use, for example when the class identifier is
@@ -2819,7 +2830,7 @@ consistent with that authorization:<a href="#section-8.4-1" class="pilcrow">¶</
             <p id="section-8.4-2.1.1">The <code>client_id</code> authenticated at the token endpoint <span class="bcp14">MUST</span> match the
 <code>client_id</code> that received the authorization_code (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section
 4.1.3). Combined with the <code>client_id</code>-binding requirement of
-<a href="#as-processing" class="auto internal xref">Section 8.2</a> step 7, this prevents an actor token from
+<a href="#as-processing" class="auto internal xref">Section 8.2</a> step 7, this prevents an instance assertion from
 another client class being attached to a code.<a href="#section-8.4-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.4-2.2">
@@ -2831,25 +2842,45 @@ authorization request).<a href="#section-8.4-2.2.1" class="pilcrow">¶</a></p>
           <li class="normal" id="section-8.4-2.3">
             <p id="section-8.4-2.3.1">If the AS has any authorization-time policy that depends on the
 actor (for example, a per-instance allow-list), the AS <span class="bcp14">MUST</span>
-evaluate that policy against the actor token presented at /token
+evaluate that policy against the instance assertion presented at /token
 and reject inconsistent requests with <code>invalid_grant</code>.<a href="#section-8.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-8.4-3">User consent under this profile applies to the client class as a
+<p id="section-8.4-3">When the issued access token is to be DPoP-bound, clients <span class="bcp14">SHOULD</span>
+include the <code>dpop_jkt</code> parameter (<span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> Section 10) on the
+authorization request, naming the same public key whose thumbprint
+will appear in the instance assertion's <code>cnf.jkt</code> at the token endpoint.
+When <code>dpop_jkt</code> is present, the AS binds the authorization code to
+that key per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, and at the token endpoint <span class="bcp14">MUST</span> verify that
+the DPoP proof, the authorization code's <code>dpop_jkt</code>, and the
+instance assertion's <code>cnf.jkt</code> all reference the same key. This provides
+cryptographic continuity from /authorize to /token bound to a
+specific instance: only the instance that holds the named DPoP
+private key can redeem the resulting code, even if the code is
+intercepted or transferred to another runtime under the same
+client class.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
+<p id="section-8.4-4">For Mutual-TLS-bound access tokens (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>), the equivalent
+continuity is established at the TLS layer: the AS sees the same
+client certificate at both the authorization and token endpoints,
+and the instance assertion's <code>cnf.x5t#S256</code> <span class="bcp14">MUST</span> match that certificate.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
+<p id="section-8.4-5">User consent under this profile applies to the client class as a
 whole; consent thereby covers all instances attested by listed
 instance issuers. ASes <span class="bcp14">MAY</span> display the client class identifier and
-the trust domain of the instance issuer at consent time.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
-<p id="section-8.4-4">ASes that record consent <span class="bcp14">SHOULD</span> record the descriptor scope under
+the trust domain of the instance issuer at consent time. The
+key-bound continuity above adds cryptographic guarantees about
+<em>which</em> instance redeems a code, but does not constitute per-instance
+consent.<a href="#section-8.4-5" class="pilcrow">¶</a></p>
+<p id="section-8.4-6">ASes that record consent <span class="bcp14">SHOULD</span> record the descriptor scope under
 which consent was granted (in particular, the descriptor's issuer
 and <code>trust_domain</code>), and <span class="bcp14">MAY</span> refuse access tokens for the same client
 class issued under a different descriptor scope than the one
 consented. This matters for client classes deployed across multiple
 trust domains (for example, "production" vs. "staging" SPIFFE trust
 domains, or distinct PaaS environments) where the user's consent to
-one is not necessarily consent to another.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
-<p id="section-8.4-5">Per-instance consent (asking the user to authorize a specific
+one is not necessarily consent to another.<a href="#section-8.4-6" class="pilcrow">¶</a></p>
+<p id="section-8.4-7">Per-instance consent (asking the user to authorize a specific
 runtime) is out of scope for this document; deployments requiring it
-<span class="bcp14">MUST</span> define it via a separate extension.<a href="#section-8.4-5" class="pilcrow">¶</a></p>
+<span class="bcp14">MUST</span> define it via a separate extension.<a href="#section-8.4-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sender-constrained">
@@ -2869,11 +2900,11 @@ Deployments unable to sender-constrain access tokens for
 operational reasons are outside the scope of this profile; they
 should publish or reference a separate profile that addresses their
 constraints.<a href="#section-8.5-2" class="pilcrow">¶</a></p>
-<p id="section-8.5-3">If the actor token includes a <code>cnf</code> claim (<a href="#claims" class="auto internal xref">Section 7.2</a>), the AS <span class="bcp14">MUST</span>:<a href="#section-8.5-3" class="pilcrow">¶</a></p>
+<p id="section-8.5-3">If the instance assertion includes a <code>cnf</code> claim (<a href="#claims" class="auto internal xref">Section 7.2</a>), the AS <span class="bcp14">MUST</span>:<a href="#section-8.5-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.5-4.1">
             <p id="section-8.5-4.1.1">bind the issued access token to the same key by setting the access
-token's top-level <code>cnf</code> to the actor token's <code>cnf</code> value;<a href="#section-8.5-4.1.1" class="pilcrow">¶</a></p>
+token's top-level <code>cnf</code> to the instance assertion's <code>cnf</code> value;<a href="#section-8.5-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.5-4.2">
             <p id="section-8.5-4.2.1">verify possession of the <code>cnf</code> key at the token endpoint, matching
@@ -2888,8 +2919,8 @@ specifications;<a href="#section-8.5-4.2.1" class="pilcrow">¶</a></p>
             <p id="section-8.5-4.3.1">reject the request with <code>invalid_request</code> if verification fails.<a href="#section-8.5-4.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-8.5-5">This protects the actor token from bearer-style replay within its
-validity window (<a href="#security-replay" class="auto internal xref">Section 14.3</a>); without it, the actor token
+<p id="section-8.5-5">This protects the instance assertion from bearer-style replay within its
+validity window (<a href="#security-replay" class="auto internal xref">Section 14.3</a>); without it, the instance assertion
 would be a bearer credential whose replay is bounded only by <code>exp</code>
 and the <code>jti</code> cache.<a href="#section-8.5-5" class="pilcrow">¶</a></p>
 <p id="section-8.5-6">The binding key <span class="bcp14">MUST</span> be specific to the validated client instance.
@@ -2897,7 +2928,7 @@ A credential shared by the client class as a whole, such as the
 class-level mTLS certificate authenticated under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>, the
 class's <code>private_key_jwt</code> key, or any other class-controlled key not
 provisioned per-instance, is not sufficient.<a href="#section-8.5-6" class="pilcrow">¶</a></p>
-<p id="section-8.5-7">If the actor token does not include a <code>cnf</code> claim, the AS <span class="bcp14">MUST</span>
+<p id="section-8.5-7">If the instance assertion does not include a <code>cnf</code> claim, the AS <span class="bcp14">MUST</span>
 establish an instance-specific binding through some other means
 whose key is attributable to the validated instance, for example:<a href="#section-8.5-7" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -2909,19 +2940,19 @@ under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>; or<a href
           <li class="normal" id="section-8.5-8.2">
             <p id="section-8.5-8.2.1">a <code>DPoP</code> key <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> that the AS confirms, through deployment-
 specific attestation or out-of-band binding to the instance issuer,
-represents the same runtime named by the actor token's <code>sub</code>.<a href="#section-8.5-8.2.1" class="pilcrow">¶</a></p>
+represents the same runtime named by the instance assertion's <code>sub</code>.<a href="#section-8.5-8.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-8.5-9">If the AS cannot establish such an instance-specific binding, it
 <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code> (<a href="#errors" class="auto internal xref">Section 8.9</a>). For this
-reason, instance issuers <span class="bcp14">SHOULD</span> include <code>cnf</code> in actor tokens so that
+reason, instance issuers <span class="bcp14">SHOULD</span> include <code>cnf</code> in instance assertions so that
 the binding key is supplied by the same authority that named the
 instance.<a href="#section-8.5-9" class="pilcrow">¶</a></p>
 <p id="section-8.5-10">Deployments combining class-level Mutual-TLS-bound client
 authentication (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) with this profile <span class="bcp14">MUST</span> establish
 instance binding through a separate, instance-specific key. The
 typical configuration uses the class's mTLS certificate at the TLS
-layer for client authentication and a <code>cnf.jkt</code> in the actor token
+layer for client authentication and a <code>cnf.jkt</code> in the instance assertion
 paired with <code>DPoP</code> <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> at the token endpoint for instance
 binding. Per-instance mTLS certificates issued by the instance
 issuer (or otherwise bound to instance attestation) are an
@@ -3016,20 +3047,20 @@ access token rather than guess; reject with <code>invalid_grant</code>
           </h4>
 <p id="section-8.6.2-1">When the request is classified as delegation, the AS <span class="bcp14">MUST</span> populate
 the issued access token's <code>act</code> claim per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> from the
-validated actor token:<a href="#section-8.6.2-1" class="pilcrow">¶</a></p>
+validated instance assertion:<a href="#section-8.6.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.6.2-2.1">
-              <p id="section-8.6.2-2.1.1"><code>act.iss</code> = actor token <code>iss</code><a href="#section-8.6.2-2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-8.6.2-2.1.1"><code>act.iss</code> = instance assertion <code>iss</code><a href="#section-8.6.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.6.2-2.2">
-              <p id="section-8.6.2-2.2.1"><code>act.sub</code> = actor token <code>sub</code><a href="#section-8.6.2-2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-8.6.2-2.2.1"><code>act.sub</code> = instance assertion <code>sub</code><a href="#section-8.6.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.6.2-2.3">
-              <p id="section-8.6.2-2.3.1"><code>act.sub_profile</code> = actor token <code>sub_profile</code> (if present); the value
+              <p id="section-8.6.2-2.3.1"><code>act.sub_profile</code> = instance assertion <code>sub_profile</code> (if present); the value
 <code>client_instance</code> <span class="bcp14">SHOULD</span> be included.<a href="#section-8.6.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.6.2-2.4">
-              <p id="section-8.6.2-2.4.1"><code>act.cnf</code> = actor token <code>cnf</code>, if present.<a href="#section-8.6.2-2.4.1" class="pilcrow">¶</a></p>
+              <p id="section-8.6.2-2.4.1"><code>act.cnf</code> = instance assertion <code>cnf</code>, if present.<a href="#section-8.6.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 <p id="section-8.6.2-3">The access token's <code>sub</code> <span class="bcp14">MUST</span> be the principal identified by the
@@ -3037,7 +3068,7 @@ grant (e.g., the authenticated user). Sender-constraint binding
 (top-level <code>cnf</code> and PoP verification) is governed by
 <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>.<a href="#section-8.6.2-3" class="pilcrow">¶</a></p>
 <p id="section-8.6.2-4">Example (delegation, sender-constrained). The validated source
-client instance actor token, with all claims required by <a href="#claims" class="auto internal xref">Section 7.2</a>:<a href="#section-8.6.2-4" class="pilcrow">¶</a></p>
+client instance assertion, with all claims required by <a href="#claims" class="auto internal xref">Section 7.2</a>:<a href="#section-8.6.2-4" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-8.6.2-5">
 <pre>
 {
@@ -3054,7 +3085,7 @@ client instance actor token, with all claims required by <a href="#claims" class
 }
 </pre><a href="#section-8.6.2-5" class="pilcrow">¶</a>
 </div>
-<p id="section-8.6.2-6">Issued access token. Note that the actor token's <code>iss</code>, <code>sub</code>,
+<p id="section-8.6.2-6">Issued access token. Note that the instance assertion's <code>iss</code>, <code>sub</code>,
 <code>sub_profile</code>, and <code>cnf</code> propagate to <code>act</code>; <code>aud</code>, <code>client_id</code>, <code>exp</code>, <code>iat</code>, and
 <code>jti</code> are validated and consumed by the AS but do not appear in the
 access token (<code>client_id</code> appears at the top level as a property of
@@ -3091,14 +3122,14 @@ in <a href="#appendix-examples-token-exchange" class="auto internal xref">Append
           </h4>
 <p id="section-8.6.3-1">When the request is classified as self-acting, the instance is the
 principal and there is no other party on whose behalf it acts. The
-AS <span class="bcp14">MUST</span> populate the issued access token from the validated actor
-token as follows:<a href="#section-8.6.3-1" class="pilcrow">¶</a></p>
+AS <span class="bcp14">MUST</span> populate the issued access token from the validated
+instance assertion as follows:<a href="#section-8.6.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.6.3-2.1">
-              <p id="section-8.6.3-2.1.1"><code>sub</code> = actor token <code>sub</code><a href="#section-8.6.3-2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-8.6.3-2.1.1"><code>sub</code> = instance assertion <code>sub</code><a href="#section-8.6.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.6.3-2.2">
-              <p id="section-8.6.3-2.2.1"><code>sub_profile</code> = actor token <code>sub_profile</code> (if present); the value
+              <p id="section-8.6.3-2.2.1"><code>sub_profile</code> = instance assertion <code>sub_profile</code> (if present); the value
 <code>client_instance</code> <span class="bcp14">SHOULD</span> be included<a href="#section-8.6.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.6.3-2.3">
@@ -3110,15 +3141,15 @@ token as follows:<a href="#section-8.6.3-1" class="pilcrow">¶</a></p>
 preserved.<a href="#section-8.6.3-2.4.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-8.6.3-3">The instance issuer's identifier (the actor token's <code>iss</code>) is not
+<p id="section-8.6.3-3">The instance issuer's identifier (the instance assertion's <code>iss</code>) is not
 represented as a claim in the self-acting access token. Trust in the
-instance issuer is structural: the AS validated the actor token
+instance issuer is structural: the AS validated the instance assertion
 against the descriptor in <a href="#instance-issuers" class="auto internal xref">Section 5.1</a> before issuance, and
 the resource server trusts the AS. Deployments that require
 in-token instance-issuer attribution for self-acting tokens may
 define a separate claim in a future profile.<a href="#section-8.6.3-3" class="pilcrow">¶</a></p>
 <p id="section-8.6.3-4">Example (self-acting, sender-constrained, <code>client_credentials</code> grant).
-Source client instance actor token, with all claims required by
+Source client instance assertion, with all claims required by
 <a href="#claims" class="auto internal xref">Section 7.2</a>:<a href="#section-8.6.3-4" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-8.6.3-5">
 <pre>
@@ -3153,7 +3184,7 @@ Source client instance actor token, with all claims required by
 </pre><a href="#section-8.6.3-7" class="pilcrow">¶</a>
 </div>
 <p id="section-8.6.3-8">Note that <code>client_id</code> (the class) and <code>sub</code> (the instance) are distinct,
-and that <code>act</code> is absent. The actor token's <code>iss</code> is not represented in
+and that <code>act</code> is absent. The instance assertion's <code>iss</code> is not represented in
 the access token (see preceding paragraph).<a href="#section-8.6.3-8" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3162,10 +3193,10 @@ the access token (see preceding paragraph).<a href="#section-8.6.3-8" class="pil
           <h4 id="name-actor-chain-merging">
 <a href="#section-8.6.4" class="section-number selfRef">8.6.4. </a><a href="#name-actor-chain-merging" class="section-name selfRef">Actor Chain Merging</a>
           </h4>
-<p id="section-8.6.4-1">Per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, a client instance actor token presented as
+<p id="section-8.6.4-1">Per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, a client instance assertion presented as
 <code>actor_token</code> <span class="bcp14">MUST NOT</span> itself carry an <code>act</code> claim; if it does, the AS
-<span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>. A client instance actor
-token is a direct identity assertion of the instance, not a
+<span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>. A client instance
+assertion is a direct identity assertion of the instance, not a
 delegation-chain credential.<a href="#section-8.6.4-1" class="pilcrow">¶</a></p>
 <p id="section-8.6.4-2">Consequently, only two inputs can contribute actor information to
 the issued token under this profile:<a href="#section-8.6.4-2" class="pilcrow">¶</a></p>
@@ -3185,9 +3216,9 @@ applying the algorithm in <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTO
 Validation and Construction" section) with the validated <code>actor_token</code>
 as the new outermost actor and the <code>subject_token</code>'s preserved
 delegation chain (when present) nested inside. The resulting depth
-<span class="bcp14">MUST NOT</span> exceed <code>max_actor_chain_depth</code> (<a href="#max-actor-chain-depth" class="auto internal xref">Section 5.2</a>);
-otherwise the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code>
-(<a href="#errors" class="auto internal xref">Section 8.9</a>), per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.6.4-4" class="pilcrow">¶</a></p>
+<span class="bcp14">MUST NOT</span> exceed the AS's local maximum delegation depth; otherwise
+the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code> (<a href="#errors" class="auto internal xref">Section 8.9</a>),
+per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.6.4-4" class="pilcrow">¶</a></p>
 <p id="section-8.6.4-5">In the self-acting case (<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>) the <code>act</code> claim
 is omitted at top level. When a <code>subject_token</code> is present (uncommon
 outside token-exchange, which this profile classifies as delegation
@@ -3263,7 +3294,7 @@ authentication, applied here to actor identity.<a href="#section-8.7.1-5" class=
 trust bundle endpoint. The AS <span class="bcp14">MUST</span> validate the bundle's freshness
 and applicability to the trust domain in the descriptor's
 <code>trust_domain</code> (or the trust domain implied by <code>spiffe_id</code>), and <span class="bcp14">MUST</span>
-reject actor tokens whose <code>iss</code> does not correspond to a key in the
+reject instance assertions whose <code>iss</code> does not correspond to a key in the
 bundle for the relevant trust domain. The bundle endpoint format,
 freshness, and rotation rules follow SPIFFE; see
 <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> for the analogous handling in client
@@ -3315,7 +3346,7 @@ refreshed access token; the original classification is <em>inherited</em>
 and is not re-derived from the refresh request itself.<a href="#section-8.8-1" class="pilcrow">¶</a></p>
 <p id="section-8.8-2">A client <span class="bcp14">MAY</span> include the <code>actor_token</code> and <code>actor_token_type</code>
 (<a href="#token-request" class="auto internal xref">Section 8.1</a>) parameters on a refresh token request to supply
-a fresh client instance actor token. When present:<a href="#section-8.8-2" class="pilcrow">¶</a></p>
+a fresh client instance assertion. When present:<a href="#section-8.8-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.8-3.1">
             <p id="section-8.8-3.1.1"><code>actor_token_type</code> <span class="bcp14">MUST</span> be
@@ -3327,7 +3358,7 @@ a fresh client instance actor token. When present:<a href="#section-8.8-2" class
 on initial issuance;<a href="#section-8.8-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.8-3.3">
-            <p id="section-8.8-3.3.1">the actor token's <code>sub</code> <span class="bcp14">MAY</span> differ from the previous instance (for
+            <p id="section-8.8-3.3.1">the instance assertion's <code>sub</code> <span class="bcp14">MAY</span> differ from the previous instance (for
 example, when the original instance has terminated and a successor
 instance is now operating under the same client class), provided
 the new <code>sub</code> satisfies the descriptor's <code>subject_syntax</code>,
@@ -3335,7 +3366,7 @@ the new <code>sub</code> satisfies the descriptor's <code>subject_syntax</code>,
 </li>
           <li class="normal" id="section-8.8-3.4">
             <p id="section-8.8-3.4.1">the AS <span class="bcp14">MUST</span> update the refreshed access token's <code>act</code> (delegation)
-or <code>sub</code> (self-acting) and <code>cnf</code> to reflect the new actor token,
+or <code>sub</code> (self-acting) and <code>cnf</code> to reflect the new instance assertion,
 preserving any nested upstream actor chain per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>;<a href="#section-8.8-3.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.8-3.5">
@@ -3346,19 +3377,15 @@ preserving any nested upstream actor chain per <span>[<a href="#ACTOR-PROFILE" c
 <p id="section-8.8-4">If <code>actor_token</code> is absent on a refresh request, the AS <span class="bcp14">MAY</span> either
 copy the previously validated actor identity into the refreshed
 access token or reject the request with <code>invalid_request</code> and require
-a fresh actor token. The choice is a matter of AS policy and <span class="bcp14">SHOULD</span>
-be documented by the deployment. A client class <span class="bcp14">MAY</span> signal that a
-fresh actor token is required at refresh time by registering
-<code>actor_token_required</code> = true (<a href="#actor-token-required" class="auto internal xref">Section 5.3</a>); when so
-registered, refresh requests without <code>actor_token</code> <span class="bcp14">MUST</span> be rejected
-with <code>invalid_request</code>.<a href="#section-8.8-4" class="pilcrow">¶</a></p>
+a fresh instance assertion. The choice is a matter of AS policy and <span class="bcp14">SHOULD</span>
+be documented by the deployment.<a href="#section-8.8-4" class="pilcrow">¶</a></p>
 <p id="section-8.8-5">Refresh tokens issued under this profile <span class="bcp14">SHOULD</span> be sender-constrained
 to the originating instance's <code>cnf</code> key, by the same mechanism used to
 sender-constrain the access token (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). A
 refresh token shared across successor instances of a class is a
 credential-theft amplifier: any present-or-future instance of the
-class can use it to obtain access tokens by presenting its own actor
-token. Where a deployment intentionally permits successor-instance
+class can use it to obtain access tokens by presenting its own
+instance assertion. Where a deployment intentionally permits successor-instance
 refresh (for example, agentic workloads whose runtime is recycled
 but whose long-running session must continue), the deployment <span class="bcp14">MUST</span>
 document the audit consequence: the resulting access token's
@@ -3389,20 +3416,6 @@ defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> t
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>actor_token</code> absent but <code>actor_token_required</code> is true</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_request</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>actor_token</code> absent on refresh when <code>actor_token_required</code> is true</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_request</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
                 <code>actor_token</code> present but <code>actor_token_type</code> absent</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_request</code>
@@ -3418,6 +3431,13 @@ defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> t
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>actor_token</code> not a syntactically valid JWT</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_request</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>typ</code> JOSE header is not <code>client-instance+jwt</code> (<a href="#signing" class="auto internal xref">Section 7.3</a>)</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_request</code>
 </td>
@@ -3512,8 +3532,7 @@ defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> t
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>max_actor_chain_depth</code> exceeded (<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>)</td>
+              <td class="text-left" rowspan="1" colspan="1">delegation chain depth exceeds AS local maximum (<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>)</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_request</code>
 </td>
@@ -3734,7 +3753,7 @@ step proceeds to the token endpoint as usual; the <code>actor_token</code> and
 <code>actor_token_type</code> parameters are presented at /token in the same way
 as for a non-PAR/JAR flow. ASes implementing per-actor
 authorization-time policy (<a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>) evaluate that
-policy at the token endpoint, after the actor token has been
+policy at the token endpoint, after the instance assertion has been
 validated; PAR and JAR do not change this.<a href="#section-11.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3752,7 +3771,7 @@ Per-resource policies that depend on the actor (for example,
 restricting an instance to a subset of resources the class is
 otherwise permitted) are an AS-side decision; this profile does not
 require or define them. When such a policy applies, the AS <span class="bcp14">MUST</span>
-evaluate it against the validated actor token before issuing the
+evaluate it against the validated instance assertion before issuing the
 access token, and reject inconsistent requests with <code>invalid_grant</code>
 (<a href="#errors" class="auto internal xref">Section 8.9</a>).<a href="#section-11.2-1" class="pilcrow">¶</a></p>
 </section>
@@ -3820,12 +3839,11 @@ forcing all clients to opt in.<a href="#section-13-1" class="pilcrow">¶</a></p>
         <h3 id="name-backward-compatibility">
 <a href="#section-13.1" class="section-number selfRef">13.1. </a><a href="#name-backward-compatibility" class="section-name selfRef">Backward Compatibility</a>
         </h3>
-<p id="section-13.1-1">Existing CIMD documents that do not declare <code>instance_issuers</code>,
-<code>max_actor_chain_depth</code>, or <code>actor_token_required</code> continue to work
-unchanged. An AS implementing this profile <span class="bcp14">MUST NOT</span> require these
-parameters from existing clients; absence of <code>instance_issuers</code> means
-the client does not use this profile, and the AS <span class="bcp14">MUST</span> process its
-token requests under their existing grant-type rules.<a href="#section-13.1-1" class="pilcrow">¶</a></p>
+<p id="section-13.1-1">Existing CIMD documents that do not declare <code>instance_issuers</code>
+continue to work unchanged. An AS implementing this profile <span class="bcp14">MUST NOT</span> require this parameter from existing clients; absence of
+<code>instance_issuers</code> means the client does not use this profile, and
+the AS <span class="bcp14">MUST</span> process its token requests under their existing
+grant-type rules.<a href="#section-13.1-1" class="pilcrow">¶</a></p>
 <p id="section-13.1-2">Existing access tokens already in circulation when a class adds
 <code>instance_issuers</code> to its CIMD remain valid for their original
 lifetime; only newly issued tokens that present a
@@ -3869,10 +3887,11 @@ requests under this profile.<a href="#section-13.2-3" class="pilcrow">¶</a></p>
 <p id="section-13.3-1">A client class <span class="bcp14">MAY</span> add <code>instance_issuers</code> to its CIMD at any time.
 Doing so does not invalidate existing access tokens issued for that
 class; it only enables this profile for future token requests that
-present an <code>actor_token</code> of the registered type. A class that
-registers <code>actor_token_required</code> = true mandates the profile for all
-new token requests and <span class="bcp14">SHOULD</span> enable this only after all instances
-have been migrated to present actor tokens.<a href="#section-13.3-1" class="pilcrow">¶</a></p>
+present an <code>actor_token</code> of the registered type. A class that wants
+to mandate instance assertions for every issued access token can register
+<code>token_endpoint_auth_method = client_instance_jwt</code>
+(<a href="#auth-via-actor-token" class="auto internal xref">Section 8.3</a>), which intrinsically requires the
+<code>actor_token</code>.<a href="#section-13.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="adoption-without-cnf">
@@ -3883,7 +3902,7 @@ have been migrated to present actor tokens.<a href="#section-13.3-1" class="pilc
 <p id="section-13.4-1">A class <span class="bcp14">MAY</span> deploy this profile before adopting per-instance proof-
 of-possession keys, but the bearer-replay protection in
 <a href="#security-replay" class="auto internal xref">Section 14.3</a> requires an instance-specific binding. Until
-the instance issuer can populate <code>cnf</code> on actor tokens, deployments
+the instance issuer can populate <code>cnf</code> on instance assertions, deployments
 <span class="bcp14">MUST</span> establish an instance-specific binding through some other
 means per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a> (per-instance mTLS certificates
 provisioned by the issuer being the most common alternative), or
@@ -3891,8 +3910,8 @@ the AS will reject the request. Short access-token lifetimes (e.g.,
 five minutes or less) further bound exposure during this transition.<a href="#section-13.4-1" class="pilcrow">¶</a></p>
 <p id="section-13.4-2">ASes and class operators <span class="bcp14">SHOULD NOT</span> enable the
 <code>client_instance_jwt</code> authentication method
-(<a href="#auth-via-actor-token" class="auto internal xref">Section 8.3</a>) until <code>cnf</code> is present in actor tokens:
-that mode has no fallback client credential, so an actor token
+(<a href="#auth-via-actor-token" class="auto internal xref">Section 8.3</a>) until <code>cnf</code> is present in instance assertions:
+that mode has no fallback client credential, so an instance assertion
 without <code>cnf</code> is fully bearer at presentation
 (<a href="#security-auth-via-actor-token" class="auto internal xref">Section 14.5</a>).<a href="#section-13.4-2" class="pilcrow">¶</a></p>
 </section>
@@ -3916,7 +3935,7 @@ without <code>cnf</code> is fully bearer at presentation
 This subsection summarizes the security implications.<a href="#section-14.1-1" class="pilcrow">¶</a></p>
 <p id="section-14.1-2">A client class delegates the authentication of its instances to one
 or more instance issuers. A compromised or misconfigured instance
-issuer can mint actor tokens that the AS will accept as legitimate
+issuer can mint instance assertions that the AS will accept as legitimate
 instances of the named client class. Client classes <span class="bcp14">SHOULD</span> list only
 instance issuers under their own administrative control (or
 contractually equivalent), and <span class="bcp14">SHOULD</span> set <code>trust_domain</code>,
@@ -3939,14 +3958,14 @@ mechanisms to keep actor identity current:<a href="#section-14.2-1" class="pilcr
 <span class="break"></span><dl class="dlParallel" id="section-14.2-2">
           <dt id="section-14.2-2.1">Rotation:</dt>
           <dd style="margin-left: 1.5em" id="section-14.2-2.2">
-            <p id="section-14.2-2.2.1">Instance issuers <span class="bcp14">MUST</span> mint short-lived actor tokens
+            <p id="section-14.2-2.2.1">Instance issuers <span class="bcp14">MUST</span> mint short-lived instance assertions
 (<a href="#security-replay" class="auto internal xref">Section 14.3</a>). New tokens are issued continuously as
 instances start, restart, or rotate keys.<a href="#section-14.2-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-14.2-2.3">Revocation within the validity window:</dt>
           <dd style="margin-left: 1.5em" id="section-14.2-2.4">
-            <p id="section-14.2-2.4.1">Within an actor token's <code>exp</code> window, the AS prevents reuse via the
+            <p id="section-14.2-2.4.1">Within an instance assertion's <code>exp</code> window, the AS prevents reuse via the
 <code>jti</code> replay rule (<a href="#security-replay" class="auto internal xref">Section 14.3</a>). A specific issued access
 token can be revoked only via the AS's own revocation mechanisms;
 this profile does not define an instance revocation list.<a href="#section-14.2-2.4.1" class="pilcrow">¶</a></p>
@@ -3954,7 +3973,7 @@ this profile does not define an instance revocation list.<a href="#section-14.2-
           <dd class="break"></dd>
 <dt id="section-14.2-2.5">Trust withdrawal:</dt>
           <dd style="margin-left: 1.5em" id="section-14.2-2.6">
-            <p id="section-14.2-2.6.1">To stop accepting actor tokens from an issuer (e.g., after a
+            <p id="section-14.2-2.6.1">To stop accepting instance assertions from an issuer (e.g., after a
 workload identity compromise), the client class removes the issuer
 from <code>instance_issuers</code>, replaces or removes <code>trust_domain</code>, reduces
 <code>actor_profiles_supported</code>, or rotates <code>jwks</code> at the issuer level. The
@@ -3965,9 +3984,9 @@ treated as no longer endorsed.<a href="#section-14.2-2.6.1" class="pilcrow">¶</
         <dd class="break"></dd>
 </dl>
 <p id="section-14.2-3">Refresh windows are a particular concern: an access token refreshed
-without a new actor token may carry stale instance identity long after
+without a new instance assertion may carry stale instance identity long after
 the original instance has terminated. ASes <span class="bcp14">SHOULD</span> prefer requiring a
-fresh actor token on refresh (<a href="#refresh" class="auto internal xref">Section 8.8</a>), or set short refresh
+fresh instance assertion on refresh (<a href="#refresh" class="auto internal xref">Section 8.8</a>), or set short refresh
 intervals when instance identity is present.<a href="#section-14.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3977,7 +3996,7 @@ intervals when instance identity is present.<a href="#section-14.2-3" class="pil
 <a href="#section-14.3" class="section-number selfRef">14.3. </a><a href="#name-replay" class="section-name selfRef">Replay</a>
         </h3>
 <p id="section-14.3-1">Actor tokens <span class="bcp14">MUST</span> include <code>jti</code>, <code>exp</code>, and <code>iat</code> (<a href="#claims" class="auto internal xref">Section 7.2</a>). After the
-AS has identified the issuer and validated the actor token signature,
+AS has identified the issuer and validated the instance assertion signature,
 it <span class="bcp14">MUST</span> reject a token whose (<code>iss</code>, <code>jti</code>) pair has already been seen
 within the token's validity window. The AS <span class="bcp14">MUST</span> retain replay-cache
 entries at least until the token's <code>exp</code> time, plus any allowed clock
@@ -3985,19 +4004,19 @@ skew. Issuers <span class="bcp14">SHOULD</span> use short lifetimes (five minute
 to limit replay exposure and because client instances often have
 lifetimes of seconds to minutes.<a href="#section-14.3-1" class="pilcrow">¶</a></p>
 <p id="section-14.3-2">When refreshing access tokens (<a href="#refresh" class="auto internal xref">Section 8.8</a>), AS implementations
-<span class="bcp14">SHOULD</span> prefer requiring a fresh actor token rather than perpetuating
+<span class="bcp14">SHOULD</span> prefer requiring a fresh instance assertion rather than perpetuating
 stale instance identity, especially across long refresh windows.<a href="#section-14.3-2" class="pilcrow">¶</a></p>
-<p id="section-14.3-3">The replay surface depends on whether the actor token carries <code>cnf</code>
+<p id="section-14.3-3">The replay surface depends on whether the instance assertion carries <code>cnf</code>
 (<a href="#claims" class="auto internal xref">Section 7.2</a>) and whether the AS verifies possession at presentation
 (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). When <code>cnf</code> is present and verified, the
-actor token is non-bearer at presentation: an attacker with only the
+instance assertion is non-bearer at presentation: an attacker with only the
 JWT cannot use it without also possessing the <code>cnf</code> private key. When
-<code>cnf</code> is absent, an attacker who captures a live actor token within
+<code>cnf</code> is absent, an attacker who captures a live instance assertion within
 its <code>exp</code> window can present it once before the <code>jti</code> cache rejects
 replays (and not at all against a different AS thanks to <code>aud</code>
 binding). For the auth-via-actor-token mode in particular
-(<a href="#auth-via-actor-token" class="auto internal xref">Section 8.3</a>), where the actor token is the only client
-credential, ASes <span class="bcp14">SHOULD</span> reject requests whose actor token lacks <code>cnf</code>;
+(<a href="#auth-via-actor-token" class="auto internal xref">Section 8.3</a>), where the instance assertion is the only client
+credential, ASes <span class="bcp14">SHOULD</span> reject requests whose instance assertion lacks <code>cnf</code>;
 classes deploying this mode <span class="bcp14">SHOULD</span> ensure their instance issuers
 populate <code>cnf</code>.<a href="#section-14.3-3" class="pilcrow">¶</a></p>
 </section>
@@ -4007,10 +4026,10 @@ populate <code>cnf</code>.<a href="#section-14.3-3" class="pilcrow">¶</a></p>
         <h3 id="name-audience-and-confused-deput">
 <a href="#section-14.4" class="section-number selfRef">14.4. </a><a href="#name-audience-and-confused-deput" class="section-name selfRef">Audience and Confused Deputy</a>
         </h3>
-<p id="section-14.4-1">The <code>aud</code> claim binds the actor token to a specific AS, preventing one
+<p id="section-14.4-1">The <code>aud</code> claim binds the instance assertion to a specific AS, preventing one
 AS from replaying it against another (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> Section 3). The
 <code>client_id</code> claim, which this document treats as a binding (not as
-actor identity), prevents an actor token issued for one client class
+actor identity), prevents an instance assertion issued for one client class
 from being presented under a different client class's authentication.<a href="#section-14.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -4028,8 +4047,8 @@ independent keys to issue a token: compromise of any CIMD-listed
 instance issuer is sufficient to mint tokens that authenticate as
 the class.<a href="#section-14.5-1" class="pilcrow">¶</a></p>
 <p id="section-14.5-2">In contrast, modes such as <code>private_key_jwt</code> require an attacker to
-possess both an instance issuer's signing key (to mint the actor
-token) and the class's private key (to assert the client) before any
+possess both an instance issuer's signing key (to mint the
+instance assertion) and the class's private key (to assert the client) before any
 token can be issued. Where the operational model permits, deployments
 <span class="bcp14">SHOULD</span> prefer two-key authentication.<a href="#section-14.5-2" class="pilcrow">¶</a></p>
 <p id="section-14.5-3">When <code>client_instance_jwt</code> is used, classes <span class="bcp14">SHOULD</span> constrain
@@ -4081,12 +4100,11 @@ audit and correlation, not a binding the RS independently verifies.<a href="#sec
 <a href="#section-14.8" class="section-number selfRef">14.8. </a><a href="#name-delegation-control" class="section-name selfRef">Delegation Control</a>
         </h3>
 <p id="section-14.8-1">Unbounded delegation chains permit privilege amplification across
-boundaries. Client classes <span class="bcp14">SHOULD</span> set <code>max_actor_chain_depth</code> and AS
-implementations <span class="bcp14">SHOULD</span> enforce their own ceiling. <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>
-recommends supporting at least depth 4 for cross-domain interop;
-deployments imposing lower ceilings should weigh interoperability
-against the privilege-amplification surface they are willing to
-allow.<a href="#section-14.8-1" class="pilcrow">¶</a></p>
+boundaries. AS implementations <span class="bcp14">MUST</span> enforce a local maximum
+delegation depth (<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>). <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> recommends
+supporting at least depth 4 for cross-domain interop; deployments
+imposing lower ceilings should weigh interoperability against the
+privilege-amplification surface they are willing to allow.<a href="#section-14.8-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="privacy">
@@ -4094,7 +4112,7 @@ allow.<a href="#section-14.8-1" class="pilcrow">¶</a></p>
         <h3 id="name-privacy">
 <a href="#section-14.9" class="section-number selfRef">14.9. </a><a href="#name-privacy" class="section-name selfRef">Privacy</a>
         </h3>
-<p id="section-14.9-1">A client instance actor token reveals fine-grained workload identity
+<p id="section-14.9-1">A client instance assertion reveals fine-grained workload identity
 to the AS and, after issuance, to resource servers via the <code>act</code> claim
 (delegation case) or the access token's top-level <code>sub</code> (self-acting
 case). Exposing per-instance identity to resource servers is the
@@ -4120,7 +4138,7 @@ granularity matches the auditing need.<a href="#section-14.9-2.2.1" class="pilcr
 </li>
         </ul>
 <p id="section-14.9-3">The error response guidance in <a href="#errors" class="auto internal xref">Section 8.9</a> extends to logs and audit
-trails: actor token contents <span class="bcp14">SHOULD</span> be logged at a level commensurate
+trails: instance assertion contents <span class="bcp14">SHOULD</span> be logged at a level commensurate
 with the sensitivity of the workload identity they convey.<a href="#section-14.9-3" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -4147,7 +4165,7 @@ registry established by <span>[<a href="#RFC6755" class="cite xref">RFC6755</a>]
           <dd class="break"></dd>
 <dt id="section-15.1-2.3">Common Name:</dt>
           <dd style="margin-left: 1.5em" id="section-15.1-2.4">
-            <p id="section-15.1-2.4.1">OAuth 2.0 Client Instance Actor Token<a href="#section-15.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-15.1-2.4.1">OAuth 2.0 Client Instance Assertion<a href="#section-15.1-2.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-15.1-2.5">Change Controller:</dt>
@@ -4184,62 +4202,12 @@ Dynamic Client Registration Metadata" registry established by
             <dd class="break"></dd>
 <dt id="section-15.2.1-1.3">Client Metadata Description:</dt>
             <dd style="margin-left: 1.5em" id="section-15.2.1-1.4">
-              <p id="section-15.2.1-1.4.1">Trusted issuers of client instance actor tokens for this client.<a href="#section-15.2.1-1.4.1" class="pilcrow">¶</a></p>
+              <p id="section-15.2.1-1.4.1">Trusted issuers of client instance assertions for this client.<a href="#section-15.2.1-1.4.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
 <dt id="section-15.2.1-1.5">Specification Document(s):</dt>
             <dd style="margin-left: 1.5em" id="section-15.2.1-1.6">
               <p id="section-15.2.1-1.6.1"><a href="#instance-issuers" class="auto internal xref">Section 5.1</a> of this document<a href="#section-15.2.1-1.6.1" class="pilcrow">¶</a></p>
-</dd>
-          <dd class="break"></dd>
-</dl>
-</section>
-</div>
-<div id="maxactorchaindepth">
-<section id="section-15.2.2">
-          <h4 id="name-max_actor_chain_depth-2">
-<a href="#section-15.2.2" class="section-number selfRef">15.2.2. </a><a href="#name-max_actor_chain_depth-2" class="section-name selfRef">max_actor_chain_depth</a>
-          </h4>
-<span class="break"></span><dl class="dlParallel" id="section-15.2.2-1">
-            <dt id="section-15.2.2-1.1">Client Metadata Name:</dt>
-            <dd style="margin-left: 1.5em" id="section-15.2.2-1.2">
-              <p id="section-15.2.2-1.2.1"><code>max_actor_chain_depth</code><a href="#section-15.2.2-1.2.1" class="pilcrow">¶</a></p>
-</dd>
-            <dd class="break"></dd>
-<dt id="section-15.2.2-1.3">Client Metadata Description:</dt>
-            <dd style="margin-left: 1.5em" id="section-15.2.2-1.4">
-              <p id="section-15.2.2-1.4.1">Maximum permitted delegation depth for <code>act</code> chains rooted at an
-instance of this client.<a href="#section-15.2.2-1.4.1" class="pilcrow">¶</a></p>
-</dd>
-            <dd class="break"></dd>
-<dt id="section-15.2.2-1.5">Specification Document(s):</dt>
-            <dd style="margin-left: 1.5em" id="section-15.2.2-1.6">
-              <p id="section-15.2.2-1.6.1"><a href="#max-actor-chain-depth" class="auto internal xref">Section 5.2</a> of this document<a href="#section-15.2.2-1.6.1" class="pilcrow">¶</a></p>
-</dd>
-          <dd class="break"></dd>
-</dl>
-</section>
-</div>
-<div id="actortokenrequired">
-<section id="section-15.2.3">
-          <h4 id="name-actor_token_required-2">
-<a href="#section-15.2.3" class="section-number selfRef">15.2.3. </a><a href="#name-actor_token_required-2" class="section-name selfRef">actor_token_required</a>
-          </h4>
-<span class="break"></span><dl class="dlParallel" id="section-15.2.3-1">
-            <dt id="section-15.2.3-1.1">Client Metadata Name:</dt>
-            <dd style="margin-left: 1.5em" id="section-15.2.3-1.2">
-              <p id="section-15.2.3-1.2.1"><code>actor_token_required</code><a href="#section-15.2.3-1.2.1" class="pilcrow">¶</a></p>
-</dd>
-            <dd class="break"></dd>
-<dt id="section-15.2.3-1.3">Client Metadata Description:</dt>
-            <dd style="margin-left: 1.5em" id="section-15.2.3-1.4">
-              <p id="section-15.2.3-1.4.1">When true, the AS rejects token requests for this client that lack
-a client instance actor token.<a href="#section-15.2.3-1.4.1" class="pilcrow">¶</a></p>
-</dd>
-            <dd class="break"></dd>
-<dt id="section-15.2.3-1.5">Specification Document(s):</dt>
-            <dd style="margin-left: 1.5em" id="section-15.2.3-1.6">
-              <p id="section-15.2.3-1.6.1"><a href="#actor-token-required" class="auto internal xref">Section 5.3</a> of this document<a href="#section-15.2.3-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
@@ -4320,7 +4288,7 @@ endpoint.<a href="#section-15.4.1-1.4.1" class="pilcrow">¶</a></p>
 <dt id="section-15.4.2-1.3">Metadata Description:</dt>
             <dd style="margin-left: 1.5em" id="section-15.4.2-1.4">
               <p id="section-15.4.2-1.4.1">JSON array of <code>subject_syntax</code> values understood by the AS when
-validating client instance actor tokens.<a href="#section-15.4.2-1.4.1" class="pilcrow">¶</a></p>
+validating client instance assertions.<a href="#section-15.4.2-1.4.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
 <dt id="section-15.4.2-1.5">Specification Document(s):</dt>
@@ -4333,39 +4301,138 @@ validating client instance actor tokens.<a href="#section-15.4.2-1.4.1" class="p
 </div>
 </section>
 </div>
-<div id="iana-entity-profile">
+<div id="iana-media-type">
 <section id="section-15.5">
-        <h3 id="name-oauth-entity-profile">
-<a href="#section-15.5" class="section-number selfRef">15.5. </a><a href="#name-oauth-entity-profile" class="section-name selfRef">OAuth Entity Profile</a>
+        <h3 id="name-media-type">
+<a href="#section-15.5" class="section-number selfRef">15.5. </a><a href="#name-media-type" class="section-name selfRef">Media Type</a>
         </h3>
-<p id="section-15.5-1">IANA is requested to register the following value in the "OAuth
-Entity Profiles" registry established by <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span>. This
-registration is contingent on the establishment of that registry.<a href="#section-15.5-1" class="pilcrow">¶</a></p>
+<p id="section-15.5-1">IANA is requested to register the following media type in the
+"Media Types" registry:<a href="#section-15.5-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-15.5-2">
-          <dt id="section-15.5-2.1">Profile Name:</dt>
+          <dt id="section-15.5-2.1">Type name:</dt>
           <dd style="margin-left: 1.5em" id="section-15.5-2.2">
-            <p id="section-15.5-2.2.1"><code>client_instance</code><a href="#section-15.5-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-15.5-2.2.1">application<a href="#section-15.5-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-15.5-2.3">Profile Description:</dt>
+<dt id="section-15.5-2.3">Subtype name:</dt>
           <dd style="margin-left: 1.5em" id="section-15.5-2.4">
-            <p id="section-15.5-2.4.1">A concrete runtime instance of an OAuth client class identified by
-a Client ID Metadata Document.<a href="#section-15.5-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-15.5-2.4.1">client-instance+jwt<a href="#section-15.5-2.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-15.5-2.5">Profile Usage Location:</dt>
+<dt id="section-15.5-2.5">Required parameters:</dt>
           <dd style="margin-left: 1.5em" id="section-15.5-2.6">
-            <p id="section-15.5-2.6.1">Actor Profile<a href="#section-15.5-2.6.1" class="pilcrow">¶</a></p>
+            <p id="section-15.5-2.6.1">N/A<a href="#section-15.5-2.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-15.5-2.7">Change Controller:</dt>
+<dt id="section-15.5-2.7">Optional parameters:</dt>
           <dd style="margin-left: 1.5em" id="section-15.5-2.8">
-            <p id="section-15.5-2.8.1">IETF<a href="#section-15.5-2.8.1" class="pilcrow">¶</a></p>
+            <p id="section-15.5-2.8.1">N/A<a href="#section-15.5-2.8.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-15.5-2.9">Specification Document(s):</dt>
+<dt id="section-15.5-2.9">Encoding considerations:</dt>
           <dd style="margin-left: 1.5em" id="section-15.5-2.10">
-            <p id="section-15.5-2.10.1">This document<a href="#section-15.5-2.10.1" class="pilcrow">¶</a></p>
+            <p id="section-15.5-2.10.1">binary; A Client Instance Assertion is a JWT; JWT values are
+encoded as a series of base64url-encoded values separated by
+period characters.<a href="#section-15.5-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.11">Security considerations:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.12">
+            <p id="section-15.5-2.12.1">See <a href="#security" class="auto internal xref">Section 14</a> of this document.<a href="#section-15.5-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.13">Interoperability considerations:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.14">
+            <p id="section-15.5-2.14.1">N/A<a href="#section-15.5-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.15">Published specification:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.16">
+            <p id="section-15.5-2.16.1">This document.<a href="#section-15.5-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.17">Applications that use this media type:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.18">
+            <p id="section-15.5-2.18.1">OAuth 2.0 authorization servers and clients implementing this
+profile.<a href="#section-15.5-2.18.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.19">Fragment identifier considerations:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.20">
+            <p id="section-15.5-2.20.1">N/A<a href="#section-15.5-2.20.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.21">Additional information:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.22">
+            <p id="section-15.5-2.22.1">Magic number(s): N/A; File extension(s): N/A; Macintosh file type
+code(s): N/A<a href="#section-15.5-2.22.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.23">Person &amp; email address to contact for further information:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.24">
+            <p id="section-15.5-2.24.1">Karl McGuinness <a href="mailto:public@karlmcguinness.com">public@karlmcguinness.com</a><a href="#section-15.5-2.24.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.25">Intended usage:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.26">
+            <p id="section-15.5-2.26.1">COMMON<a href="#section-15.5-2.26.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.27">Restrictions on usage:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.28">
+            <p id="section-15.5-2.28.1">none<a href="#section-15.5-2.28.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.29">Author:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.30">
+            <p id="section-15.5-2.30.1">Karl McGuinness<a href="#section-15.5-2.30.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.5-2.31">Change controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.5-2.32">
+            <p id="section-15.5-2.32.1">IETF<a href="#section-15.5-2.32.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-15.5-3">This media type, when used as a value of the <code>typ</code> JWS protected
+header parameter (<span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> Section 4.1.9), <span class="bcp14">MUST</span> be
+<code>client-instance+jwt</code> (per <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> Section 3.11; the
+<code>application/</code> prefix is omitted).<a href="#section-15.5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-entity-profile">
+<section id="section-15.6">
+        <h3 id="name-oauth-entity-profile">
+<a href="#section-15.6" class="section-number selfRef">15.6. </a><a href="#name-oauth-entity-profile" class="section-name selfRef">OAuth Entity Profile</a>
+        </h3>
+<p id="section-15.6-1">IANA is requested to register the following value in the "OAuth
+Entity Profiles" registry established by <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span>. This
+registration is contingent on the establishment of that registry.<a href="#section-15.6-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-15.6-2">
+          <dt id="section-15.6-2.1">Profile Name:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.6-2.2">
+            <p id="section-15.6-2.2.1"><code>client_instance</code><a href="#section-15.6-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.6-2.3">Profile Description:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.6-2.4">
+            <p id="section-15.6-2.4.1">A concrete runtime instance of an OAuth client class identified by
+a Client ID Metadata Document.<a href="#section-15.6-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.6-2.5">Profile Usage Location:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.6-2.6">
+            <p id="section-15.6-2.6.1">Actor Profile<a href="#section-15.6-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.6-2.7">Change Controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-15.6-2.8">
+            <p id="section-15.6-2.8.1">IETF<a href="#section-15.6-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-15.6-2.9">Specification Document(s):</dt>
+          <dd style="margin-left: 1.5em" id="section-15.6-2.10">
+            <p id="section-15.6-2.10.1">This document<a href="#section-15.6-2.10.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -4494,8 +4561,20 @@ a Client ID Metadata Document.<a href="#section-15.5-2.4.1" class="pilcrow">¶</
 <span class="refAuthor">SPIFFE</span>, <span class="refTitle">"SPIFFE: Secure Production Identity Framework For Everyone"</span>, <time datetime="2024" class="refDate">2024</time>, <span>&lt;<a href="https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/">https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="SPIFFE-CLIENT-AUTH">[SPIFFE-CLIENT-AUTH]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Rose, S.</span>, and <span class="refAuthor">S. Thorgersen</span>, <span class="refTitle">"OAuth SPIFFE Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-spiffe-client-auth-01</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-01">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="WIMSE-ARCH">[WIMSE-ARCH]</dt>
+        <dd>
+<span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Rosomakho, Y.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"Workload Identity in a Multi System Environment (WIMSE) Architecture"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-arch-07</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-arch-07">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-arch-07</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="WIMSE-CREDS">[WIMSE-CREDS]</dt>
+        <dd>
+<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Sheffer, Y.</span>, and <span class="refAuthor">Y. Rosomakho</span>, <span class="refTitle">"WIMSE Workload Credentials"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-workload-creds-00</span>, <time datetime="2025-11-03" class="refDate">3 November 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-00">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="WIMSE-WPT">[WIMSE-WPT]</dt>
+      <dd>
+<span class="refAuthor">Campbell, B.</span> and <span class="refAuthor">A. Schwenkschuster</span>, <span class="refTitle">"WIMSE Workload Proof Token"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-wpt-01</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-wpt-01">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-wpt-01</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -4582,8 +4661,8 @@ double the wire surface without changing the validation.<a href="#appendix-A.5-3
           <li id="appendix-A.5-3.2">
             <p id="appendix-A.5-3.2.1"><em>Classification belongs to the grant.</em> Whether the issued access
 token represents delegation or self-acting is determined by the
-grant (<a href="#access-token-classification" class="auto internal xref">Section 8.6.1</a>), not by the actor token.
-The same actor token can correctly produce either shape depending
+grant (<a href="#access-token-classification" class="auto internal xref">Section 8.6.1</a>), not by the instance assertion.
+The same instance assertion can correctly produce either shape depending
 on the grant it accompanies.<a href="#appendix-A.5-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="appendix-A.5-3.3">
@@ -4615,13 +4694,13 @@ presented as a <code>client_assertion</code> under <span>[<a href="#SPIFFE-CLIEN
 the client). The CIMD listing of <code>spiffe_id</code>, including the permitted
 /* prefix wildcard, turns the SVID into a credential for the client.
 There is no separate notion of "instance" on the wire.<a href="#appendix-A.6-2" class="pilcrow">¶</a></p>
-<p id="appendix-A.6-3">A client instance actor token under this profile names <em>the
+<p id="appendix-A.6-3">A client instance assertion under this profile names <em>the
 instance</em>: its <code>sub</code> is the instance identifier and its <code>client_id</code>
 claim names the class. The same JWT is required to do double duty
 only when the client class chooses
 <code>token_endpoint_auth_method</code> = <code>client_instance_jwt</code>; in every
 other auth method, a separate client credential authenticates the
-class and the actor token names the instance.<a href="#appendix-A.6-3" class="pilcrow">¶</a></p>
+class and the instance assertion names the instance.<a href="#appendix-A.6-3" class="pilcrow">¶</a></p>
 <p id="appendix-A.6-4">Modeling the dual-use case as a <code>client_assertion_type</code> would have
 required either (a) inventing a second token type identical to
 client-instance-jwt to be the assertion, doubling the wire surface,
@@ -4629,14 +4708,9 @@ or (b) overloading <code>client_assertion_type</code> with the actor-token URN,
 which conflicts with that URN's role as <code>actor_token_type</code>. Modeling
 it as a <code>token_endpoint_auth_method</code> captures what is actually
 happening, namely that the AS authenticates the client class
-implicitly from its CIMD endorsement of the actor token's issuer,
+implicitly from its CIMD endorsement of the instance assertion's issuer,
 while keeping <code>client_assertion</code> and <code>actor_token</code> semantically
 distinct.<a href="#appendix-A.6-4" class="pilcrow">¶</a></p>
-<p id="appendix-A.6-5"><code>actor_token_required</code> is intentionally redundant with this auth
-method (<a href="#actor-token-required" class="auto internal xref">Section 5.3</a>). It exists for client classes that
-use a separate client authentication method (such as
-<code>private_key_jwt</code>) but still want every issued access token bound to
-an instance.<a href="#appendix-A.6-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -4879,7 +4953,7 @@ https://workload.app.example.com (<code>subject_syntax</code> "uri",
           <p id="appendix-C-3.4.1">Resource server: https://api.example.com.<a href="#appendix-C-3.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-C-3.5">
-          <p id="appendix-C-3.5.1">All access tokens are <code>DPoP</code>-bound; the actor token's <code>cnf</code> carries
+          <p id="appendix-C-3.5.1">All access tokens are <code>DPoP</code>-bound; the instance assertion's <code>cnf</code> carries
 the instance's <code>DPoP</code> key thumbprint.<a href="#appendix-C-3.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
@@ -4890,9 +4964,12 @@ the instance's <code>DPoP</code> key thumbprint.<a href="#appendix-C-3.5.1" clas
         </h3>
 <p id="appendix-C.1-1">Alice authorizes the agent (client class) at the AS through a
 standard authorization_code flow. The agent runs as instance
-inst-01, which presents an actor token at the token endpoint to
+inst-01, which presents an instance assertion at the token endpoint to
 identify itself.<a href="#appendix-C.1-1" class="pilcrow">¶</a></p>
-<p id="appendix-C.1-2">Authorization request from the agent (abridged):<a href="#appendix-C.1-2" class="pilcrow">¶</a></p>
+<p id="appendix-C.1-2">Authorization request from the agent (abridged). <code>dpop_jkt</code> carries
+the thumbprint of inst-01's DPoP key (matching the instance assertion's
+<code>cnf.jkt</code>) to establish key-bound continuity per
+<a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>:<a href="#appendix-C.1-2" class="pilcrow">¶</a></p>
 <div class="lang-http-message sourcecode" id="appendix-C.1-3">
 <pre>
 GET /authorize?response_type=code
@@ -4901,13 +4978,16 @@ GET /authorize?response_type=code
   &amp;scope=repo.write
   &amp;state=xyz
   &amp;code_challenge=...
-  &amp;code_challenge_method=S256 HTTP/1.1
+  &amp;code_challenge_method=S256
+  &amp;dpop_jkt=0ZcOCORZNYy...iguA4I HTTP/1.1
 Host: as.example.com
 </pre><a href="#appendix-C.1-3" class="pilcrow">¶</a>
 </div>
 <p id="appendix-C.1-4">The AS authenticates Alice, displays consent for the client class
 (per <a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a> consent applies to the class as a
-whole, not per-instance), and redirects with an authorization_code.<a href="#appendix-C.1-4" class="pilcrow">¶</a></p>
+whole, not per-instance), binds the authorization code to the
+<code>dpop_jkt</code> value per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, and redirects with an
+authorization_code.<a href="#appendix-C.1-4" class="pilcrow">¶</a></p>
 <p id="appendix-C.1-5">Token request from instance inst-01:<a href="#appendix-C.1-5" class="pilcrow">¶</a></p>
 <div class="lang-http-message sourcecode" id="appendix-C.1-6">
 <pre>
@@ -4969,15 +5049,16 @@ grant_type=authorization_code
             <p id="appendix-C.1-10.7.1">Verifies <code>actor_token</code>.<code>client_id</code> == request <code>client_id</code> (step 7).<a href="#appendix-C.1-10.7.1" class="pilcrow">¶</a></p>
 </li>
           <li id="appendix-C.1-10.8">
-            <p id="appendix-C.1-10.8.1">Applies <code>max_actor_chain_depth</code> (step 8).<a href="#appendix-C.1-10.8.1" class="pilcrow">¶</a></p>
+            <p id="appendix-C.1-10.8.1">Applies AS-local maximum delegation depth (step 8).<a href="#appendix-C.1-10.8.1" class="pilcrow">¶</a></p>
 </li>
           <li id="appendix-C.1-10.9">
             <p id="appendix-C.1-10.9.1"><a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>: the request's <code>client_id</code> matches the
-<code>client_id</code> that received the code.<a href="#appendix-C.1-10.9.1" class="pilcrow">¶</a></p>
+<code>client_id</code> that received the code, and the DPoP proof's
+thumbprint matches both the code's <code>dpop_jkt</code> and the actor
+token's <code>cnf.jkt</code>.<a href="#appendix-C.1-10.9.1" class="pilcrow">¶</a></p>
 </li>
           <li id="appendix-C.1-10.10">
-            <p id="appendix-C.1-10.10.1">Classifies as delegation; verifies <code>DPoP</code> proof matches <code>cnf.jkt</code>;
-issues sender-constrained access token.<a href="#appendix-C.1-10.10.1" class="pilcrow">¶</a></p>
+            <p id="appendix-C.1-10.10.1">Classifies as delegation; issues sender-constrained access token.<a href="#appendix-C.1-10.10.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="appendix-C.1-11">Issued access token:<a href="#appendix-C.1-11" class="pilcrow">¶</a></p>
@@ -5059,7 +5140,7 @@ principal):<a href="#appendix-C.2-4" class="pilcrow">¶</a></p>
         </h3>
 <p id="appendix-C.3-1">A user-delegated access token issued by an upstream service is
 exchanged at the AS for a downstream-resource-scoped token. The
-agent's instance presents an actor token; the inbound <code>subject_token</code>
+agent's instance presents an instance assertion; the inbound <code>subject_token</code>
 already carries an <code>act</code> chain from a previous hop.<a href="#appendix-C.3-1" class="pilcrow">¶</a></p>
 <p id="appendix-C.3-2">Inbound <code>subject_token</code> (decoded; issued earlier by an upstream
 service named "service-router"):<a href="#appendix-C.3-2" class="pilcrow">¶</a></p>
@@ -5137,7 +5218,7 @@ own (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</s
 }
 </pre><a href="#appendix-C.3-10" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.3-11">Resulting chain depth is 2, well within typical <code>max_actor_chain_depth</code>.<a href="#appendix-C.3-11" class="pilcrow">¶</a></p>
+<p id="appendix-C.3-11">Resulting chain depth is 2, well within typical AS-local maximums.<a href="#appendix-C.3-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="appendix-examples-refresh">
@@ -5149,7 +5230,7 @@ own (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</s
 token (from the authorization_code example above), then terminated.
 A successor instance inst-04 obtains the refresh token (via a
 deployment-specific handoff such as a shared persistent state) and
-presents a fresh actor token to refresh.<a href="#appendix-C.4-1" class="pilcrow">¶</a></p>
+presents a fresh instance assertion to refresh.<a href="#appendix-C.4-1" class="pilcrow">¶</a></p>
 <p id="appendix-C.4-2">Refresh request:<a href="#appendix-C.4-2" class="pilcrow">¶</a></p>
 <div class="lang-http-message sourcecode" id="appendix-C.4-3">
 <pre>
