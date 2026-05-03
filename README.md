@@ -1,8 +1,8 @@
 <!-- regenerate: on (set to off if you edit this file) -->
 
-# OAuth 2.0 Client Instance Actor Assertion Profile
+# OAuth 2.0 Client Instance Assertion Profile
 
-This is the working area for the individual Internet-Draft, "OAuth 2.0 Client Instance Actor Assertion Profile".
+This is the working area for the individual Internet-Draft, "OAuth 2.0 Client Instance Assertion Profile".
 
 * [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/#go.draft-mcguinness-oauth-client-instance-actor-assertion.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-client-instance-actor-assertion)
@@ -28,4 +28,3 @@ $ make
 
 Command line usage requires that you have the necessary software installed.  See
 [the instructions](https://github.com/martinthomson/i-d-template/blob/main/doc/SETUP.md).
-
