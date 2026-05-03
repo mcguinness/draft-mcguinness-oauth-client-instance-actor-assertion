@@ -119,8 +119,13 @@ Table of Contents
        8.7.1.  Pushed Authorization Requests (PAR) and JAR
        8.7.2.  Resource Indicators
        8.7.3.  Token Introspection
-     8.8.  Refresh Tokens
-     8.9.  Error Responses
+     8.8.  SPIFFE Compatibility
+       8.8.1.  client_id Claim Omission
+       8.8.2.  SPIFFE Trust Bundle Resolution
+       8.8.3.  Combined SPIFFE Client Authentication and Actor
+               Identity
+     8.9.  Refresh Tokens
+     8.10. Error Responses
    9.  Grant Type Applicability
    10. Security Considerations
      10.1.  Trust Model
@@ -155,6 +160,11 @@ Table of Contents
      Why reuse actor_token in the self-acting case?
      Why a token_endpoint_auth_method rather than a
           client_assertion_type?
+   SPIFFE Deployment Recipe
+     Setup
+     Workload Token Request
+     AS Processing
+     Issued Access Token
    Acknowledgments
    Author's Address
 
@@ -300,10 +310,27 @@ Table of Contents
    This document does not require SPIFFE.  Instance issuers may issue
    non-SPIFFE JWT actor tokens (any subject_syntax other than "spiffe"),
    and the client class itself may authenticate via private_key_jwt,
-   [SPIFFE-CLIENT-AUTH], or any other registered method.  Integration
-   with [SPIFFE-CLIENT-AUTH]'s spiffe_bundle_endpoint as an alternative
-   trust source for the instance_issuers descriptor is left to a future
-   profile.
+   [SPIFFE-CLIENT-AUTH], or any other registered method.
+
+   For SPIFFE deployments specifically, this profile defines first-
+   class support to enable presenting JWT-SVIDs from the SPIFFE Workload
+   API directly as actor_token without re-minting:
+
+   *  the instance_issuers descriptor accepts spiffe_bundle_endpoint as
+      a trust source (Section 5.1), aligned with [SPIFFE-CLIENT-AUTH];
+
+   *  the descriptor accepts a spiffe_id member with optional "/*"
+      wildcard (Section 5.1), structurally bounding which workloads may
+      be attested as instances of the class (analogous to
+      [SPIFFE-CLIENT-AUTH]'s spiffe_id matching for client auth); and
+
+   *  the actor_token's client_id claim is OPTIONAL when the matched
+      descriptor uses these SPIFFE features (Section 8.8.1).
+
+   A SPIFFE deployment combining [SPIFFE-CLIENT-AUTH] with this profile
+   MAY present the same SVID as both client_assertion and actor_token in
+   a single token request (Section 8.8.3).  An end-to-end deployment
+   recipe is in Appendix "SPIFFE Deployment Recipe".
 
 2.  Conventions and Definitions
 
@@ -498,15 +525,22 @@ Table of Contents
       issuer.  This value MUST exactly match the iss claim of accepted
       actor tokens.
 
-   A descriptor MUST contain exactly one of jwks_uri and jwks; if both
-   are present or both are absent, the AS MUST reject the descriptor as
-   invalid client metadata.
+   A descriptor MUST contain exactly one of jwks_uri, jwks, and
+   spiffe_bundle_endpoint.  If two or more are present, or all are
+   absent, the AS MUST reject the descriptor as invalid client metadata.
 
    jwks_uri:  An HTTPS URL of a JWK Set [RFC7517] containing the public
       keys used to verify signatures of actor tokens issued by this
       issuer.
 
    jwks:  An inline JWK Set serving the same purpose as jwks_uri.
+
+   spiffe_bundle_endpoint:  An HTTPS URL of a SPIFFE trust bundle
+      endpoint [SPIFFE] from which the AS resolves verification keys for
+      actor tokens issued by this issuer.  When present, subject_syntax
+      MUST be "spiffe".  The bundle endpoint format and resolution rules
+      are governed by SPIFFE; see [SPIFFE-CLIENT-AUTH] for the analogous
+      use in client authentication.
 
    signing_alg_values_supported (OPTIONAL):  A JSON array of JWS
       [RFC7515] alg values that this issuer uses to sign actor tokens.
@@ -528,6 +562,19 @@ Table of Contents
       domain.  A descriptor's trust_domain is independent of any SPIFFE
       trust domain associated with the client class itself under
       [SPIFFE-CLIENT-AUTH]; the two MAY differ.
+
+   spiffe_id (OPTIONAL):  When subject_syntax is "spiffe", a SPIFFE ID
+      that further bounds which workloads this issuer may attest as
+      instances of this class.  The value is a SPIFFE ID, optionally
+      with a trailing "/_" wildcard, using the same syntax and matching
+      rules as [SPIFFE-CLIENT-AUTH].  Without "/_", the actor token's
+      sub MUST equal this value exactly; with "/*", the actor token's
+      sub MUST be a SPIFFE ID whose prefix before the wildcard matches
+      this value's prefix and whose path begins with the prefix's path.
+      If both spiffe_id and trust_domain are present, the trust domain
+      in spiffe_id MUST equal trust_domain.  This member, when present,
+      structurally binds a workload subtree to this client class — see
+      Section 8.8.1.
 
    actor_profiles_supported (OPTIONAL):  A JSON array of sub_profile
       values from the OAuth Entity Profiles registry [ENTITY-PROFILES]
@@ -717,7 +764,8 @@ Table of Contents
       an AS-specific actor token rather than a multi-aud JWT, to limit
       the replay surface.
 
-   client_id (REQUIRED):  The client_id of the client class to which
+   client_id (REQUIRED unless the SPIFFE compatibility conditions of
+   Section 8.8.1 are met):  The client_id of the client class to which
       this instance belongs.  This claim uses the JSON Web Token
       client_id claim registered by [RFC9068] Section 2.2 (which itself
       defers to [RFC8693] Section 4.3 for the underlying definition).
@@ -726,9 +774,12 @@ Table of Contents
       names the client class to which the asserted instance belongs.  It
       binds the actor token to a specific client class and is not part
       of the actor's identity (per [ACTOR-PROFILE], client_id identifies
-      an OAuth client, not an actor).  The AS MUST reject the token if
-      this value does not exactly equal the client_id of the
-      authenticated client.
+      an OAuth client, not an actor).  When present, the AS MUST reject
+      the token if this value does not exactly equal the client_id of
+      the authenticated client.  When omitted under Section 8.8.1, the
+      binding is established structurally by the matched descriptor's
+      spiffe_id rather than by a JWT claim, and a SPIFFE JWT-SVID may be
+      presented as the actor_token directly without re-minting.
 
    exp (REQUIRED):  Expiration time.  Issuers SHOULD set short lifetimes
       (e.g., five minutes or less); see Section 10.3.
@@ -768,7 +819,7 @@ Table of Contents
    instance); per [ACTOR-PROFILE], an actor_token that carries an act
    claim represents a delegation chain rather than a direct identity,
    and the AS MUST reject such a token with invalid_grant
-   (Section 8.6.4, Section 8.9).
+   (Section 8.6.4, Section 8.10).
 
    Additional claims MAY be present and MUST be ignored if not
    understood, except where this document or [ACTOR-PROFILE] specifies
@@ -879,7 +930,7 @@ Table of Contents
         as a JWT and read its iss claim.  Find the descriptor in
         instance_issuers whose issuer member exactly equals iss.  If no
         descriptor is found, or instance_issuers is absent, reject the
-        request with invalid_grant (Section 8.9).
+        request with invalid_grant (Section 8.10).
 
    5.   *Verify the signature.* Using the descriptor's jwks_uri or jwks,
         verify the JWS signature per [RFC7515] and Section 7.3.
@@ -889,9 +940,16 @@ Table of Contents
         subject_syntax, trust_domain, signing_alg_values_supported, and
         actor_profiles_supported when present in the descriptor.
 
-   7.   *Verify client_id binding.* The actor token's client_id claim
-        MUST exactly equal the authenticated client_id.  Reject with
-        invalid_grant otherwise.
+   7.   *Verify client_id binding.* If the actor token contains a
+        client_id claim, it MUST exactly equal the authenticated
+        client_id; reject with invalid_grant otherwise.  If the actor
+        token has no client_id claim, the AS MUST verify that the
+        matched descriptor satisfies the SPIFFE compatibility conditions
+        (Section 8.8.1); if not, reject with invalid_grant.  When the
+        descriptor satisfies those conditions, the AS MUST verify that
+        the actor_token's sub falls under the descriptor's spiffe_id
+        (with wildcard expansion if any); if not, reject with
+        invalid_grant.
 
    8.   *Enforce delegation policy.* Apply max_actor_chain_depth and the
         AS's own maximum, subject to the minimum supported depth
@@ -1080,7 +1138,7 @@ Table of Contents
       sub.
 
    If the AS cannot establish such an instance-specific binding, it MUST
-   reject the request with invalid_request (Section 8.9).  For this
+   reject the request with invalid_request (Section 8.10).  For this
    reason, instance issuers SHOULD include cnf in actor tokens so that
    the binding key is supplied by the same authority that named the
    instance.
@@ -1150,7 +1208,7 @@ Table of Contents
    When neither delegation nor self-acting cleanly applies (for example,
    custom or experimental grants), the AS MUST refuse to issue the
    access token rather than guess; reject with invalid_grant
-   (Section 8.9).
+   (Section 8.10).
 
 8.6.2.  Delegation Case
 
@@ -1341,7 +1399,7 @@ Table of Contents
    outermost actor and the subject_token's preserved delegation chain
    (when present) nested inside.  The resulting depth MUST NOT exceed
    max_actor_chain_depth (Section 5.2); otherwise the AS MUST reject the
-   request with invalid_request (Section 8.9), per [ACTOR-PROFILE].
+   request with invalid_request (Section 8.10), per [ACTOR-PROFILE].
 
    In the self-acting case (Section 8.6.3) the act claim is omitted at
    top level.  When a subject_token is present (uncommon outside token-
@@ -1378,7 +1436,7 @@ Table of Contents
    require or define them.  When such a policy applies, the AS MUST
    evaluate it against the validated actor token before issuing the
    access token, and reject inconsistent requests with invalid_grant
-   (Section 8.9).
+   (Section 8.10).
 
 8.7.3.  Token Introspection
 
@@ -1391,7 +1449,85 @@ Table of Contents
    key.  In the self-acting case, the access token's sub_profile and cnf
    SHOULD be returned alongside the standard [RFC7662] response fields.
 
-8.8.  Refresh Tokens
+8.8.  SPIFFE Compatibility
+
+   A SPIFFE workload typically obtains a JWT-SVID from the SPIFFE
+   Workload API.  JWT-SVIDs carry iss (the trust domain), sub (the
+   SPIFFE ID), aud, exp, iat, and a signature, but do not carry an OAuth
+   client_id claim.  To allow such SVIDs to be presented as actor_token
+   without re-minting, this profile defines a SPIFFE compatibility mode
+   driven entirely by descriptor configuration.
+
+8.8.1.  client_id Claim Omission
+
+   When all of the following hold for the descriptor that matches the
+   actor_token's iss:
+
+   *  subject_syntax is "spiffe";
+
+   *  a spiffe_id member is present (Section 5.1); and
+
+   *  the actor_token's sub satisfies the spiffe_id matching rule (exact
+      match or prefix match including the "/*" wildcard);
+
+   the AS MUST treat the descriptor as the per-class binding even if the
+   actor_token has no client_id claim.  In this mode:
+
+   *  The AS MUST verify that the actor_token's sub falls under the
+      descriptor's spiffe_id (after applying the wildcard, if any).
+
+   *  If the actor_token has a client_id claim, it MUST still equal the
+      request's client_id parameter (Section 8.2 step 7); the exception
+      narrows the _requirement_ that the claim be present, not the
+      _consistency_ of the claim when present.
+
+   *  All other JWT claims and validation rules of Section 7.2 continue
+      to apply unchanged.
+
+   The security rationale is that the descriptor's spiffe_id, signed
+   into the client class's CIMD document and dereferenced by the AS, is
+   itself the per-class binding: a workload's SPIFFE ID is bound to a
+   class by the class explicitly listing the prefix that contains it.
+   This is the same model SPIFFE-CLIENT-AUTH uses for client
+   authentication, applied here to actor identity.
+
+8.8.2.  SPIFFE Trust Bundle Resolution
+
+   When a descriptor specifies spiffe_bundle_endpoint instead of
+   jwks_uri or jwks, the AS resolves verification keys via the SPIFFE
+   trust bundle endpoint.  The AS MUST validate the bundle's freshness
+   and applicability to the trust domain in the descriptor's
+   trust_domain (or the trust domain implied by spiffe_id), and MUST
+   reject actor tokens whose iss does not correspond to a key in the
+   bundle for the relevant trust domain.  The bundle endpoint format,
+   freshness, and rotation rules follow SPIFFE; see [SPIFFE-CLIENT-AUTH]
+   for the analogous handling in client authentication.
+
+8.8.3.  Combined SPIFFE Client Authentication and Actor Identity
+
+   A SPIFFE deployment that uses [SPIFFE-CLIENT-AUTH] for client
+   authentication MAY use the same JWT-SVID as the actor_token under
+   this profile, in the same token request:
+
+   *  The SVID is presented as client_assertion with
+      client_assertion_type = urn:ietf:params:oauth:client-assertion-
+      type:jwt-spiffe per [SPIFFE-CLIENT-AUTH] (validated against the
+      client's spiffe_id CIMD member).
+
+   *  The same SVID is presented as actor_token with actor_token_type =
+      urn:ietf:params:oauth:token-type:client-instance-jwt (validated
+      against an instance_issuers descriptor under this profile).
+
+   The SVID's aud MUST identify the AS in a form acceptable to both
+   specifications (typically a single value identifying the AS satisfies
+   both).  The two parameters carry the same JWT bytes; the AS performs
+   both validations against the same artifact.
+
+   This is a non-normative coordination pattern; neither
+   [SPIFFE-CLIENT-AUTH] nor this document requires it.  A future profile
+   MAY define a single auth method that subsumes both roles.
+
+8.9.  Refresh Tokens
 
    When an access token issued under this profile is refreshed
    ([RFC6749] Section 6), the AS reuses the classification
@@ -1451,7 +1587,7 @@ Table of Contents
    Issuing access tokens with stale instance identity across long
    refresh windows is discouraged; see Section 10.3.
 
-8.9.  Error Responses
+8.10.  Error Responses
 
    Errors are returned per [RFC6749] Section 5.2 and [RFC8693]
    Section 2.2.2.  The following table maps the validation failures
@@ -1500,8 +1636,18 @@ Table of Contents
    +------------------------------------------+------------------------+
    | client_id binding mismatch               | invalid_grant          |
    +------------------------------------------+------------------------+
+   | client_id claim absent and SPIFFE        | invalid_grant          |
+   | compatibility conditions not met         |                        |
+   | (Section 8.8.1)                          |                        |
+   +------------------------------------------+------------------------+
+   | spiffe_id prefix match fails             | invalid_grant          |
+   | (Section 5.1)                            |                        |
+   +------------------------------------------+------------------------+
    | subject_syntax, sub_profile, or          | invalid_grant          |
    | trust_domain constraint fails            |                        |
+   +------------------------------------------+------------------------+
+   | subject_syntax is "spiffe" but sub       | invalid_grant          |
+   | is not a valid SPIFFE ID                 |                        |
    +------------------------------------------+------------------------+
    | max_actor_chain_depth exceeded           | invalid_request        |
    | ([ACTOR-PROFILE])                        |                        |
@@ -1528,7 +1674,7 @@ Table of Contents
 
    *  client_credentials ([RFC6749])
 
-   *  refresh_token ([RFC6749]; see Section 8.8)
+   *  refresh_token ([RFC6749]; see Section 8.9)
 
    *  urn:ietf:params:oauth:grant-type:jwt-bearer ([RFC7523])
 
@@ -1594,7 +1740,7 @@ Table of Contents
    Refresh windows are a particular concern: an access token refreshed
    without a new actor token may carry stale instance identity long
    after the original instance has terminated.  ASes SHOULD prefer
-   requiring a fresh actor token on refresh (Section 8.8), or set short
+   requiring a fresh actor token on refresh (Section 8.9), or set short
    refresh intervals when instance identity is present.
 
 10.3.  Replay
@@ -1608,7 +1754,7 @@ Table of Contents
    to limit replay exposure and because client instances often have
    lifetimes of seconds to minutes.
 
-   When refreshing access tokens (Section 8.8), AS implementations
+   When refreshing access tokens (Section 8.9), AS implementations
    SHOULD prefer requiring a fresh actor token rather than perpetuating
    stale instance identity, especially across long refresh windows.
 
@@ -1729,7 +1875,7 @@ Table of Contents
       hierarchical identifiers (e.g., a SPIFFE path) whose minimum
       granularity matches the auditing need.
 
-   The error response guidance in Section 8.9 extends to logs and audit
+   The error response guidance in Section 8.10 extends to logs and audit
    trails: actor token contents SHOULD be logged at a level commensurate
    with the sensitivity of the workload identity they convey.
 
@@ -2073,6 +2219,128 @@ Why a token_endpoint_auth_method rather than a client_assertion_type?
    (Section 5.3).  It exists for client classes that use a separate
    client authentication method (such as private_key_jwt) but still want
    every issued access token bound to an instance.
+
+SPIFFE Deployment Recipe
+
+   This appendix walks through an end-to-end SPIFFE deployment combining
+   [SPIFFE-CLIENT-AUTH] for client authentication and this profile for
+   instance identity, using the same JWT-SVID for both.  The recipe is
+   non-normative.
+
+Setup
+
+   The OAuth client class is identified by a CIMD URL,
+   https://app.example.com/agent.  The class is deployed across SPIFFE
+   workloads under the trust domain example.com, with all instances
+   under the path prefix /agent.
+
+   The class's CIMD document declares both client authentication
+   (SPIFFE-CLIENT-AUTH) and instance trust (this profile).  Both point
+   at the same SPIFFE bundle endpoint:
+
+   {
+     "client_id": "https://app.example.com/agent",
+     "spiffe_id": "spiffe://example.com/agent/*",
+     "spiffe_bundle_endpoint":
+         "https://spiffe.example.com/bundle",
+     "token_endpoint_auth_method":
+         "urn:ietf:params:oauth:client-assertion-type:jwt-spiffe",
+     "instance_issuers": [
+       {
+         "issuer": "spiffe://example.com",
+         "spiffe_bundle_endpoint":
+             "https://spiffe.example.com/bundle",
+         "subject_syntax": "spiffe",
+         "trust_domain": "example.com",
+         "spiffe_id": "spiffe://example.com/agent/*",
+         "actor_profiles_supported": ["client_instance"]
+       }
+     ]
+   }
+
+   The top-level spiffe_id (under SPIFFE-CLIENT-AUTH) and the
+   descriptor's spiffe_id (under this profile) intentionally match: any
+   workload under spiffe://example.com/agent/* counts both as the client
+   and as a permitted instance.
+
+Workload Token Request
+
+   A workload spiffe://example.com/agent/inst-01 obtains a JWT-SVID from
+   the SPIFFE Workload API with audience set to the AS
+   (https://as.example.com), then issues a client_credentials request
+   that uses the SVID as both client_assertion and actor_token:
+
+   POST /token HTTP/1.1
+   Host: as.example.com
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=client_credentials
+   &scope=repo.write
+   &client_id=https%3A%2F%2Fapp.example.com%2Fagent
+   &client_assertion_type=
+     urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-spiffe
+   &client_assertion=eyJhbGciOiJFUzI1NiIs...
+   &actor_token=eyJhbGciOiJFUzI1NiIs...
+   &actor_token_type=
+     urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
+
+   client_assertion and actor_token carry the byte-identical JWT-SVID:
+
+   {
+     "iss": "spiffe://example.com",
+     "sub": "spiffe://example.com/agent/inst-01",
+     "aud": "https://as.example.com",
+     "iat": 1770000000,
+     "exp": 1770000300,
+     "jti": "1a2b3c4d-5e6f"
+   }
+
+   The SVID has no client_id claim and is not re-minted; SPIFFE
+   compatibility (Section 8.8.1) handles the binding structurally via
+   the descriptor's spiffe_id.
+
+AS Processing
+
+   The AS:
+
+   1.  Resolves the CIMD document at https://app.example.com/agent.
+
+   2.  Authenticates the client per [SPIFFE-CLIENT-AUTH]: the
+       client_assertion's sub (spiffe://example.com/agent/inst-01) is
+       matched against the top-level spiffe_id (spiffe://example.com/
+       agent/*), and the SVID signature is verified against the SPIFFE
+       bundle.
+
+   3.  Validates the actor_token under this profile: matches the
+       descriptor (issuer = spiffe://example.com), verifies the
+       signature against the same SPIFFE bundle, validates JWT claims,
+       confirms the sub falls under the descriptor's spiffe_id, and
+       accepts the absence of a client_id claim per Section 8.8.1.
+
+   4.  Classifies as self-acting (client_credentials grant).
+
+   5.  Issues a sender-constrained access token.  The cnf is established
+       per the deployment's binding mechanism (typically the SVID's key
+       for DPoP, or the X.509-SVID's certificate for mTLS).
+
+Issued Access Token
+
+   {
+     "iss": "https://as.example.com",
+     "aud": "https://api.example.com",
+     "sub": "spiffe://example.com/agent/inst-01",
+     "sub_profile": "client_instance",
+     "client_id": "https://app.example.com/agent",
+     "scope": "repo.write",
+     "iat": 1770000005,
+     "exp": 1770000305,
+     "cnf": { "jkt": "0ZcOCORZNYy...iguA4I" }
+   }
+
+   The access token's client_id is the client class (the CIMD URL), sub
+   is the SPIFFE ID of the specific instance, and cnf binds the token to
+   the instance's key.  No re-minting was required at any point in the
+   workload's flow.
 
 Acknowledgments
 
