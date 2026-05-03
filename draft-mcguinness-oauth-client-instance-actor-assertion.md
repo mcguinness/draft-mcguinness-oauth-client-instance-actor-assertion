@@ -165,12 +165,14 @@ What this document does *not* do:
 
 The structure of this document follows that split.
 {{grant-type-applicability}} defines the common grant-type extension.
-The sections beginning with {{trust-model}} define the
-`client-instance-jwt` actor token type and its metadata, validation,
-representation, and security rules. Reusable token endpoint behavior is
-grouped under {{common-token-processing}}; future actor token type
-specifications can reuse that section without re-specifying the
-client-instance-specific validation rules.
+The protocol overview and the sections that follow define the
+`client-instance-jwt` actor token type, including its trust model,
+metadata, validation, representation, and security rules. Reusable
+token endpoint behavior is grouped under {{common-token-processing}};
+future actor token type specifications can reuse that section without
+re-specifying the client-instance-specific validation rules.
+
+# Relationship to Other Specifications {#relationships}
 
 ## Relationship to RFC 8693
 
@@ -339,7 +341,13 @@ Client Instance Assertion:
   carries when its `actor_token_type` is
   `urn:ietf:params:oauth:token-type:client-instance-jwt`).
 
-# Architecture {#architecture}
+# Protocol Overview {#protocol}
+
+This section describes the protocol model, the grant-type extension,
+and the client-instance trust relationship before defining concrete
+metadata, assertion, endpoint, and resource server processing.
+
+## Architecture {#architecture}
 
 Three roles cooperate to authenticate a client instance:
 
@@ -449,14 +457,14 @@ can publicly publish its bundle endpoint and instance descriptors;
 under RFC 7591, equivalent federation requires manual coordination
 of registration between the organizations.
 
-# Grant Type Applicability {#grant-type-applicability}
+## Grant Type Applicability {#grant-type-applicability}
 
 This section defines the grant-type extension to {{RFC8693}}: the
-generic mechanism on which this document's `client-instance-jwt`
+common mechanism on which this document's `client-instance-jwt`
 actor token type ({{client-instance-jwt}}) is built, and on which
 future profiles may build other actor token types.
 
-## Grant-Type Extension {#grant-type-extension}
+### Grant-Type Extension {#grant-type-extension}
 
 {{RFC8693}} defines `actor_token` and `actor_token_type` only on
 the token-exchange grant. This document permits these parameters
@@ -482,7 +490,7 @@ This document does not define behavior for the implicit grant or
 for the device authorization grant; specifying those is left to
 future work.
 
-## Applicability to Other Actor Token Types {#other-actor-token-types}
+### Applicability to Other Actor Token Types {#other-actor-token-types}
 
 The grant-type extension is independent of any specific
 `actor_token_type`. While this document defines and registers
@@ -524,12 +532,12 @@ A new profile only needs to specify what is unique to its actor
 token type (validation, trust resolution, and any specific claim
 constraints).
 
-# Trust Delegation Model {#trust-model}
+## Trust Delegation Model {#trust-model}
 
-The remainder of this document specifies the
-`client-instance-jwt` actor token type — the specific application
-of the grant-type extension above — including its trust model,
-metadata, claims, processing, and security considerations.
+The `client-instance-jwt` actor token type is the specific application
+of the grant-type extension defined above. Its trust model is defined
+here; its metadata, assertion format, endpoint processing, and security
+considerations are defined in later sections.
 
 This profile defines a three-party trust delegation between the
 client class, the instance issuer, and the AS. The client class
@@ -537,7 +545,7 @@ client class, the instance issuer, and the AS. The client class
 instance issuers; the AS *relies on* that delegation as expressed in
 the CIMD document.
 
-## Delegation by the Client Class {#trust-model-delegation}
+### Delegation by the Client Class {#trust-model-delegation}
 
 By listing an instance issuer in its CIMD `instance_issuers`
 ({{instance-issuers}}), a client class delegates to that issuer the
@@ -569,7 +577,7 @@ attributable to the client class. A class MAY exploit this to use
 the instance assertion as its client credential; see
 {{auth-via-actor-token}}.
 
-## Authority of the Authorization Server {#trust-model-as}
+### Authority of the Authorization Server {#trust-model-as}
 
 The AS treats the CIMD `instance_issuers` list as authoritative: it
 derives its trust in an instance assertion solely from the descriptor whose
@@ -578,7 +586,7 @@ does not define out-of-band or AS-side configuration of additional
 instance issuers for a `client_id`; deployments requiring such
 configuration MUST do so via a separate specification.
 
-## Trust Update Handling {#trust-lifecycle}
+### Trust Update Handling {#trust-lifecycle}
 
 The trust relationship between client class and instance issuer is
 mutable. When the CIMD document changes (for example, an instance
@@ -607,7 +615,7 @@ Deployments that cannot satisfy this bound MUST support active
 access-token revocation ({{revocation}}) and SHOULD support
 introspection-based status checks at the resource server.
 
-## Cross-Organization Federation {#cross-org-federation}
+### Cross-Organization Federation {#cross-org-federation}
 
 A client class MAY list instance issuers operated by a different
 organization than the class itself. This is the cross-organization
@@ -641,7 +649,13 @@ metadata independently, and workloads request audience-specific
 JWT-SVIDs per target AS so that `aud`-based replay protection
 ({{security-replay}}) holds across destinations.
 
-# Client Metadata Extensions {#cimd-extensions}
+# Metadata and Discovery {#metadata}
+
+This section defines client metadata used to delegate instance
+attestation and authorization server metadata used by clients to
+discover support.
+
+## Client Metadata Extensions {#client-metadata}
 
 This document defines client metadata parameters describing the
 trust relationship between a client class and the instance issuers
@@ -662,7 +676,7 @@ The descriptor format and processing rules are identical in both
 cases. {{registration-models}} discusses the trade-offs between the
 two registration models.
 
-## instance_issuers {#instance-issuers}
+### instance_issuers {#instance-issuers}
 
 OPTIONAL. A non-empty JSON array of *instance issuer descriptor*
 objects. Each descriptor declares an issuer that the client class
@@ -778,7 +792,7 @@ Example client metadata document using a non-SPIFFE instance issuer
 }
 ~~~
 
-# Authorization Server Metadata {#as-metadata}
+## Authorization Server Metadata {#as-metadata}
 
 This document defines the following AS metadata parameters for
 {{RFC8414}} (see {{iana-as-metadata}}):
@@ -818,7 +832,7 @@ In addition, an AS that supports {{auth-via-actor-token}} MUST
 advertise `client_instance_jwt` in
 `token_endpoint_auth_methods_supported` ({{RFC8414}}).
 
-# The Client Instance Assertion {#client-instance-jwt}
+# Client Instance Assertion Format {#client-instance-jwt}
 
 This section defines `client-instance-jwt` — a specific
 `actor_token_type` registered under this document for asserting
@@ -1029,7 +1043,7 @@ The `sub_profile` value "`ai_agent`" is illustrative; only
 registration in the OAuth Entity Profiles registry
 {{ENTITY-PROFILES}}.
 
-# Token Endpoint Processing for Client Instance Assertions {#token-endpoint}
+# Token Endpoint Processing {#token-endpoint}
 
 This section specifies AS-side processing for token requests
 carrying an `actor_token` of type
@@ -1038,7 +1052,7 @@ rules for actor token processing are grouped under
 {{common-token-processing}}. Sections outside that parent are specific
 to the `client-instance-jwt` token type unless otherwise noted.
 
-## Token Request {#token-request}
+## Client Instance Assertion Token Request {#token-request}
 
 A client presents a client instance assertion at the token endpoint
 by adding the `actor_token` and `actor_token_type` parameters defined by
@@ -1081,7 +1095,7 @@ the sections it references.
 | Grant classifies as delegation | Put the actor in `act`; keep the grant principal in top-level `sub`. |
 | Grant classifies as self-acting | Put the actor in top-level `sub`; omit top-level `act`. |
 
-## Authorization Server Processing {#as-processing}
+## Authorization Server Processing for Client Instance Assertions {#as-processing}
 
 When evaluating a token request for this profile, an AS implementing
 this document MUST perform the following checks and steps in addition
@@ -1847,13 +1861,19 @@ something while the instance identity appears in `act.sub` or `sub`.
 When the instance is a SPIFFE workload, the SPIFFE ID is conveyed
 via `act.sub` (delegation) or `sub` (self-acting), never via `client_id`.
 
-# Token Revocation {#revocation}
+# Operational Considerations {#operational}
+
+This section covers behavior that affects deployment and operation of
+the protocol after tokens have been issued: revocation, interactions
+with other OAuth extensions, and migration.
+
+## Token Revocation {#revocation}
 
 This profile supports two complementary revocation models for access
 tokens issued under it. Both build on {{RFC7009}}; deployments MAY
 support either, both, or neither, subject to operational constraints.
 
-## Per-Token Revocation
+### Per-Token Revocation
 
 An AS that supports {{RFC7009}} revocation MAY accept the access
 token (or its associated refresh token) as the token parameter and
@@ -1861,7 +1881,7 @@ revoke that specific issued token. This works unchanged for tokens
 issued under this profile; no profile-specific extensions to the
 revocation endpoint are required.
 
-## Per-Instance Revocation {#per-instance-revocation}
+### Per-Instance Revocation {#per-instance-revocation}
 
 When an instance is compromised or otherwise needs to be quarantined,
 a deployment may need to invalidate all access tokens whose
@@ -1885,7 +1905,7 @@ removal of the instance from the workload identity provider's
 roster (which the AS observes via the descriptor's
 `spiffe_bundle_endpoint` or `jwks_uri` rotation).
 
-## Introspection Behavior on Revocation
+### Introspection Behavior on Revocation
 
 When an AS supports introspection ({{RFC7662}}), introspection
 responses for access tokens issued under this profile MUST honor
@@ -1900,7 +1920,7 @@ tokens, `sub`) is no longer endorsed, introspection responses for
 that access token MUST return active = false within the AS's CIMD
 cache window.
 
-## Revocation and Refresh Tokens
+### Revocation and Refresh Tokens
 
 When a refresh token is sender-constrained to the originating
 instance ({{refresh}}), per-instance revocation MUST also revoke
@@ -1910,12 +1930,12 @@ refresh ({{refresh}}) MUST decide whether per-instance revocation
 cascades to successors and document its choice; the safe default
 is that revocation of any successor in a chain revokes the chain.
 
-# Interactions with Other OAuth Extensions {#interactions}
+## Interactions with Other OAuth Extensions {#interactions}
 
 This profile conveys actor identity at the token endpoint only. Its
 interactions with other OAuth extensions are as follows.
 
-## Pushed Authorization Requests (PAR) and JAR {#interactions-par-jar}
+### Pushed Authorization Requests (PAR) and JAR {#interactions-par-jar}
 
 This profile does not define any extensions to the authorization
 request, so it does not interact directly with Pushed Authorization
@@ -1928,7 +1948,7 @@ authorization-time policy ({{auth-time-consistency}}) evaluate that
 policy at the token endpoint, after the instance assertion has been
 validated; PAR and JAR do not change this.
 
-## Resource Indicators {#interactions-resource}
+### Resource Indicators {#interactions-resource}
 
 The resource parameter {{RFC8707}} constrains the audience of the
 issued access token. It is orthogonal to actor identity: the same
@@ -1943,7 +1963,7 @@ evaluate it against the validated instance assertion before issuing the
 access token, and reject inconsistent requests with `invalid_grant`
 ({{errors}}).
 
-## Token Introspection {#interactions-introspection}
+### Token Introspection {#interactions-introspection}
 
 When an AS supports token introspection {{RFC7662}} for access
 tokens issued under this profile, introspection responses for
@@ -1955,13 +1975,13 @@ possession have the binding key. In the self-acting case, the
 access token's `sub_profile` and `cnf` SHOULD be returned alongside the
 standard {{RFC7662}} response fields.
 
-# Adoption and Migration {#adoption}
+## Adoption and Migration {#adoption}
 
 This profile is designed for incremental adoption: existing OAuth
 deployments can add support for client instance identity without
 forcing all clients to opt in.
 
-## Backward Compatibility
+### Backward Compatibility
 
 Existing CIMD documents that do not declare `instance_issuers`
 continue to work unchanged. An AS implementing this profile MUST
@@ -1976,7 +1996,7 @@ lifetime; only newly issued tokens that present a
 client-instance-jwt `actor_token` are subject to this profile's
 processing rules.
 
-## Incremental AS Adoption
+### Incremental AS Adoption
 
 An AS MAY implement this profile while continuing to serve clients
 that don't use it. Token requests are dispatched on `actor_token_type`:
@@ -1994,7 +2014,7 @@ ASes SHOULD advertise support via `actor_token_types_supported`
 ({{as-metadata}}) so clients can discover whether to assemble token
 requests under this profile.
 
-## Incremental Client Adoption
+### Incremental Client Adoption
 
 A client class MAY add `instance_issuers` to its CIMD at any time.
 Doing so does not invalidate existing access tokens issued for that
@@ -2005,7 +2025,7 @@ to mandate instance assertions for every issued access token can register
 ({{auth-via-actor-token}}), which intrinsically requires the
 `actor_token`.
 
-## Migration without cnf {#adoption-without-cnf}
+### Migration without cnf {#adoption-without-cnf}
 
 A class MAY deploy this profile before adopting per-instance proof-
 of-possession keys, but the bearer-replay protection in
