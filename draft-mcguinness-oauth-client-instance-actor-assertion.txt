@@ -98,17 +98,17 @@ Table of Contents
      2.3.  Relationship to SPIFFE Client Authentication
      2.4.  Relationship to WIMSE Workload Credentials
    3.  Conventions and Definitions
-   4.  Protocol Overview
-     4.1.  Architecture
-     4.2.  Client Registration Models
-     4.3.  Trust Delegation Model
-       4.3.1.  Delegation by the Client Class
-       4.3.2.  Authority of the Authorization Server
-       4.3.3.  Trust Update Handling
-       4.3.4.  Cross-Organization Federation
-   5.  Grant-Type Extension
-     5.1.  Supported Grant Types
-     5.2.  Other Actor Token Types
+   4.  Actor Token Grant Extension
+     4.1.  Grant Types
+     4.2.  Other Actor Token Types
+   5.  Client Instance Model
+     5.1.  Architecture
+     5.2.  Client Registration Models
+     5.3.  Trust Delegation Model
+       5.3.1.  Delegation by the Client Class
+       5.3.2.  Authority of the Authorization Server
+       5.3.3.  Trust Update Handling
+       5.3.4.  Cross-Organization Federation
    6.  Metadata and Discovery
      6.1.  Client Metadata Extensions
        6.1.1.  instance_issuers
@@ -233,7 +233,7 @@ Table of Contents
    actor_token_type: it provides the wire mechanism on which other
    profiles can build their own actor token types for non-instance use
    cases (for example, AI agents acting on behalf of a user, or services
-   invoked under a delegation grant).  See Section 5.
+   invoked under a delegation grant).  See Section 4.
 
    *An actor token type for client instance identity.* Building on the
    grant-type extension, this document:
@@ -243,7 +243,7 @@ Table of Contents
       to assert that a particular runtime is an instance of that class.
       The metadata applies whether the client is identified by a Client
       ID Metadata Document [CIMD] or registered via [RFC7591]; see
-      Section 4.2.
+      Section 5.2.
 
    *  Registers a new actor_token_type, urn:ietf:params:oauth:token-
       type:client-instance-jwt, that carries the instance identity as a
@@ -276,13 +276,13 @@ Table of Contents
       conveying actor identity; like [ACTOR-PROFILE], this is left for
       future work.
 
-   The structure of this document follows that split.  Section 5 defines
+   The structure of this document follows that split.  Section 4 defines
    the common grant-type extension, including the token endpoint grants
    on which actor_token and actor_token_type may appear.  The sections
    that follow define the client-instance-jwt actor token type,
    including its trust model, metadata, validation, representation, and
    security rules.  Future actor token type specifications can reuse
-   Section 5 without re-specifying the client-instance-specific
+   Section 4 without re-specifying the client-instance-specific
    validation rules.
 
 2.  Relationship to Other Specifications
@@ -291,7 +291,7 @@ Table of Contents
 
    [RFC8693] defines actor_token and actor_token_type only on the token-
    exchange grant.  This document permits these parameters on additional
-   grant types (Section 5) and registers a new actor_token_type for
+   grant types (Section 4) and registers a new actor_token_type for
    asserting client instance identity (Section 7).  The two are
    separable: a future profile may register a different actor_token_type
    and use the grant-type extension without redefining it.
@@ -449,7 +449,7 @@ Table of Contents
 
    Client Class:  The logical OAuth client identified by a client_id (a
       CIMD URL or a registered client_id under [RFC7591]; see
-      Section 4.2).  The client class is the issuer (in the OAuth
+      Section 5.2).  The client class is the issuer (in the OAuth
       metadata sense) that publishes the set of instance issuers
       permitted to authenticate its runtime instances.
 
@@ -472,13 +472,78 @@ Table of Contents
       actor_token_type is urn:ietf:params:oauth:token-type:client-
       instance-jwt).
 
-4.  Protocol Overview
+4.  Actor Token Grant Extension
 
-   This section describes the protocol model, the grant-type extension,
-   and the client-instance trust relationship before defining concrete
-   metadata, assertion, endpoint, and resource server processing.
+   This section defines the grant-type extension to [RFC8693]: the
+   common mechanism on which this document's client-instance-jwt actor
+   token type (Section 7) is built, and on which future profiles may
+   build other actor token types.  It specifies which grant types accept
+   the actor_token parameters.  Processing rules that are specific to
+   the client-instance-jwt token type are defined in Section 8.
 
-4.1.  Architecture
+4.1.  Grant Types
+
+   [RFC8693] defines actor_token and actor_token_type only on the token-
+   exchange grant.  This document permits these parameters on the
+   following additional token endpoint grant types:
+
+   *  authorization_code ([RFC6749])
+
+   *  client_credentials ([RFC6749])
+
+   *  refresh_token ([RFC6749])
+
+   *  urn:ietf:params:oauth:grant-type:jwt-bearer ([RFC7523])
+
+   Token-exchange ([RFC8693]) is also in scope; processing under
+   [RFC8693] continues to apply unchanged, with the addition of the new
+   actor_token_type defined in this document.
+
+   This grant-type extension defines only where the actor_token and
+   actor_token_type parameters may appear.  Each actor_token_type
+   profile defines how the AS validates that actor token, how it
+   represents the actor in issued tokens, and how refresh-token requests
+   are processed for that token type.
+
+   This document does not define behavior for the implicit grant or for
+   the device authorization grant; specifying those is left to future
+   work.
+
+4.2.  Other Actor Token Types
+
+   The grant-type extension is independent of any specific
+   actor_token_type.  While this document defines and registers
+   urn:ietf:params:oauth:token-type:client-instance-jwt for asserting
+   client instance identity (Section 7), other profiles MAY register
+   additional actor_token_type values suitable for other kinds of actor
+   delegation (for example, AI agents acting on behalf of a user,
+   services acting under a delegation grant, or workload identities
+   outside the OAuth client- class model).  Such profiles can use this
+   document's grant-type extension to present their actor tokens on the
+   same set of grants without re-specifying the grant-type-level
+   interaction.
+
+   At the token endpoint, the AS dispatches by actor_token_type: tokens
+   of type urn:ietf:params:oauth:token-type:client-instance-jwt are
+   processed under this document's rules in Section 8, while tokens of
+   other registered types are processed under their own specifications.
+   An AS MAY support multiple actor_token_type values concurrently and
+   SHOULD advertise them via actor_token_types_supported (Section 6.2).
+
+   A profile defining a new actor_token_type for use under the grant-
+   type extension MUST specify the validation, trust resolution, access-
+   token representation, sender-constraint, refresh-token, and security
+   rules for that token type.  Such profiles can reference this grant-
+   type extension for the wire-level permission to carry actor_token and
+   actor_token_type on the grant types listed in Section 4.1.
+
+5.  Client Instance Model
+
+   This section describes the client instance model and trust
+   relationship before defining concrete metadata, assertion, endpoint,
+   and resource server processing.
+
+5.1.  Architecture
 
    Three roles cooperate to authenticate a client instance:
 
@@ -566,7 +631,7 @@ Table of Contents
    |                    |  -> issues access token with act or sub
    +--------------------+
 
-4.2.  Client Registration Models
+5.2.  Client Registration Models
 
    This profile applies to OAuth clients regardless of how their
    metadata is registered with the AS.  Two models are supported:
@@ -595,16 +660,16 @@ Table of Contents
    difference is whether the AS obtains the metadata by dereferencing
    the CIMD URL or from stored registration data.
 
-   Cross-organization SPIFFE federation (Section 4.3.4) is operationally
+   Cross-organization SPIFFE federation (Section 5.3.4) is operationally
    easier under CIMD because the foreign organization can publicly
    publish its bundle endpoint and instance descriptors; under RFC 7591,
    equivalent federation requires manual coordination of registration
    between the organizations.
 
-4.3.  Trust Delegation Model
+5.3.  Trust Delegation Model
 
    The client-instance-jwt actor token type is the specific application
-   of the grant-type extension defined in Section 5.  Its trust model is
+   of the grant-type extension defined in Section 4.  Its trust model is
    defined here; its metadata, assertion format, endpoint processing,
    and security considerations are defined in later sections.
 
@@ -614,7 +679,7 @@ Table of Contents
    instance issuers; the AS _relies on_ that delegation as expressed in
    the CIMD document.
 
-4.3.1.  Delegation by the Client Class
+5.3.1.  Delegation by the Client Class
 
    By listing an instance issuer in its CIMD instance_issuers
    (Section 6.1.1), a client class delegates to that issuer the
@@ -647,7 +712,7 @@ Table of Contents
    itself attributable to the client class.  A class MAY exploit this to
    use the instance assertion as its client credential; see Section 8.7.
 
-4.3.2.  Authority of the Authorization Server
+5.3.2.  Authority of the Authorization Server
 
    The AS treats the CIMD instance_issuers list as authoritative: it
    derives its trust in an instance assertion solely from the descriptor
@@ -656,7 +721,7 @@ Table of Contents
    additional instance issuers for a client_id; deployments requiring
    such configuration MUST do so via a separate specification.
 
-4.3.3.  Trust Update Handling
+5.3.3.  Trust Update Handling
 
    The trust relationship between client class and instance issuer is
    mutable.  When the CIMD document changes (for example, an instance
@@ -685,7 +750,7 @@ Table of Contents
    access-token revocation (Section 10.1) and SHOULD support
    introspection-based status checks at the resource server.
 
-4.3.4.  Cross-Organization Federation
+5.3.4.  Cross-Organization Federation
 
    A client class MAY list instance issuers operated by a different
    organization than the class itself.  This is the cross-organization
@@ -705,7 +770,7 @@ Table of Contents
       rotation and revocation procedures.
 
    *  The foreign issuer MUST enforce the per-class minting rule
-      (Section 4.3.1).
+      (Section 5.3.1).
 
    *  For SPIFFE deployments where trust domains differ, the trust
       relationship SHOULD be expressed via SPIFFE federation: the AS
@@ -720,72 +785,6 @@ Table of Contents
    metadata independently, and workloads request audience-specific JWT-
    SVIDs per target AS so that aud-based replay protection
    (Section 12.3) holds across destinations.
-
-5.  Grant-Type Extension
-
-   This section defines the grant-type extension to [RFC8693]: the
-   common mechanism on which this document's client-instance-jwt actor
-   token type (Section 7) is built, and on which future profiles may
-   build other actor token types.  It specifies which grant types accept
-   the actor_token parameters.  Processing rules that are specific to
-   the client-instance-jwt token type are defined in Section 8.
-
-5.1.  Supported Grant Types
-
-   [RFC8693] defines actor_token and actor_token_type only on the token-
-   exchange grant.  This document permits these parameters on the
-   following additional token endpoint grant types:
-
-   *  authorization_code ([RFC6749])
-
-   *  client_credentials ([RFC6749])
-
-   *  refresh_token ([RFC6749])
-
-   *  urn:ietf:params:oauth:grant-type:jwt-bearer ([RFC7523])
-
-   Token-exchange ([RFC8693]) is also in scope; processing under
-   [RFC8693] continues to apply unchanged, with the addition of the new
-   actor_token_type defined in this document.
-
-   This grant-type extension defines only where the actor_token and
-   actor_token_type parameters may appear.  Each actor_token_type
-   profile defines how the AS validates that actor token, how it
-   represents the actor in issued tokens, and how refresh-token requests
-   are processed for that token type.
-
-   This document does not define behavior for the implicit grant or for
-   the device authorization grant; specifying those is left to future
-   work.
-
-5.2.  Other Actor Token Types
-
-   The grant-type extension is independent of any specific
-   actor_token_type.  While this document defines and registers
-   urn:ietf:params:oauth:token-type:client-instance-jwt for asserting
-   client instance identity (Section 7), other profiles MAY register
-   additional actor_token_type values suitable for other kinds of actor
-   delegation (for example, AI agents acting on behalf of a user,
-   services acting under a delegation grant, or workload identities
-   outside the OAuth client- class model).  Such profiles can use this
-   document's grant-type extension to present their actor tokens on the
-   same set of grants without re-specifying the grant-type-level
-   interaction.
-
-   ASes implementing this profile dispatch on actor_token_type during
-   Section 8.2: tokens of type urn:ietf:params:oauth:token-type:client-
-   instance-jwt are processed under this document's rules in Section 8,
-   while tokens of other registered types are processed under their own
-   specifications.  An AS MAY support multiple actor_token_type values
-   concurrently and SHOULD advertise them via
-   actor_token_types_supported (Section 6.2).
-
-   A profile defining a new actor_token_type for use under the grant-
-   type extension MUST specify the validation, trust resolution, access-
-   token representation, sender-constraint, refresh-token, and security
-   rules for that token type.  Such profiles can reference this grant-
-   type extension for the wire-level permission to carry actor_token and
-   actor_token_type on the grant types listed in Section 5.1.
 
 6.  Metadata and Discovery
 
@@ -812,7 +811,7 @@ Table of Contents
       by the AS.
 
    The descriptor format and processing rules are identical in both
-   cases.  Section 4.2 discusses the trade-offs between the two
+   cases.  Section 5.2 discusses the trade-offs between the two
    registration models.
 
 6.1.1.  instance_issuers
@@ -967,7 +966,7 @@ Table of Contents
    This section defines client-instance-jwt — a specific
    actor_token_type registered under this document for asserting client
    instance identity.  Tokens of this type are presented under the
-   grant-type extension defined in Section 5; their AS-side processing
+   grant-type extension defined in Section 4; their AS-side processing
    is specified in Section 8.
 
    A _Client Instance Assertion_ is a JWT [RFC7519] that asserts the
@@ -1166,7 +1165,7 @@ Table of Contents
 
    This section specifies AS-side processing for token requests carrying
    an actor_token of type urn:ietf:params:oauth:token-type:client-
-   instance-jwt.  It builds on the grant-type extension in Section 5 by
+   instance-jwt.  It builds on the grant-type extension in Section 4 by
    defining the validation, sender-constraint, representation, refresh,
    and error rules specific to the client-instance-jwt token type.
 
@@ -1174,7 +1173,7 @@ Table of Contents
 
    A client presents a client instance assertion at the token endpoint
    by adding the actor_token and actor_token_type parameters defined by
-   [RFC8693] to a token request of any grant type listed in Section 5.
+   [RFC8693] to a token request of any grant type listed in Section 4.
 
    The following example shows a client credentials grant carrying a
    client instance assertion.  The client class authenticates with
@@ -1223,7 +1222,7 @@ Table of Contents
         urn:ietf:params:oauth:token-type:client-instance-jwt, processing
         under this document does not apply.  Other registered
         actor_token_type values MAY be processed under their own
-        specifications (Section 5.2).
+        specifications (Section 4.2).
 
    3.   *Resolve client metadata.* Retrieve the client metadata for the
         authenticated client_id.  For clients identified by [CIMD],
@@ -2076,7 +2075,7 @@ Table of Contents
    per-token revocation and per-instance revocation: an introspection
    response MUST return active = false for any access token that has
    been revoked under either model.  Introspection MUST also honor the
-   trust update and CIMD freshness rules in Section 4.3.3: when the AS
+   trust update and CIMD freshness rules in Section 5.3.3: when the AS
    has adopted an updated CIMD document that removes an instance issuer
    or narrows a descriptor's scope so that an issued access token's act
    (or, for self-acting tokens, sub) is no longer endorsed,
@@ -2211,7 +2210,7 @@ Table of Contents
 
    Grant-Type Extension AS:  An AS that supports presentation of
       actor_token and actor_token_type on the grant types listed in
-      Section 5.1.  Such an AS MUST dispatch by actor_token_type and
+      Section 4.1.  Such an AS MUST dispatch by actor_token_type and
       MUST NOT apply client-instance-jwt token validation rules to other
       actor token types.
 
@@ -2233,7 +2232,7 @@ Table of Contents
 
    Instance Issuer:  An issuer of Client Instance Assertions MUST mint
       assertions according to Section 7.2, Section 7.3, and the
-      delegated scope described in Section 4.3.1.
+      delegated scope described in Section 5.3.1.
 
    Resource Server:  A resource server that consumes access tokens
       issued under this profile MUST process delegated tokens according
@@ -2248,7 +2247,7 @@ Table of Contents
 
 12.1.  Trust Model
 
-   The normative trust model for this profile is in Section 4.3.  This
+   The normative trust model for this profile is in Section 5.3.  This
    subsection summarizes the security implications.
 
    A client class delegates the authentication of its instances to one
@@ -2288,7 +2287,7 @@ Table of Contents
       class removes the issuer from instance_issuers, replaces or
       removes trust_domain, reduces actor_profiles_supported, or rotates
       jwks at the issuer level.  The AS's response is governed by
-      Section 4.3.3: subsequent uses of access tokens whose act
+      Section 5.3.3: subsequent uses of access tokens whose act
       references the withdrawn scope are treated as no longer endorsed.
 
    Refresh windows are a particular concern: an access token refreshed
@@ -2763,10 +2762,10 @@ Why extend actor_token to non-token-exchange grants?
    delegation grant, workload identities outside the OAuth client-class
    model — share the same need to convey actor identity at the token
    endpoint on grants other than token- exchange.  By isolating the
-   grant-type extension (Section 5), this document provides those future
+   grant-type extension (Section 4), this document provides those future
    profiles a defined wire mechanism to build on, rather than each
    profile re-litigating the question of whether actor_token may appear
-   on authorization_code or client_credentials.  See Section 5.2.
+   on authorization_code or client_credentials.  See Section 4.2.
 
 Why CIMD as the trust anchor for instance issuers?
 
