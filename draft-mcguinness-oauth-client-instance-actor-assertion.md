@@ -452,7 +452,7 @@ of registration between the organizations.
 # Grant Type Applicability {#grant-type-applicability}
 
 This section defines the grant-type extension to {{RFC8693}}: the
-common mechanism on which this document's `client-instance-jwt`
+generic mechanism on which this document's `client-instance-jwt`
 actor token type ({{client-instance-jwt}}) is built, and on which
 future profiles may build other actor token types.
 
@@ -506,12 +506,19 @@ values concurrently and SHOULD advertise them via
 `actor_token_types_supported` ({{as-metadata}}).
 
 A profile defining a new `actor_token_type` for use under the
-grant-type extension SHOULD reuse this document's:
+grant-type extension SHOULD reuse the rules grouped under
+{{common-token-processing}}, which include:
 
+* {{auth-time-consistency}} (authorization-code consent and key
+  continuity);
+* {{sender-constrained}} (sender-constraint requirements);
 * {{access-token-classification}} (which grant produces what shape);
+* {{access-token-delegation}} and {{access-token-self-acting}}
+  (default `act`/`sub` representation);
 * {{chain-merging}} (how to merge prior chains with the new actor);
-* {{sender-constrained}} (sender-constraint requirements); and
-* the default `act` representation rules in {{access-token-delegation}}.
+  and
+* {{refresh}} (classification inheritance and audit consequences
+  on refresh).
 
 A new profile only needs to specify what is unique to its actor
 token type (validation, trust resolution, and any specific claim
@@ -634,7 +641,7 @@ metadata independently, and workloads request audience-specific
 JWT-SVIDs per target AS so that `aud`-based replay protection
 ({{security-replay}}) holds across destinations.
 
-# Client-instance-jwt Client Metadata Extensions {#cimd-extensions}
+# Client Metadata Extensions {#cimd-extensions}
 
 This document defines client metadata parameters describing the
 trust relationship between a client class and the instance issuers
@@ -811,50 +818,7 @@ In addition, an AS that supports {{auth-via-actor-token}} MUST
 advertise `client_instance_jwt` in
 `token_endpoint_auth_methods_supported` ({{RFC8414}}).
 
-# Conformance {#conformance}
-
-This document defines separable implementation capabilities. A
-deployment or implementation claiming conformance MUST identify which
-of the following capabilities it supports.
-
-Grant-Type Extension AS:
-: An AS that supports presentation of `actor_token` and
-  `actor_token_type` on the grant types listed in
-  {{grant-type-extension}}. Such an AS MUST dispatch by
-  `actor_token_type` and MUST NOT apply `client-instance-jwt` token
-  validation rules to other actor token types.
-
-Client-instance-jwt AS:
-: An AS that supports
-  `urn:ietf:params:oauth:token-type:client-instance-jwt`. Such an AS
-  MUST implement {{as-processing}}, {{sender-constrained}},
-  {{access-token}}, {{chain-merging}}, and {{errors}}. It MUST also
-  implement {{ACTOR-PROFILE}}.
-
-Client-instance-jwt Client Authentication AS:
-: An AS that supports the `client_instance_jwt`
-  `token_endpoint_auth_method`. Such an AS MUST implement
-  {{auth-via-actor-token}} in addition to the Client-instance-jwt AS
-  capability.
-
-Client Class:
-: A client class using this profile MUST publish or register
-  `instance_issuers` metadata as defined in {{instance-issuers}} and
-  MUST ensure that each listed instance issuer is authorized to attest
-  instances of the class.
-
-Instance Issuer:
-: An issuer of Client Instance Assertions MUST mint assertions
-  according to {{claims}}, {{signing}}, and the delegated scope
-  described in {{trust-model-delegation}}.
-
-Resource Server:
-: A resource server that consumes access tokens issued under this
-  profile MUST process delegated tokens according to
-  {{ACTOR-PROFILE}} and MUST apply the self-acting semantics in
-  {{rs-self-acting}} when no `act` claim is present.
-
-# Client-instance-jwt Assertion Format {#client-instance-jwt}
+# The Client Instance Assertion {#client-instance-jwt}
 
 This section defines `client-instance-jwt` — a specific
 `actor_token_type` registered under this document for asserting
@@ -1427,20 +1391,19 @@ as belonging to the instance for binding purposes.
 
 A client instance may be acting on behalf of another principal
 (*delegation case*; e.g., a user authorized the request through an
-authorization_code grant) or acting as itself with no other principal
-involved (*self-acting case*; e.g., a `client_credentials` grant). The
-AS MUST classify each request as delegation or self-acting before
-populating the issued access token's claims. Classification rules
-are in {{access-token-classification}}; representation rules differ
-between the two cases.
+authorization_code grant) or acting as itself with no other
+principal involved (*self-acting case*; e.g., a
+`client_credentials` grant). The AS MUST classify each request as
+delegation or self-acting before populating the issued access
+token's claims. In both cases the access token's `client_id`
+remains the client class, the access token MUST be sender-
+constrained per {{sender-constrained}}, and any upstream actor
+chain MUST be preserved by nesting per {{ACTOR-PROFILE}} (merge
+rules in {{chain-merging}}). The classification rule, the two
+representation cases, and the chain-merging rule appear as peer
+subsections below.
 
-In both cases, the access token's `client_id` remains the client
-class, the access token MUST be sender-constrained per
-{{sender-constrained}}, and any upstream actor chain MUST be
-preserved by nesting per {{ACTOR-PROFILE}}; merge rules are in
-{{chain-merging}}.
-
-#### Classification {#access-token-classification}
+### Classification {#access-token-classification}
 
 Future profiles defining other `actor_token_type` values SHOULD adopt
 the same classification rule.
@@ -1470,7 +1433,7 @@ custom or experimental grants), the AS MUST refuse to issue the
 access token rather than guess; reject with `invalid_grant`
 ({{errors}}).
 
-#### Delegation Case {#access-token-delegation}
+### Delegation Case {#access-token-delegation}
 
 When the request is classified as delegation, the AS MUST populate
 the issued access token's `act` claim per {{ACTOR-PROFILE}} from the
@@ -1541,7 +1504,7 @@ For a nested actor chain (e.g., a token-exchange request whose
 `subject_token` already carries an `act` chain), see the worked example
 in {{appendix-examples-token-exchange}}.
 
-#### Self-Acting Case {#access-token-self-acting}
+### Self-Acting Case {#access-token-self-acting}
 
 When the request is classified as self-acting, the actor is the
 principal and there is no other party on whose behalf it acts. The
@@ -1608,7 +1571,7 @@ Note that `client_id` (the class) and `sub` (the instance) are distinct,
 and that `act` is absent. The instance assertion's `iss` is not represented in
 the access token (see preceding paragraph).
 
-#### Actor Chain Merging {#chain-merging}
+### Actor Chain Merging {#chain-merging}
 
 Future profiles defining other `actor_token_type` values SHOULD adopt
 the same chain construction rules.
@@ -2060,6 +2023,49 @@ ASes and class operators SHOULD NOT enable the
 that mode has no fallback client credential, so an instance assertion
 without `cnf` is fully bearer at presentation
 ({{security-auth-via-actor-token}}).
+
+# Conformance {#conformance}
+
+This document defines separable implementation capabilities. A
+deployment or implementation claiming conformance MUST identify which
+of the following capabilities it supports.
+
+Grant-Type Extension AS:
+: An AS that supports presentation of `actor_token` and
+  `actor_token_type` on the grant types listed in
+  {{grant-type-extension}}. Such an AS MUST dispatch by
+  `actor_token_type` and MUST NOT apply `client-instance-jwt` token
+  validation rules to other actor token types.
+
+Client Instance Assertion AS:
+: An AS that supports
+  `urn:ietf:params:oauth:token-type:client-instance-jwt`. Such an AS
+  MUST implement {{as-processing}}, {{sender-constrained}},
+  {{access-token}}, {{chain-merging}}, and {{errors}}. It MUST also
+  implement {{ACTOR-PROFILE}}.
+
+Client Instance Assertion Auth Method AS:
+: An AS that supports the `client_instance_jwt`
+  `token_endpoint_auth_method`. Such an AS MUST implement
+  {{auth-via-actor-token}} in addition to the Client Instance
+  Assertion AS capability.
+
+Client Class:
+: A client class using this profile MUST publish or register
+  `instance_issuers` metadata as defined in {{instance-issuers}} and
+  MUST ensure that each listed instance issuer is authorized to attest
+  instances of the class.
+
+Instance Issuer:
+: An issuer of Client Instance Assertions MUST mint assertions
+  according to {{claims}}, {{signing}}, and the delegated scope
+  described in {{trust-model-delegation}}.
+
+Resource Server:
+: A resource server that consumes access tokens issued under this
+  profile MUST process delegated tokens according to
+  {{ACTOR-PROFILE}} and MUST apply the self-acting semantics in
+  {{rs-self-acting}} when no `act` claim is present.
 
 # Security Considerations {#security}
 
