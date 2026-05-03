@@ -341,11 +341,77 @@ Client Instance Assertion:
   carries when its `actor_token_type` is
   `urn:ietf:params:oauth:token-type:client-instance-jwt`).
 
-# Protocol Overview {#protocol}
+# Actor Token Grant Extension {#grant-type-applicability}
 
-This section describes the protocol model, the grant-type extension,
-and the client-instance trust relationship before defining concrete
-metadata, assertion, endpoint, and resource server processing.
+This section defines the grant-type extension to {{RFC8693}}: the
+common mechanism on which this document's `client-instance-jwt`
+actor token type ({{client-instance-jwt}}) is built, and on which
+future profiles may build other actor token types. It specifies
+which grant types accept the `actor_token` parameters. Processing
+rules that are specific to the `client-instance-jwt` token type are
+defined in {{token-endpoint}}.
+
+## Grant Types {#grant-type-extension}
+
+{{RFC8693}} defines `actor_token` and `actor_token_type` only on
+the token-exchange grant. This document permits these parameters
+on the following additional token endpoint grant types:
+
+* `authorization_code` ({{RFC6749}})
+* `client_credentials` ({{RFC6749}})
+* `refresh_token` ({{RFC6749}})
+* `urn:ietf:params:oauth:grant-type:jwt-bearer` ({{RFC7523}})
+
+Token-exchange ({{RFC8693}}) is also in scope; processing under
+{{RFC8693}} continues to apply unchanged, with the addition of the
+new `actor_token_type` defined in this document.
+
+This grant-type extension defines only where the `actor_token` and
+`actor_token_type` parameters may appear. Each `actor_token_type`
+profile defines how the AS validates that actor token, how it
+represents the actor in issued tokens, and how refresh-token
+requests are processed for that token type.
+
+This document does not define behavior for the implicit grant or
+for the device authorization grant; specifying those is left to
+future work.
+
+## Other Actor Token Types {#other-actor-token-types}
+
+The grant-type extension is independent of any specific
+`actor_token_type`. While this document defines and registers
+`urn:ietf:params:oauth:token-type:client-instance-jwt` for
+asserting client instance identity ({{client-instance-jwt}}),
+other profiles MAY register additional `actor_token_type` values
+suitable for other kinds of actor delegation (for example, AI
+agents acting on behalf of a user, services acting under a
+delegation grant, or workload identities outside the OAuth client-
+class model). Such profiles can use this document's grant-type
+extension to present their actor tokens on the same set of grants
+without re-specifying the grant-type-level interaction.
+
+At the token endpoint, the AS dispatches by `actor_token_type`:
+tokens of type
+`urn:ietf:params:oauth:token-type:client-instance-jwt` are
+processed under this document's rules in {{token-endpoint}}, while
+tokens of other registered types are processed under their own
+specifications. An AS MAY support multiple `actor_token_type`
+values concurrently and SHOULD advertise them via
+`actor_token_types_supported` ({{as-metadata}}).
+
+A profile defining a new `actor_token_type` for use under the
+grant-type extension MUST specify the validation, trust resolution,
+access-token representation, sender-constraint, refresh-token, and
+security rules for that token type. Such profiles can reference this
+grant-type extension for the wire-level permission to carry
+`actor_token` and `actor_token_type` on the grant types listed in
+{{grant-type-extension}}.
+
+# Client Instance Model {#client-instance-model}
+
+This section describes the client instance model and trust relationship
+before defining concrete metadata, assertion, endpoint, and resource
+server processing.
 
 ## Architecture {#architecture}
 
@@ -574,72 +640,6 @@ ASes, is supported structurally: each AS resolves its own client
 metadata independently, and workloads request audience-specific
 JWT-SVIDs per target AS so that `aud`-based replay protection
 ({{security-replay}}) holds across destinations.
-
-# Grant-Type Extension {#grant-type-applicability}
-
-This section defines the grant-type extension to {{RFC8693}}: the
-common mechanism on which this document's `client-instance-jwt`
-actor token type ({{client-instance-jwt}}) is built, and on which
-future profiles may build other actor token types. It specifies
-which grant types accept the `actor_token` parameters. Processing
-rules that are specific to the `client-instance-jwt` token type are
-defined in {{token-endpoint}}.
-
-## Supported Grant Types {#grant-type-extension}
-
-{{RFC8693}} defines `actor_token` and `actor_token_type` only on
-the token-exchange grant. This document permits these parameters
-on the following additional token endpoint grant types:
-
-* `authorization_code` ({{RFC6749}})
-* `client_credentials` ({{RFC6749}})
-* `refresh_token` ({{RFC6749}})
-* `urn:ietf:params:oauth:grant-type:jwt-bearer` ({{RFC7523}})
-
-Token-exchange ({{RFC8693}}) is also in scope; processing under
-{{RFC8693}} continues to apply unchanged, with the addition of the
-new `actor_token_type` defined in this document.
-
-This grant-type extension defines only where the `actor_token` and
-`actor_token_type` parameters may appear. Each `actor_token_type`
-profile defines how the AS validates that actor token, how it
-represents the actor in issued tokens, and how refresh-token
-requests are processed for that token type.
-
-This document does not define behavior for the implicit grant or
-for the device authorization grant; specifying those is left to
-future work.
-
-## Other Actor Token Types {#other-actor-token-types}
-
-The grant-type extension is independent of any specific
-`actor_token_type`. While this document defines and registers
-`urn:ietf:params:oauth:token-type:client-instance-jwt` for
-asserting client instance identity ({{client-instance-jwt}}),
-other profiles MAY register additional `actor_token_type` values
-suitable for other kinds of actor delegation (for example, AI
-agents acting on behalf of a user, services acting under a
-delegation grant, or workload identities outside the OAuth client-
-class model). Such profiles can use this document's grant-type
-extension to present their actor tokens on the same set of grants
-without re-specifying the grant-type-level interaction.
-
-ASes implementing this profile dispatch on `actor_token_type` during
-{{as-processing}}: tokens of type
-`urn:ietf:params:oauth:token-type:client-instance-jwt` are
-processed under this document's rules in {{token-endpoint}}, while
-tokens of other registered types are processed under their own
-specifications. An AS MAY support multiple `actor_token_type`
-values concurrently and SHOULD advertise them via
-`actor_token_types_supported` ({{as-metadata}}).
-
-A profile defining a new `actor_token_type` for use under the
-grant-type extension MUST specify the validation, trust resolution,
-access-token representation, sender-constraint, refresh-token, and
-security rules for that token type. Such profiles can reference this
-grant-type extension for the wire-level permission to carry
-`actor_token` and `actor_token_type` on the grant types listed in
-{{grant-type-extension}}.
 
 # Metadata and Discovery {#metadata}
 
