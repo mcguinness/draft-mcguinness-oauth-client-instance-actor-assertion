@@ -1980,7 +1980,7 @@ combining {{SPIFFE-CLIENT-AUTH}} for client authentication and this
 profile for instance identity, using the same JWT-SVID for both. The
 recipe is non-normative.
 
-## Setup
+## Setup {#appendix-spiffe-setup}
 {:numbered="false"}
 
 The OAuth client class is identified by a CIMD URL,
@@ -2019,7 +2019,7 @@ descriptor's spiffe_id (under this profile) intentionally match: any
 workload under spiffe://example.com/agent/* counts both as the
 client and as a permitted instance.
 
-## Workload Token Request
+## Workload Token Request {#appendix-spiffe-request}
 {:numbered="false"}
 
 A workload spiffe://example.com/agent/inst-01 obtains a JWT-SVID
@@ -2060,7 +2060,7 @@ The SVID has no client_id claim and is not re-minted; SPIFFE
 compatibility ({{spiffe-client-id-omission}}) handles the binding
 structurally via the descriptor's spiffe_id.
 
-## AS Processing
+## AS Processing {#appendix-spiffe-as}
 {:numbered="false"}
 
 The AS:
@@ -2081,7 +2081,7 @@ The AS:
    per the deployment's binding mechanism (typically the SVID's key
    for DPoP, or the X.509-SVID's certificate for mTLS).
 
-## Issued Access Token
+## Issued Access Token {#appendix-spiffe-access-token}
 {:numbered="false"}
 
 ~~~ json
