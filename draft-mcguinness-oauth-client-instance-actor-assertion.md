@@ -118,7 +118,7 @@ parameter for proving an actor in flows other than token exchange.
 This document defines two related specifications, each
 independently useful:
 
-**A grant-type extension to RFC 8693.** It permits the
+**An actor token grant extension.** It permits the
 `actor_token` and `actor_token_type` parameters from {{RFC8693}} on
 token endpoint grants other than token-exchange (specifically:
 `authorization_code`, `client_credentials`, `refresh_token`, and
@@ -130,7 +130,7 @@ a user, or services invoked under a delegation grant). See
 {{grant-type-applicability}}.
 
 **An actor token type for client instance identity.** Building on
-the grant-type extension, this document:
+the actor token grant extension, this document:
 
 * Treats the OAuth `client_id` as identifying a client *class*, and
   defines client metadata describing the *instance issuers* trusted
@@ -164,7 +164,7 @@ What this document does *not* do:
   future work.
 
 The structure of this document follows that split.
-{{grant-type-applicability}} defines the common grant-type extension,
+{{grant-type-applicability}} defines the actor token grant extension,
 including the token endpoint grants on which `actor_token` and
 `actor_token_type` may appear. The sections that follow define the
 `client-instance-jwt` actor token type, including its trust model,
@@ -182,13 +182,17 @@ on additional grant types ({{grant-type-applicability}}) and
 registers a new `actor_token_type` for asserting client instance
 identity ({{client-instance-jwt}}). The two are separable: a
 future profile may register a different `actor_token_type` and
-use the grant-type extension without redefining it.
+use the actor token grant extension without redefining it.
 
-Both preserve {{RFC8693}}'s actor semantics in the *delegation*
-case ({{access-token-delegation}}): the `actor_token` identifies
-the party acting on behalf of the subject and is reflected in an
-`act` claim in the issued token. Use of these parameters on a
-token-exchange request remains fully governed by {{RFC8693}}.
+The actor token grant extension preserves {{RFC8693}}'s presentation
+model: `actor_token` carries the actor token and `actor_token_type`
+identifies its type. Representation of the actor in issued access
+tokens is defined by the applicable `actor_token_type` profile. For
+the `client-instance-jwt` token type defined by this document,
+delegation requests represent the instance in the `act` claim
+({{access-token-delegation}}). Use of these parameters on a
+token-exchange request remains fully governed by {{RFC8693}} and the
+applicable actor-token-type profile.
 
 This document additionally defines a *self-acting* case
 ({{access-token-self-acting}}) for grants that produce no principal
@@ -352,6 +356,23 @@ listed below. This document's `client-instance-jwt` actor token type
 ({{client-instance-jwt}}) is one such profile; its token-type-specific
 processing rules are defined in {{token-endpoint}}.
 
+{{RFC8693}} provides a general-purpose way to present an actor token
+to the AS, but scopes `actor_token` and `actor_token_type` to the
+token-exchange grant. Actor identity is also useful when an AS issues
+tokens directly from other grants: for example, an agent may redeem
+an authorization code on behalf of a user, a service may request a
+self-acting client credentials token, a delegated actor may refresh a
+token while preserving actor identity, or a JWT bearer assertion may
+identify one principal while the request still identifies the actor
+performing the operation.
+
+Defining new request parameters for each grant or actor-token profile
+would fragment the token endpoint surface. This extension instead
+reuses the existing `actor_token` and `actor_token_type` parameters
+as a common presentation mechanism. The extension does not define a
+universal actor-token validation model or access-token representation;
+those remain the responsibility of each `actor_token_type` profile.
+
 ## Grant Types {#grant-type-extension}
 
 {{RFC8693}} defines `actor_token` and `actor_token_type` only on
@@ -367,7 +388,7 @@ Token-exchange ({{RFC8693}}) is also in scope; processing under
 {{RFC8693}} continues to apply unchanged for any `actor_token_type`
 the AS supports.
 
-This grant-type extension defines only where the `actor_token` and
+This actor token grant extension defines only where the `actor_token` and
 `actor_token_type` parameters may appear. Each `actor_token_type`
 profile defines how the AS validates that actor token, how it
 represents the actor in issued tokens, and how refresh-token
@@ -379,17 +400,18 @@ future work.
 
 ## Other Actor Token Types {#other-actor-token-types}
 
-The grant-type extension is independent of any specific
-`actor_token_type`. While this document defines and registers
-`urn:ietf:params:oauth:token-type:client-instance-jwt` for
-asserting client instance identity ({{client-instance-jwt}}),
-other profiles MAY register additional `actor_token_type` values
-suitable for other kinds of actor delegation (for example, AI
-agents acting on behalf of a user, services acting under a
-delegation grant, or workload identities outside the OAuth client-
-class model). Such profiles can use this document's grant-type
-extension to present their actor tokens on the same set of grants
-without re-specifying the grant-type-level interaction.
+The actor token grant extension is independent of any specific
+`actor_token_type`. Any profile MAY register an `actor_token_type`
+value suitable for its actor model (for example, AI agents acting on
+behalf of a user, services acting under a delegation grant, or
+workload identities outside the OAuth client-class model). Such
+profiles can use this document's actor token grant extension to present
+their actor tokens on the same set of grants without re-specifying
+the grant-level actor-token presentation interaction.
+
+This document defines and registers
+`urn:ietf:params:oauth:token-type:client-instance-jwt` for asserting
+client instance identity ({{client-instance-jwt}}).
 
 At the token endpoint, the AS dispatches by `actor_token_type`:
 tokens of type
@@ -401,10 +423,10 @@ values concurrently and SHOULD advertise them via
 `actor_token_types_supported` ({{as-metadata}}).
 
 A profile defining a new `actor_token_type` for use under the
-grant-type extension MUST specify the validation, trust resolution,
+actor token grant extension MUST specify the validation, trust resolution,
 access-token representation, sender-constraint, refresh-token, and
 security rules for that token type. Such profiles can reference this
-grant-type extension for the wire-level permission to carry
+actor token grant extension for the wire-level permission to carry
 `actor_token` and `actor_token_type` on the grant types listed in
 {{grant-type-extension}}.
 
@@ -527,7 +549,8 @@ of registration between the organizations.
 ## Trust Delegation Model {#trust-model}
 
 The `client-instance-jwt` actor token type is the specific application
-of the grant-type extension defined in {{grant-type-applicability}}.
+of the actor token grant extension defined in
+{{grant-type-applicability}}.
 Its trust model is defined here; its metadata, assertion format,
 endpoint processing, and security considerations are defined in
 later sections.
@@ -830,7 +853,7 @@ advertise `client_instance_jwt` in
 This section defines `client-instance-jwt` — a specific
 `actor_token_type` registered under this document for asserting
 client instance identity. Tokens of this type are presented under
-the grant-type extension defined in
+the actor token grant extension defined in
 {{grant-type-applicability}}; their AS-side processing is
 specified in {{token-endpoint}}.
 
@@ -1041,9 +1064,9 @@ registration in the OAuth Entity Profiles registry
 This section specifies AS-side processing for token requests
 carrying an `actor_token` of type
 `urn:ietf:params:oauth:token-type:client-instance-jwt`. It builds on
-the grant-type extension in {{grant-type-applicability}} by defining
-the validation, sender-constraint, representation, refresh, and error
-rules specific to the `client-instance-jwt` token type.
+the actor token grant extension in {{grant-type-applicability}} by
+defining the validation, sender-constraint, representation, refresh,
+and error rules specific to the `client-instance-jwt` token type.
 
 ## Token Request {#token-request}
 
@@ -2422,25 +2445,29 @@ keeps the protocol surface unchanged.
 ## Why extend actor_token to non-token-exchange grants?
 {:numbered="false"}
 
-The actor concept in {{RFC8693}} fits client instance identity
-exactly: the instance acts on behalf of the subject (the human user
-or service principal) under the authority of the client class. The
-parameter machinery is already specified, deployed, and understood.
-The only normative move is permitting it on additional grants: a
-small, contained extension whose security analysis is the union of
-{{RFC8693}}'s and the underlying grant's.
+{{RFC8693}} already defines request parameters for presenting an
+actor token and identifying its token type. Those parameters are not
+specific to token exchange as a protocol concept; token exchange is
+only the grant on which {{RFC8693}} defines them. Other grants also
+need a way to identify the actor performing the request. Reusing the
+existing parameter machinery avoids grant-specific actor parameters
+and gives actor-token profiles a single token endpoint presentation
+model.
 
-The grant-type extension is intentionally separable from the
-specific `actor_token_type` defined here. Other actor delegation
-use cases — AI agents acting on behalf of a user, services
-invoked under a delegation grant, workload identities outside the
-OAuth client-class model — share the same need to convey actor
-identity at the token endpoint on grants other than token-
-exchange. By isolating the grant-type extension
-({{grant-type-applicability}}), this document provides those
+Client instance identity is one motivating example: the instance acts
+on behalf of the subject (the human user or service principal) under
+the authority of the client class. Other actor delegation use cases
+share the same presentation need. The only normative move in
+{{grant-type-applicability}} is permitting `actor_token` and
+`actor_token_type` on additional grants; validation and access-token
+representation remain token-type-specific.
+
+The actor token grant extension is intentionally separable from the specific
+`actor_token_type` defined here. By isolating the actor token grant
+extension ({{grant-type-applicability}}), this document provides
 future profiles a defined wire mechanism to build on, rather than
-each profile re-litigating the question of whether `actor_token`
-may appear on `authorization_code` or `client_credentials`. See
+each profile re-litigating the question of whether `actor_token` may
+appear on `authorization_code` or `client_credentials`. See
 {{other-actor-token-types}}.
 
 ## Why CIMD as the trust anchor for instance issuers?
