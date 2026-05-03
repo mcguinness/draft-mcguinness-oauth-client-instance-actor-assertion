@@ -246,31 +246,32 @@ as both `client_assertion` and `actor_token` in a single request
 
 The IETF Workload Identity in Multi System Environments (WIMSE)
 working group is defining specifications for workload identity,
-including the Workload Identity Token (WIT) {{WIMSE-CREDS}}, a JWT
-credential that asserts a workload's identity, and the broader
-WIMSE architecture {{WIMSE-ARCH}}. SPIFFE is the dominant deployed
-instance of this model; WIMSE generalizes it.
+including a Workload Identity Token {{WIMSE-CREDS}} (a JWT credential
+asserting a workload's identity) and the broader WIMSE architecture
+{{WIMSE-ARCH}}. WIMSE work is in progress; the descriptions below
+reflect drafts current at the time of writing and may shift as that
+work progresses.
 
 This profile and WIMSE address adjacent layers:
 
-* **WIMSE WIT**: a general-purpose workload identity credential.
-  Carries `sub`, `cnf`, `exp`, optionally `iss` and `jti`. Media
-  type `application/wit+jwt`. Designed for any HTTP endpoint, not
+* **WIMSE workload identity credential**: a general-purpose
+  workload identity assertion designed for any HTTP endpoint, not
   specifically for OAuth.
 * **This profile's Client Instance Assertion**: the OAuth-aware
-  projection of the same workload identity model. Carries WIT-style
-  claims plus the OAuth-specific bindings (`client_id` for class
-  membership, `aud` identifying the AS) needed to be presented as
-  `actor_token` at the OAuth token endpoint.
+  projection of the same workload identity model, carrying the
+  OAuth-specific bindings (`client_id` for class membership, `aud`
+  identifying the AS) needed to be presented as `actor_token` at
+  the OAuth token endpoint.
 
-A WIT alone cannot be presented as `actor_token` under this profile
-because it lacks the OAuth-specific claims. Deployments that already
-hold a WIT (or a SPIFFE JWT-SVID, a Kubernetes projected service-
-account token, or other workload credential) SHOULD use the
-OAuth-aware adapter pattern ({{issuer-obligations}}) to mint a Client Instance
-Assertion carrying the underlying credential's identity together
-with the required OAuth claims. From the AS's perspective, the
-adapter is the instance issuer.
+A WIMSE workload identity credential alone cannot be presented as
+`actor_token` under this profile because it lacks the OAuth-specific
+claims. Deployments that already hold one (or a SPIFFE JWT-SVID, a
+Kubernetes projected service-account token, or other workload
+credential) SHOULD use the OAuth-aware adapter pattern
+({{issuer-obligations}}) to mint a Client Instance Assertion carrying
+the underlying credential's identity together with the required
+OAuth claims. From the AS's perspective, the adapter is the
+instance issuer.
 
 The WIMSE Workload Proof Token (WPT) {{WIMSE-WPT}} is a workload-to-
 workload HTTP signing mechanism (analogous to {{RFC9449}} DPoP for
@@ -311,6 +312,26 @@ Client Instance Assertion:
   defined by this profile, which is what the `actor_token` parameter
   carries when its `actor_token_type` is
   `urn:ietf:params:oauth:token-type:client-instance-jwt`).
+
+Actor Token Grant Extension:
+: The wire-level extension defined in {{grant-extension}} permitting
+  `actor_token` and `actor_token_type` ({{RFC8693}}) on the grant
+  types listed in {{permitted-grants}}. This document's
+  `client-instance-jwt` actor token type builds on the extension;
+  other profiles may define their own actor token types under it.
+
+Delegation case:
+: A token request whose grant produces a principal distinct from the
+  instance presenting the `actor_token` (for example, a user under
+  authorization_code or jwt-bearer). The issued access token's `sub`
+  is the principal and the instance appears in `act` per
+  {{access-token-delegation}}.
+
+Self-acting case:
+: A token request whose grant produces no principal distinct from
+  the instance (notably `client_credentials`). The issued access
+  token's `sub` is the instance and `act` is omitted per
+  {{access-token-self-acting}}.
 
 # Actor Token Grant Extension {#grant-extension}
 
@@ -878,11 +899,16 @@ The following claims are defined for client instance assertions.
 
 `cnf` (RECOMMENDED):
 : A confirmation claim {{RFC7800}} carrying a key bound to this
-  instance. When present, the instance issuer MUST mint it from a
-  key the named runtime instance demonstrably possesses (e.g., an
-  instance-attested key, a per-instance workload key, or a `DPoP`
-  public key presented to the issuer at attestation time). Binding
-  rules and AS verification are defined in {{sender-constrained}}.
+  instance. When present, the `cnf` value MUST contain exactly one
+  of `jkt` (a JWK SHA-256 thumbprint per {{RFC9449}} Section 3.1) or
+  `x5t#S256` (an X.509 certificate SHA-256 thumbprint per
+  {{RFC8705}} Section 3); other confirmation methods registered
+  under {{RFC7800}} MAY appear in addition but MUST NOT be the only
+  member. The instance issuer MUST mint `cnf` from a key the named
+  runtime instance demonstrably possesses (e.g., an instance-
+  attested key, a per-instance workload key, or a `DPoP` public key
+  presented to the issuer at attestation time). Binding rules and
+  AS verification are defined in {{sender-constrained}}.
 
 `nbf` (OPTIONAL):
 : Not-before time. If present, the AS MUST reject the token before
@@ -904,22 +930,26 @@ assertions whose `crit` header includes claims they do not implement.
 
 ## Signing and JOSE Header {#signing}
 
-A Client Instance Assertion MUST be signed using a JWS {{RFC7515}}
-algorithm; "none" MUST NOT be used. Implementations MUST follow the
-guidance in {{RFC8725}}. For interoperability, ASes SHOULD support
-at least `RS256` and `ES256`, and MAY support other asymmetric
-algorithms permitted by the descriptor's
-`signing_alg_values_supported`. Issuers SHOULD include a `kid` in
-the JWS protected header; ASes SHOULD use `kid` for key selection.
+A Client Instance Assertion MUST be signed using an asymmetric JWS
+{{RFC7515}} algorithm; `none` and symmetric (HMAC-based)
+algorithms (`HS256`, `HS384`, `HS512`) MUST NOT be used and ASes
+MUST reject assertions signed with them. The descriptor's
+`signing_alg_values_supported` ({{instance-issuers}}), when present,
+MUST contain only asymmetric algorithm identifiers. Implementations
+MUST follow the guidance in {{RFC8725}}. For interoperability, ASes
+SHOULD support at least `RS256` and `ES256`. Issuers SHOULD include a
+`kid` in the JWS protected header; ASes SHOULD use `kid` for key
+selection.
 
 Issuers minting a Client Instance Assertion under this profile MUST
 set the JWS `typ` (type) protected header parameter to
 `client-instance+jwt` per {{RFC8725}} Section 3.11, and ASes MUST
 reject such assertions whose `typ` is anything else. Explicit typing
 prevents JWT confusion attacks where a token of a different type
-(for example, a WIT {{WIMSE-CREDS}}, a JWT-SVID outside the SPIFFE
-compatibility mode, or an OAuth JWT access token {{RFC9068}}) is
-mistaken for a Client Instance Assertion.
+(for example, a WIMSE workload identity credential {{WIMSE-CREDS}},
+a JWT-SVID outside the SPIFFE compatibility mode, or an OAuth JWT
+access token {{RFC9068}}) is mistaken for a Client Instance
+Assertion.
 
 The only exception is the SPIFFE compatibility mode in
 {{spiffe-client-id-omission}}, where a raw JWT-SVID is intentionally
@@ -1333,7 +1363,14 @@ identifies a principal, and {{RFC8693}} Section 2.1 requires a
 the issued access token's `sub` is that party and the actor appears
 in `act`. ASes MUST NOT classify these grants as self-acting based
 on heuristic matching of subject identifiers; see
-{{security-mode-switch}}.
+{{security-mode-switch}}. This rule applies even when the
+`subject_token` was itself a self-acting access token whose `sub`
+named the same instance now presenting the `actor_token` (e.g., a
+client-credentials token from an upstream AS exchanged at a
+downstream AS): the resulting access token has `sub` and `act.sub`
+naming the same instance. This is benign chain self-reference and
+is not an error; the AS MUST NOT collapse the two into a self-
+acting representation.
 
 When neither delegation nor self-acting cleanly applies (for example,
 custom or experimental grants), the AS MUST refuse to issue the
@@ -1613,6 +1650,14 @@ a concrete runtime of an OAuth client class, which can inform
 authorization policy. Resource servers MUST NOT rely on `act.iss`
 for proof of possession; per {{ACTOR-PROFILE}}, the top-level `cnf`
 is the binding for the current presenter.
+
+Under this profile, the access token's top-level `cnf` is the
+*instance's* key, not the principal's key (the principal in `sub` is
+typically a user, who does not present the token). The instance,
+named in `act.sub`, is the bearer; sender-constraint validation
+authenticates that instance. This is a deliberate consequence of
+binding the access token to the instance that holds the
+authorization, not to the principal who delegated to it.
 
 ## Self-Acting Case {#rs-self-acting}
 
@@ -1934,6 +1979,14 @@ When `client_instance_jwt` is used, classes SHOULD constrain
 each instance issuer's authority through `trust_domain`,
 `actor_profiles_supported`, and `signing_alg_values_supported`, and
 SHOULD list only the minimum set of `instance_issuers` necessary.
+
+Trust withdrawal under this auth method has immediate consequences
+for client authentication: removing an instance issuer from
+`instance_issuers` (or narrowing its descriptor scope) immediately
+invalidates client authentications that depended on that issuer's
+endorsement. The AS MUST stop accepting `client_instance_jwt`
+authentications via the removed or narrowed issuer within its CIMD
+cache window per {{trust-lifecycle}}.
 
 ## Mode-Switch Between Delegation and Self-Acting {#security-mode-switch}
 
