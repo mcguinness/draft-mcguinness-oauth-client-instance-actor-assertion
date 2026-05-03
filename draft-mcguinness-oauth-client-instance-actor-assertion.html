@@ -1753,34 +1753,35 @@ as both <code>client_assertion</code> and <code>actor_token</code> in a single r
         </h3>
 <p id="section-2.4-1">The IETF Workload Identity in Multi System Environments (WIMSE)
 working group is defining specifications for workload identity,
-including the Workload Identity Token (WIT) <span>[<a href="#WIMSE-CREDS" class="cite xref">WIMSE-CREDS</a>]</span>, a JWT
-credential that asserts a workload's identity, and the broader
-WIMSE architecture <span>[<a href="#WIMSE-ARCH" class="cite xref">WIMSE-ARCH</a>]</span>. SPIFFE is the dominant deployed
-instance of this model; WIMSE generalizes it.<a href="#section-2.4-1" class="pilcrow">¶</a></p>
+including a Workload Identity Token <span>[<a href="#WIMSE-CREDS" class="cite xref">WIMSE-CREDS</a>]</span> (a JWT credential
+asserting a workload's identity) and the broader WIMSE architecture
+<span>[<a href="#WIMSE-ARCH" class="cite xref">WIMSE-ARCH</a>]</span>. WIMSE work is in progress; the descriptions below
+reflect drafts current at the time of writing and may shift as that
+work progresses.<a href="#section-2.4-1" class="pilcrow">¶</a></p>
 <p id="section-2.4-2">This profile and WIMSE address adjacent layers:<a href="#section-2.4-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-2.4-3.1">
-            <p id="section-2.4-3.1.1"><strong>WIMSE WIT</strong>: a general-purpose workload identity credential.
-Carries <code>sub</code>, <code>cnf</code>, <code>exp</code>, optionally <code>iss</code> and <code>jti</code>. Media
-type <code>application/wit+jwt</code>. Designed for any HTTP endpoint, not
+            <p id="section-2.4-3.1.1"><strong>WIMSE workload identity credential</strong>: a general-purpose
+workload identity assertion designed for any HTTP endpoint, not
 specifically for OAuth.<a href="#section-2.4-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-2.4-3.2">
             <p id="section-2.4-3.2.1"><strong>This profile's Client Instance Assertion</strong>: the OAuth-aware
-projection of the same workload identity model. Carries WIT-style
-claims plus the OAuth-specific bindings (<code>client_id</code> for class
-membership, <code>aud</code> identifying the AS) needed to be presented as
-<code>actor_token</code> at the OAuth token endpoint.<a href="#section-2.4-3.2.1" class="pilcrow">¶</a></p>
+projection of the same workload identity model, carrying the
+OAuth-specific bindings (<code>client_id</code> for class membership, <code>aud</code>
+identifying the AS) needed to be presented as <code>actor_token</code> at
+the OAuth token endpoint.<a href="#section-2.4-3.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-2.4-4">A WIT alone cannot be presented as <code>actor_token</code> under this profile
-because it lacks the OAuth-specific claims. Deployments that already
-hold a WIT (or a SPIFFE JWT-SVID, a Kubernetes projected service-
-account token, or other workload credential) <span class="bcp14">SHOULD</span> use the
-OAuth-aware adapter pattern (<a href="#issuer-obligations" class="auto internal xref">Section 7.1</a>) to mint a Client Instance
-Assertion carrying the underlying credential's identity together
-with the required OAuth claims. From the AS's perspective, the
-adapter is the instance issuer.<a href="#section-2.4-4" class="pilcrow">¶</a></p>
+<p id="section-2.4-4">A WIMSE workload identity credential alone cannot be presented as
+<code>actor_token</code> under this profile because it lacks the OAuth-specific
+claims. Deployments that already hold one (or a SPIFFE JWT-SVID, a
+Kubernetes projected service-account token, or other workload
+credential) <span class="bcp14">SHOULD</span> use the OAuth-aware adapter pattern
+(<a href="#issuer-obligations" class="auto internal xref">Section 7.1</a>) to mint a Client Instance Assertion carrying
+the underlying credential's identity together with the required
+OAuth claims. From the AS's perspective, the adapter is the
+instance issuer.<a href="#section-2.4-4" class="pilcrow">¶</a></p>
 <p id="section-2.4-5">The WIMSE Workload Proof Token (WPT) <span>[<a href="#WIMSE-WPT" class="cite xref">WIMSE-WPT</a>]</span> is a workload-to-
 workload HTTP signing mechanism (analogous to <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> DPoP for
 workloads). WPT operates at a different layer than this profile and
@@ -1835,6 +1836,32 @@ Assertion" or "instance assertion" in prose (the JWT artifact
 defined by this profile, which is what the <code>actor_token</code> parameter
 carries when its <code>actor_token_type</code> is
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>).<a href="#section-3-3.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-3-3.9">Actor Token Grant Extension:</dt>
+        <dd style="margin-left: 1.5em" id="section-3-3.10">
+          <p id="section-3-3.10.1">The wire-level extension defined in <a href="#grant-extension" class="auto internal xref">Section 4</a> permitting
+<code>actor_token</code> and <code>actor_token_type</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) on the grant
+types listed in <a href="#permitted-grants" class="auto internal xref">Section 4.1</a>. This document's
+<code>client-instance-jwt</code> actor token type builds on the extension;
+other profiles may define their own actor token types under it.<a href="#section-3-3.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-3-3.11">Delegation case:</dt>
+        <dd style="margin-left: 1.5em" id="section-3-3.12">
+          <p id="section-3-3.12.1">A token request whose grant produces a principal distinct from the
+instance presenting the <code>actor_token</code> (for example, a user under
+authorization_code or jwt-bearer). The issued access token's <code>sub</code>
+is the principal and the instance appears in <code>act</code> per
+<a href="#access-token-delegation" class="auto internal xref">Section 8.6.2</a>.<a href="#section-3-3.12.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-3-3.13">Self-acting case:</dt>
+        <dd style="margin-left: 1.5em" id="section-3-3.14">
+          <p id="section-3-3.14.1">A token request whose grant produces no principal distinct from
+the instance (notably <code>client_credentials</code>). The issued access
+token's <code>sub</code> is the instance and <code>act</code> is omitted per
+<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>.<a href="#section-3-3.14.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
@@ -2574,11 +2601,16 @@ privately defined collision-resistant values, per
 <code>cnf</code> (<span class="bcp14">RECOMMENDED</span>):</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.18">
             <p id="section-7.2-2.18.1">A confirmation claim <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> carrying a key bound to this
-instance. When present, the instance issuer <span class="bcp14">MUST</span> mint it from a
-key the named runtime instance demonstrably possesses (e.g., an
-instance-attested key, a per-instance workload key, or a <code>DPoP</code>
-public key presented to the issuer at attestation time). Binding
-rules and AS verification are defined in <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
+instance. When present, the <code>cnf</code> value <span class="bcp14">MUST</span> contain exactly one
+of <code>jkt</code> (a JWK SHA-256 thumbprint per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> Section 3.1) or
+<code>x5t#S256</code> (an X.509 certificate SHA-256 thumbprint per
+<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span> Section 3); other confirmation methods registered
+under <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> <span class="bcp14">MAY</span> appear in addition but <span class="bcp14">MUST NOT</span> be the only
+member. The instance issuer <span class="bcp14">MUST</span> mint <code>cnf</code> from a key the named
+runtime instance demonstrably possesses (e.g., an instance-
+attested key, a per-instance workload key, or a <code>DPoP</code> public key
+presented to the issuer at attestation time). Binding rules and
+AS verification are defined in <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.19">
@@ -2608,21 +2640,25 @@ assertions whose <code>crit</code> header includes claims they do not implement.
         <h3 id="name-signing-and-jose-header">
 <a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-signing-and-jose-header" class="section-name selfRef">Signing and JOSE Header</a>
         </h3>
-<p id="section-7.3-1">A Client Instance Assertion <span class="bcp14">MUST</span> be signed using a JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>
-algorithm; "none" <span class="bcp14">MUST NOT</span> be used. Implementations <span class="bcp14">MUST</span> follow the
-guidance in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>. For interoperability, ASes <span class="bcp14">SHOULD</span> support
-at least <code>RS256</code> and <code>ES256</code>, and <span class="bcp14">MAY</span> support other asymmetric
-algorithms permitted by the descriptor's
-<code>signing_alg_values_supported</code>. Issuers <span class="bcp14">SHOULD</span> include a <code>kid</code> in
-the JWS protected header; ASes <span class="bcp14">SHOULD</span> use <code>kid</code> for key selection.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-1">A Client Instance Assertion <span class="bcp14">MUST</span> be signed using an asymmetric JWS
+<span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> algorithm; <code>none</code> and symmetric (HMAC-based)
+algorithms (<code>HS256</code>, <code>HS384</code>, <code>HS512</code>) <span class="bcp14">MUST NOT</span> be used and ASes
+<span class="bcp14">MUST</span> reject assertions signed with them. The descriptor's
+<code>signing_alg_values_supported</code> (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>), when present,
+<span class="bcp14">MUST</span> contain only asymmetric algorithm identifiers. Implementations
+<span class="bcp14">MUST</span> follow the guidance in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>. For interoperability, ASes
+<span class="bcp14">SHOULD</span> support at least <code>RS256</code> and <code>ES256</code>. Issuers <span class="bcp14">SHOULD</span> include a
+<code>kid</code> in the JWS protected header; ASes <span class="bcp14">SHOULD</span> use <code>kid</code> for key
+selection.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
 <p id="section-7.3-2">Issuers minting a Client Instance Assertion under this profile <span class="bcp14">MUST</span>
 set the JWS <code>typ</code> (type) protected header parameter to
 <code>client-instance+jwt</code> per <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> Section 3.11, and ASes <span class="bcp14">MUST</span>
 reject such assertions whose <code>typ</code> is anything else. Explicit typing
 prevents JWT confusion attacks where a token of a different type
-(for example, a WIT <span>[<a href="#WIMSE-CREDS" class="cite xref">WIMSE-CREDS</a>]</span>, a JWT-SVID outside the SPIFFE
-compatibility mode, or an OAuth JWT access token <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>) is
-mistaken for a Client Instance Assertion.<a href="#section-7.3-2" class="pilcrow">¶</a></p>
+(for example, a WIMSE workload identity credential <span>[<a href="#WIMSE-CREDS" class="cite xref">WIMSE-CREDS</a>]</span>,
+a JWT-SVID outside the SPIFFE compatibility mode, or an OAuth JWT
+access token <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>) is mistaken for a Client Instance
+Assertion.<a href="#section-7.3-2" class="pilcrow">¶</a></p>
 <p id="section-7.3-3">The only exception is the SPIFFE compatibility mode in
 <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>, where a raw JWT-SVID is intentionally
 presented without re-minting. In that mode, the AS <span class="bcp14">MUST</span> validate the
@@ -3141,7 +3177,14 @@ identifies a principal, and <span>[<a href="#RFC8693" class="cite xref">RFC8693<
 the issued access token's <code>sub</code> is that party and the actor appears
 in <code>act</code>. ASes <span class="bcp14">MUST NOT</span> classify these grants as self-acting based
 on heuristic matching of subject identifiers; see
-<a href="#security-mode-switch" class="auto internal xref">Section 12.6</a>.<a href="#section-8.6.1-3" class="pilcrow">¶</a></p>
+<a href="#security-mode-switch" class="auto internal xref">Section 12.6</a>. This rule applies even when the
+<code>subject_token</code> was itself a self-acting access token whose <code>sub</code>
+named the same instance now presenting the <code>actor_token</code> (e.g., a
+client-credentials token from an upstream AS exchanged at a
+downstream AS): the resulting access token has <code>sub</code> and <code>act.sub</code>
+naming the same instance. This is benign chain self-reference and
+is not an error; the AS <span class="bcp14">MUST NOT</span> collapse the two into a self-
+acting representation.<a href="#section-8.6.1-3" class="pilcrow">¶</a></p>
 <p id="section-8.6.1-4">When neither delegation nor self-acting cleanly applies (for example,
 custom or experimental grants), the AS <span class="bcp14">MUST</span> refuse to issue the
 access token rather than guess; reject with <code>invalid_grant</code>
@@ -3622,6 +3665,13 @@ a concrete runtime of an OAuth client class, which can inform
 authorization policy. Resource servers <span class="bcp14">MUST NOT</span> rely on <code>act.iss</code>
 for proof of possession; per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, the top-level <code>cnf</code>
 is the binding for the current presenter.<a href="#section-9-2" class="pilcrow">¶</a></p>
+<p id="section-9-3">Under this profile, the access token's top-level <code>cnf</code> is the
+<em>instance's</em> key, not the principal's key (the principal in <code>sub</code> is
+typically a user, who does not present the token). The instance,
+named in <code>act.sub</code>, is the bearer; sender-constraint validation
+authenticates that instance. This is a deliberate consequence of
+binding the access token to the instance that holds the
+authorization, not to the principal who delegated to it.<a href="#section-9-3" class="pilcrow">¶</a></p>
 <div id="rs-self-acting">
 <section id="section-9.1">
         <h3 id="name-self-acting-case-2">
@@ -4033,6 +4083,13 @@ token can be issued. Where the operational model permits, deployments
 each instance issuer's authority through <code>trust_domain</code>,
 <code>actor_profiles_supported</code>, and <code>signing_alg_values_supported</code>, and
 <span class="bcp14">SHOULD</span> list only the minimum set of <code>instance_issuers</code> necessary.<a href="#section-12.5-3" class="pilcrow">¶</a></p>
+<p id="section-12.5-4">Trust withdrawal under this auth method has immediate consequences
+for client authentication: removing an instance issuer from
+<code>instance_issuers</code> (or narrowing its descriptor scope) immediately
+invalidates client authentications that depended on that issuer's
+endorsement. The AS <span class="bcp14">MUST</span> stop accepting <code>client_instance_jwt</code>
+authentications via the removed or narrowed issuer within its CIMD
+cache window per <a href="#trust-lifecycle" class="auto internal xref">Section 5.3.3</a>.<a href="#section-12.5-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-mode-switch">
