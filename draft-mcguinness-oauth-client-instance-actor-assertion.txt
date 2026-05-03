@@ -474,12 +474,14 @@ Table of Contents
 
 4.  Actor Token Grant Extension
 
-   This section defines the grant-type extension to [RFC8693]: the
-   common mechanism on which this document's client-instance-jwt actor
-   token type (Section 7) is built, and on which future profiles may
-   build other actor token types.  It specifies which grant types accept
-   the actor_token parameters.  Processing rules that are specific to
-   the client-instance-jwt token type are defined in Section 8.
+   This section defines a grant extension for carrying actor tokens at
+   the OAuth token endpoint.  It is independent of the client instance
+   model defined later in this document: any profile that defines an
+   actor_token_type, including profiles based on [ACTOR-PROFILE], can
+   use this extension to present actor tokens on the grant types listed
+   below.  This document's client-instance-jwt actor token type
+   (Section 7) is one such profile; its token-type-specific processing
+   rules are defined in Section 8.
 
 4.1.  Grant Types
 
@@ -496,8 +498,8 @@ Table of Contents
    *  urn:ietf:params:oauth:grant-type:jwt-bearer ([RFC7523])
 
    Token-exchange ([RFC8693]) is also in scope; processing under
-   [RFC8693] continues to apply unchanged, with the addition of the new
-   actor_token_type defined in this document.
+   [RFC8693] continues to apply unchanged for any actor_token_type the
+   AS supports.
 
    This grant-type extension defines only where the actor_token and
    actor_token_type parameters may appear.  Each actor_token_type
