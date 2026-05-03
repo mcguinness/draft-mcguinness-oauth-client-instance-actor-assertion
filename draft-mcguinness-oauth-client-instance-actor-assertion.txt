@@ -107,7 +107,7 @@ Table of Contents
      5.3.  Trust Delegation Model
        5.3.1.  Delegation by the Client Class
        5.3.2.  Authority of the Authorization Server
-       5.3.3.  Trust Update Handling
+       5.3.3.  Trust Lifecycle
        5.3.4.  Cross-Organization Federation
    6.  Metadata and Discovery
      6.1.  Client Metadata Extensions
@@ -117,15 +117,15 @@ Table of Contents
      7.1.  Issuer Obligations
      7.2.  JWT Claims
      7.3.  Signing and JOSE Header
-     7.4.  Example
+     7.4.  Example Assertion
    8.  Token Endpoint Processing
      8.1.  Token Request
      8.2.  Authorization Server Processing
-     8.3.  Client Authentication
+     8.3.  Client Authentication via Instance Assertion
        8.3.1.  Request Format
        8.3.2.  Validation Procedure
      8.4.  Authorization-Time Consistency
-     8.5.  Sender Constraint
+     8.5.  Sender-Constrained Access Tokens
      8.6.  Access Token Representation
        8.6.1.  Classification
        8.6.2.  Delegation Case
@@ -138,9 +138,7 @@ Table of Contents
        8.8.3.  Combined Authentication and Actor Identity
      8.9.  Error Responses
    9.  Resource Server Processing
-     9.1.  Delegation Case
-     9.2.  Self-Acting Case
-     9.3.  Client Identity Semantics
+     9.1.  Self-Acting Case
    10. Operational Considerations
      10.1.  Token Revocation
        10.1.1.  Per-Token Revocation
@@ -148,24 +146,17 @@ Table of Contents
        10.1.3.  Introspection Behavior on Revocation
        10.1.4.  Revocation and Refresh Tokens
      10.2.  Interactions with Other OAuth Extensions
-       10.2.1.  Pushed Authorization Requests (PAR) and JAR
-       10.2.2.  Resource Indicators
-       10.2.3.  Token Introspection
      10.3.  Adoption and Migration
-       10.3.1.  Backward Compatibility
-       10.3.2.  Incremental AS Adoption
-       10.3.3.  Incremental Client Adoption
-       10.3.4.  Migration without cnf
+       10.3.1.  Migration without cnf
    11. Conformance
    12. Security Considerations
      12.1.  Trust Model
      12.2.  Instance Lifecycle
      12.3.  Replay
      12.4.  Audience and Confused Deputy
-     12.5.  Defense in Depth for the client_instance_jwt
-            Authentication Method
+     12.5.  Hardening client_instance_jwt Authentication
      12.6.  Mode-Switch Between Delegation and Self-Acting
-     12.7.  Binding
+     12.7.  Sender-Constraint Requirement
      12.8.  Delegation Control
      12.9.  Privacy
    13. IANA Considerations
@@ -627,9 +618,9 @@ Table of Contents
       registration toolchains.
 
    The runtime behavior is identical in both models.  The descriptor
-   format (Section 6.1.1), the auth-via-actor-token mode (Section 8.3),
-   the SPIFFE compatibility features (Section 8.8), and the AS
-   processing rules (Section 8.2) all apply uniformly.  The only
+   format (Section 6.1.1), the instance-assertion auth mode
+   (Section 8.3), the SPIFFE compatibility features (Section 8.8), and
+   the AS processing rules (Section 8.2) all apply uniformly.  The only
    difference is whether the AS obtains the metadata by dereferencing
    the CIMD URL or from stored registration data.
 
@@ -689,7 +680,7 @@ Table of Contents
    additional instance issuers for a client_id; deployments requiring
    such configuration MUST do so via a separate specification.
 
-5.3.3.  Trust Update Handling
+5.3.3.  Trust Lifecycle
 
    The trust relationship between client class and instance issuer is
    mutable.  When the CIMD document changes (for example, an instance
@@ -886,18 +877,8 @@ Table of Contents
       clients use it to decide whether to assemble token requests
       carrying an instance assertion.
 
-   Values other than urn:ietf:params:oauth:token-type:client-instance-
-   jwt MAY appear in actor_token_types_supported and are processed under
-   their own specifications.  For non-normative reference, the values
-   defined in [RFC8693] Section 3 (including
-   urn:ietf:params:oauth:token-type:jwt, urn:ietf:params:oauth:token-
-   type:access_token, and urn:ietf:params:oauth:token-type:id_token)
-   describe general actor tokens whose trust is resolved by means
-   outside this document (e.g., configured issuers or token
-   introspection).  The urn:ietf:params:oauth:token-type:client-
-   instance-jwt value is distinguished by its CIMD-based
-   instance_issuers trust resolution (Section 6.1.1) and its required
-   client_id binding (Section 7.2).
+   Other values MAY appear and are processed under their own
+   specifications; their trust resolution is not via instance_issuers.
 
    subject_syntaxes_supported:  OPTIONAL.  A JSON array of
       subject_syntax values (Section 6.1.1) that the AS understands when
@@ -1080,7 +1061,7 @@ Table of Contents
    the AS MUST verify alg against signing_alg_values_supported when
    present.
 
-7.4.  Example
+7.4.  Example Assertion
 
    A decoded client instance assertion.  The JWS protected header
    includes "typ": "client-instance+jwt" per Section 7.3:
@@ -1225,7 +1206,7 @@ Table of Contents
    If validation succeeds, the AS issues an access token (and optionally
    a refresh token) per the requested grant.
 
-8.3.  Client Authentication
+8.3.  Client Authentication via Instance Assertion
 
    A client class MAY register the token_endpoint_auth_method value
    client_instance_jwt in its CIMD metadata to indicate that the AS
@@ -1366,7 +1347,7 @@ Table of Contents
    runtime) is out of scope for this document; deployments requiring it
    MUST define it via a separate extension.
 
-8.5.  Sender Constraint
+8.5.  Sender-Constrained Access Tokens
 
    When the AS issues an access token under this profile, whether the
    instance is represented in act (delegation case; Section 8.6.2) or in
@@ -1814,20 +1795,16 @@ Table of Contents
    and introspection.  This section adds only the considerations
    specific to this profile.
 
-9.1.  Delegation Case
-
    When the access token carries an act claim (Section 8.6.2), the
-   resource server processes it per [ACTOR-PROFILE].  This profile does
-   not add new RS-side requirements for the delegation case.  Resource
+   resource server processes it per [ACTOR-PROFILE]; this profile adds
+   no new RS-side requirements for the delegation case.  Resource
    servers MAY use act.sub_profile = client_instance as a signal that
    the actor is a concrete runtime of an OAuth client class, which can
-   inform authorization policy (for example, distinguishing "any human
-   user delegating to a workload" from "a workload acting
-   autonomously").  Resource servers MUST NOT rely on act.iss for proof
-   of possession; per [ACTOR-PROFILE], the top-level cnf is the binding
-   for the current presenter.
+   inform authorization policy.  Resource servers MUST NOT rely on
+   act.iss for proof of possession; per [ACTOR-PROFILE], the top-level
+   cnf is the binding for the current presenter.
 
-9.2.  Self-Acting Case
+9.1.  Self-Acting Case
 
    In the self-acting case (Section 8.6.3), the access token carries no
    act claim.  From the resource server's perspective, the access token
@@ -1856,19 +1833,10 @@ Table of Contents
 
    Resource servers that distinguish "human-delegated" from "workload-
    self-acting" requests SHOULD make the determination based on the
-   presence or absence of act, not on the format of sub.
-
-9.3.  Client Identity Semantics
-
-   In both delegation and self-acting cases, the access token's top-
-   level client_id is the client class (the CIMD URL identifying the
-   logical OAuth client).  It is not the instance, not the actor, and
-   not a per-request workload identifier.  This is consistent with
-   [ACTOR-PROFILE]'s treatment of client_id as a client-identity input,
-   but worth restating because the client_id appears to "name" something
-   while the instance identity appears in act.sub or sub.  When the
-   instance is a SPIFFE workload, the SPIFFE ID is conveyed via act.sub
-   (delegation) or sub (self-acting), never via client_id.
+   presence or absence of act, not on the format of sub.  In both cases
+   the top-level client_id names the client class, not the instance;
+   when the instance is a SPIFFE workload, the SPIFFE ID is conveyed via
+   act.sub (delegation) or sub (self-acting), never via client_id.
 
 10.  Operational Considerations
 
@@ -1941,90 +1909,43 @@ Table of Contents
 
 10.2.  Interactions with Other OAuth Extensions
 
-   This profile conveys actor identity at the token endpoint only.  Its
-   interactions with other OAuth extensions are as follows.
-
-10.2.1.  Pushed Authorization Requests (PAR) and JAR
-
-   This profile does not define any extensions to the authorization
-   request, so it does not interact directly with Pushed Authorization
-   Requests [RFC9126] or JWT-Secured Authorization Requests [RFC9101].
-   A request that uses PAR or JAR for the authorization step proceeds to
-   the token endpoint as usual; the actor_token and actor_token_type
-   parameters are presented at /token in the same way as for a non-PAR/
-   JAR flow.  ASes implementing per-actor authorization-time policy
-   (Section 8.4) evaluate that policy at the token endpoint, after the
-   instance assertion has been validated; PAR and JAR do not change
-   this.
-
-10.2.2.  Resource Indicators
+   This profile conveys actor identity at the token endpoint only and
+   does not define authorization-request extensions, so it does not
+   interact directly with Pushed Authorization Requests [RFC9126] or
+   JWT-Secured Authorization Requests [RFC9101]; the actor_token and
+   actor_token_type parameters are presented at /token regardless of how
+   the authorization step was performed.
 
    The resource parameter [RFC8707] is orthogonal to actor identity: the
    AS populates act (delegation) or sub (self-acting) the same way
    regardless of resource.  AS-side per-resource policies that depend on
-   the actor MUST be evaluated against the validated instance assertion
-   and inconsistent requests rejected with invalid_grant (Section 8.9).
+   the actor MUST be evaluated against the validated instance assertion,
+   with inconsistent requests rejected via invalid_grant (Section 8.9).
 
-10.2.3.  Token Introspection
-
-   When an AS supports token introspection [RFC7662] for access tokens
-   issued under this profile, introspection responses for delegated
-   tokens follow the introspection semantics defined by [ACTOR-PROFILE].
-   The top-level cnf, when present in the access token, SHOULD be
-   returned in the introspection response so that protected resources
-   performing introspection-based proof-of- possession have the binding
-   key.  In the self-acting case, the access token's sub_profile and cnf
-   SHOULD be returned alongside the standard [RFC7662] response fields.
+   When an AS supports token introspection [RFC7662], delegated-token
+   responses follow [ACTOR-PROFILE]; the top-level cnf, when present,
+   SHOULD be returned so introspection-based PoP has the binding key.
+   In the self-acting case, sub_profile and cnf SHOULD be returned
+   alongside the standard [RFC7662] response fields.
 
 10.3.  Adoption and Migration
 
-   This profile is designed for incremental adoption: existing OAuth
-   deployments can add support for client instance identity without
-   forcing all clients to opt in.
-
-10.3.1.  Backward Compatibility
-
-   Existing CIMD documents that do not declare instance_issuers continue
-   to work unchanged.  An AS implementing this profile MUST NOT require
-   this parameter from existing clients; absence of instance_issuers
-   means the client does not use this profile, and the AS MUST process
-   its token requests under their existing grant-type rules.
-
-   Existing access tokens already in circulation when a class adds
-   instance_issuers to its CIMD remain valid for their original
-   lifetime; only newly issued tokens that present a client-instance-jwt
-   actor_token are subject to this profile's processing rules.
-
-10.3.2.  Incremental AS Adoption
-
-   An AS MAY implement this profile while continuing to serve clients
-   that don't use it.  Token requests are dispatched on
-   actor_token_type:
-
-   *  No actor_token: existing grant-type processing only.
-
-   *  actor_token_type other than urn:ietf:params:oauth:token-
-      type:client-instance-jwt: the request is processed under that
-      other token type's specification, not this profile.
-
-   *  actor_token_type == urn:ietf:params:oauth:token-type:client-
-      instance-jwt: this profile's processing applies (Section 8.2).
-
-   ASes SHOULD advertise support via actor_token_types_supported
-   (Section 6.2) so clients can discover whether to assemble token
-   requests under this profile.
-
-10.3.3.  Incremental Client Adoption
-
-   A client class MAY add instance_issuers to its CIMD at any time.
-   Doing so does not invalidate existing access tokens issued for that
-   class; it only enables this profile for future token requests that
-   present an actor_token of the registered type.  A class that wants to
+   This profile is designed for incremental adoption.  Existing CIMD
+   documents that do not declare instance_issuers continue to work
+   unchanged, and existing access tokens in circulation when a class
+   adds instance_issuers remain valid for their original lifetime.  An
+   AS MAY implement this profile while continuing to serve clients that
+   don't use it: token requests are dispatched on actor_token_type, with
+   urn:ietf:params:oauth:token-type:client- instance-jwt triggering this
+   profile's processing (Section 8.2) and other (or absent) values
+   processed under their own specifications.  ASes SHOULD advertise
+   support via actor_token_types_supported (Section 6.2).  A client
+   class MAY add instance_issuers at any time; a class that wants to
    mandate instance assertions for every issued access token can
    register token_endpoint_auth_method = client_instance_jwt
    (Section 8.3), which intrinsically requires the actor_token.
 
-10.3.4.  Migration without cnf
+10.3.1.  Migration without cnf
 
    A class MAY deploy this profile before adopting per-instance proof-
    of-possession keys, but the bearer-replay protection in Section 12.3
@@ -2077,7 +1998,7 @@ Table of Contents
    Resource Server:  A resource server that consumes access tokens
       issued under this profile MUST process delegated tokens according
       to [ACTOR-PROFILE] and MUST apply the self-acting semantics in
-      Section 9.2 when no act claim is present.
+      Section 9.1 when no act claim is present.
 
 12.  Security Considerations
 
@@ -2160,7 +2081,7 @@ Table of Contents
    key.  When cnf is absent, an attacker who captures a live instance
    assertion within its exp window can present it once before the jti
    cache rejects replays (and not at all against a different AS thanks
-   to aud binding).  For the auth-via-actor-token mode in particular
+   to aud binding).  For the instance-assertion auth mode in particular
    (Section 8.3), where the instance assertion is the only client
    credential, ASes SHOULD reject requests whose instance assertion
    lacks cnf; classes deploying this mode SHOULD ensure their instance
@@ -2175,8 +2096,7 @@ Table of Contents
    issued for one client class from being presented under a different
    client class's authentication.
 
-12.5.  Defense in Depth for the client_instance_jwt Authentication
-       Method
+12.5.  Hardening client_instance_jwt Authentication
 
    The client_instance_jwt authentication method (Section 8.3)
    eliminates the requirement for the client class to control a private
@@ -2215,7 +2135,7 @@ Table of Contents
    grants not listed in the table), the AS MUST refuse rather than
    guess.
 
-12.7.  Binding
+12.7.  Sender-Constraint Requirement
 
    Without sender-constraint, an act claim is an assertion about who
    acted, not a binding enforced at the resource server: any party in
@@ -3020,7 +2940,7 @@ Client Credentials (Self-Acting)
    }
 
    The RS treats sub as the workload identity (not a human user) per
-   Section 9.2.
+   Section 9.1.
 
 Token Exchange with Prior Delegation Chain
 
