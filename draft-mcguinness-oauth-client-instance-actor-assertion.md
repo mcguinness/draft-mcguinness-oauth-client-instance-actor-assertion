@@ -127,7 +127,7 @@ any specific `actor_token_type`: it provides the wire mechanism on
 which other profiles can build their own actor token types for
 non-instance use cases (for example, AI agents acting on behalf of
 a user, or services invoked under a delegation grant). See
-{{grant-type-applicability}}.
+{{grant-extension}}.
 
 **An actor token type for client instance identity.** Building on
 the actor token grant extension, this document:
@@ -164,12 +164,12 @@ What this document does *not* do:
   future work.
 
 The structure of this document follows that split.
-{{grant-type-applicability}} defines the actor token grant extension,
+{{grant-extension}} defines the actor token grant extension,
 including the token endpoint grants on which `actor_token` and
 `actor_token_type` may appear. The sections that follow define the
 `client-instance-jwt` actor token type, including its trust model,
 metadata, validation, representation, and security rules. Future
-actor token type specifications can reuse {{grant-type-applicability}}
+actor token type specifications can reuse {{grant-extension}}
 without re-specifying the client-instance-specific validation rules.
 
 # Relationship to Other Specifications {#relationships}
@@ -178,7 +178,7 @@ without re-specifying the client-instance-specific validation rules.
 
 {{RFC8693}} defines `actor_token` and `actor_token_type` only on
 the token-exchange grant. This document permits these parameters
-on additional grant types ({{grant-type-applicability}}) and
+on additional grant types ({{grant-extension}}) and
 registers a new `actor_token_type` for asserting client instance
 identity ({{client-instance-jwt}}). The two are separable: a
 future profile may register a different `actor_token_type` and
@@ -345,7 +345,7 @@ Client Instance Assertion:
   carries when its `actor_token_type` is
   `urn:ietf:params:oauth:token-type:client-instance-jwt`).
 
-# Actor Token Grant Extension {#grant-type-applicability}
+# Actor Token Grant Extension {#grant-extension}
 
 This section defines a grant extension for carrying actor tokens at
 the OAuth token endpoint. It is independent of the client instance
@@ -373,7 +373,7 @@ as a common presentation mechanism. The extension does not define a
 universal actor-token validation model or access-token representation;
 those remain the responsibility of each `actor_token_type` profile.
 
-## Grant Types {#grant-type-extension}
+## Permitted Grant Types {#permitted-grants}
 
 {{RFC8693}} defines `actor_token` and `actor_token_type` only on
 the token-exchange grant. This document permits these parameters
@@ -423,18 +423,26 @@ values concurrently and SHOULD advertise them via
 `actor_token_types_supported` ({{as-metadata}}).
 
 A profile defining a new `actor_token_type` for use under the
-actor token grant extension MUST specify the validation, trust resolution,
-access-token representation, sender-constraint, refresh-token, and
-security rules for that token type. Such profiles can reference this
-actor token grant extension for the wire-level permission to carry
-`actor_token` and `actor_token_type` on the grant types listed in
-{{grant-type-extension}}.
+actor token grant extension MUST specify the validation, trust
+resolution, access-token representation, sender-constraint,
+refresh-token, and security rules for that token type. Such profiles
+can reference this actor token grant extension for the wire-level
+permission to carry `actor_token` and `actor_token_type` on the
+grant types listed in {{permitted-grants}}.
+
+The token endpoint processing rules for the `client-instance-jwt`
+token type ({{token-endpoint}}) are written in a way that may serve
+as a template for future actor token type profiles. In particular,
+{{auth-time-consistency}}, {{sender-constrained}}, {{access-token}},
+and {{refresh}} are largely token-type-agnostic and MAY be adopted
+verbatim or adapted by other profiles; their token-type-specific
+hooks (descriptor lookup, JWT claim validation, `client_id` binding)
+are the parts a new profile is expected to redefine.
 
 # Client Instance Model {#client-instance-model}
 
-This section describes the client instance model and trust relationship
-before defining concrete metadata, assertion, endpoint, and resource
-server processing.
+This section describes the architecture, registration models, and
+trust delegation that underpin the `client-instance-jwt` profile.
 
 ## Architecture {#architecture}
 
@@ -550,7 +558,7 @@ of registration between the organizations.
 
 The `client-instance-jwt` actor token type is the specific application
 of the actor token grant extension defined in
-{{grant-type-applicability}}.
+{{grant-extension}}.
 Its trust model is defined here; its metadata, assertion format,
 endpoint processing, and security considerations are defined in
 later sections.
@@ -854,7 +862,7 @@ This section defines `client-instance-jwt` — a specific
 `actor_token_type` registered under this document for asserting
 client instance identity. Tokens of this type are presented under
 the actor token grant extension defined in
-{{grant-type-applicability}}; their AS-side processing is
+{{grant-extension}}; their AS-side processing is
 specified in {{token-endpoint}}.
 
 A *Client Instance Assertion* is a JWT {{RFC7519}} that asserts the
@@ -863,7 +871,7 @@ parameter ({{RFC8693}}) with `actor_token_type` set to
 `urn:ietf:params:oauth:token-type:client-instance-jwt` (see
 {{iana-token-type}}).
 
-## Layering: Authentication and Class Membership {#layering}
+## Identity and Class Membership {#layering}
 
 A client instance assertion serves two conceptually distinct
 purposes:
@@ -1064,16 +1072,18 @@ registration in the OAuth Entity Profiles registry
 This section specifies AS-side processing for token requests
 carrying an `actor_token` of type
 `urn:ietf:params:oauth:token-type:client-instance-jwt`. It builds on
-the actor token grant extension in {{grant-type-applicability}} by
-defining the validation, sender-constraint, representation, refresh,
-and error rules specific to the `client-instance-jwt` token type.
+the actor token grant extension in {{grant-extension}} by
+defining the validation, authorization-time consistency, sender-
+constraint, representation, refresh, client authentication, SPIFFE
+compatibility, and error rules specific to the `client-instance-jwt`
+token type.
 
 ## Token Request {#token-request}
 
 A client presents a client instance assertion at the token endpoint
 by adding the `actor_token` and `actor_token_type` parameters defined by
 {{RFC8693}} to a token request of any grant type listed in
-{{grant-type-applicability}}.
+{{grant-extension}}.
 
 The following example shows a client credentials grant carrying a
 client instance assertion. The client class authenticates with
@@ -1094,6 +1104,22 @@ grant_type=client_credentials
 &actor_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
 ~~~
+
+## Processing Summary {#processing-summary}
+
+This non-normative summary shows how an AS dispatches token endpoint
+requests. The normative processing rules are in {{as-processing}} and
+the sections it references.
+
+| Request shape | AS behavior |
+| --- | --- |
+| No `actor_token` | Process using existing grant-type rules only. |
+| Exactly one of `actor_token` and `actor_token_type` | Reject with `invalid_request`. |
+| `actor_token_type` other than `urn:ietf:params:oauth:token-type:client-instance-jwt` | Process under that token type's specification, if supported; otherwise use the applicable error for the grant. |
+| `actor_token_type` is `urn:ietf:params:oauth:token-type:client-instance-jwt` with separate client authentication | Authenticate the client normally, validate the Client Instance Assertion, classify the grant, and issue a sender-constrained access token. |
+| `token_endpoint_auth_method` is `client_instance_jwt` | Use the Client Instance Assertion as both client authentication and actor token, subject to {{auth-via-actor-token}}. |
+| Grant classifies as delegation | Put the actor in `act`; keep the grant principal in top-level `sub`. |
+| Grant classifies as self-acting | Put the actor in top-level `sub`; omit top-level `act`. |
 
 ## Authorization Server Processing {#as-processing}
 
@@ -1176,6 +1202,82 @@ Before the steps below, the AS MUST reject the request with
 
 If validation succeeds, the AS issues an access token (and optionally
 a refresh token) per the requested grant.
+
+## Client Authentication {#auth-via-actor-token}
+
+A client class MAY register the `token_endpoint_auth_method` value
+`client_instance_jwt` in its CIMD metadata to indicate that
+the AS authenticates the client implicitly from a presented
+instance assertion, without requiring a separate `client_assertion` or other
+credential controlled by the class itself.
+
+This mode is appropriate where the class has no online private key
+that an instance can use, for example when the class identifier is
+a logical CIMD URL with class-key custody centralized away from the
+runtime, or when the workload identity provider trusted to attest
+instances is also the only authority the class wishes to publish.
+The trust chain to the class is preserved: the class's CIMD listing
+of the instance issuer is itself the endorsement, and a token signed
+by such an issuer naming this `client_id` is attributable to the
+class.
+
+### Request Format {#auth-via-actor-token-request}
+
+A request using this auth method carries `client_id`, `actor_token`,
+and `actor_token_type`. It MUST NOT carry `client_assertion` or any
+other client authentication credential. Example, using the
+`client_credentials` grant:
+
+~~~ http-message
+POST /token HTTP/1.1
+Host: as.example.com
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&scope=repo.write
+&client_id=https%3A%2F%2Fopenai.example.com%2Fcodex
+&actor_token=eyJhbGciOiJFUzI1NiIsImtpZCI6...
+&actor_token_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
+~~~
+
+### Validation Procedure {#auth-via-actor-token-as}
+
+When the registered `token_endpoint_auth_method` for the `client_id` is
+`client_instance_jwt`, the AS replaces step 1 of {{as-processing}}
+("Authenticate the client") with the following procedure:
+
+1. Resolve CIMD metadata for `client_id`.
+2. Validate the presented `actor_token` using the token-type check,
+   instance issuer descriptor lookup, signature verification, and JWT
+   claim validation rules in {{as-processing}}.
+3. Verify that the `actor_token`'s `client_id` claim exactly equals
+   the request's `client_id` parameter.
+4. Verify proof-of-possession of the `actor_token` at presentation per
+   {{sender-constrained}}. In this mode the `actor_token` serves as the
+   sole client authentication credential, so the bearer-replay
+   considerations in {{security-replay}} apply with no fallback
+   credential; ASes SHOULD reject requests in this mode whose
+   `actor_token` lacks a `cnf` claim, and MUST verify possession of the
+   `cnf` key when present.
+5. Reject the request with `invalid_client` if any of the above fails.
+6. Treat the client as authenticated. The validated `actor_token` also
+   satisfies the `actor_token` requirement of this profile and is used
+   for instance representation per {{access-token}}.
+
+The `actor_token`'s `aud` claim serves both purposes (the
+{{RFC7523}} client-assertion audience and this profile's actor-token
+audience). A single value identifying the AS satisfies both.
+
+The SPIFFE `client_id` claim omission mode
+({{spiffe-client-id-omission}}) does not apply to
+`client_instance_jwt` client authentication. Because the same JWT is
+the sole client authentication credential, the assertion MUST contain
+the `client_id` claim and the AS MUST verify it exactly as described
+above.
+
+After this procedure completes, processing continues with step 2 of
+{{as-processing}} ("Match the token type") and onward.
 
 ## Authorization-Time Consistency {#auth-time-consistency}
 
@@ -1563,81 +1665,6 @@ the instance change mid-stream.
 Issuing access tokens with stale instance identity across long
 refresh windows is discouraged; see {{security-replay}}.
 
-## Client Authentication {#auth-via-actor-token}
-
-A client class MAY register the `token_endpoint_auth_method` value
-`client_instance_jwt` in its CIMD metadata to indicate that
-the AS authenticates the client implicitly from a presented
-instance assertion, without requiring a separate `client_assertion` or other
-credential controlled by the class itself.
-
-This mode is appropriate where the class has no online private key
-that an instance can use, for example when the class identifier is
-a logical CIMD URL with class-key custody centralized away from the
-runtime, or when the workload identity provider trusted to attest
-instances is also the only authority the class wishes to publish.
-The trust chain to the class is preserved: the class's CIMD listing
-of the instance issuer is itself the endorsement, and a token signed
-by such an issuer naming this `client_id` is attributable to the
-class.
-
-### Token Request {#auth-via-actor-token-request}
-
-A request using this auth method carries `client_id`, `actor_token`,
-and `actor_token_type`. It MUST NOT carry `client_assertion` or any
-other client authentication credential. Example, using the
-`client_credentials` grant:
-
-~~~ http-message
-POST /token HTTP/1.1
-Host: as.example.com
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=client_credentials
-&scope=repo.write
-&client_id=https%3A%2F%2Fopenai.example.com%2Fcodex
-&actor_token=eyJhbGciOiJFUzI1NiIsImtpZCI6...
-&actor_token_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
-~~~
-
-### Authorization Server Processing {#auth-via-actor-token-as}
-
-When the registered `token_endpoint_auth_method` for the `client_id` is
-`client_instance_jwt`, the AS replaces the separate client
-authentication step of {{as-processing}} with the following procedure:
-
-1. Resolve CIMD metadata for `client_id`.
-2. Validate the presented `actor_token` using the token-type check,
-   instance issuer descriptor lookup, signature verification, and JWT
-   claim validation rules in {{as-processing}}.
-3. Verify that the `actor_token`'s `client_id` claim exactly equals
-   the request's `client_id` parameter.
-4. Verify proof-of-possession of the `actor_token` at presentation per
-   {{sender-constrained}}. In this mode the `actor_token` serves as the
-   sole client authentication credential, so the bearer-replay
-   considerations in {{security-replay}} apply with no fallback
-   credential; ASes SHOULD reject requests in this mode whose
-   `actor_token` lacks a `cnf` claim, and MUST verify possession of the
-   `cnf` key when present.
-5. Reject the request with `invalid_client` if any of the above fails.
-6. Treat the client as authenticated. The validated `actor_token` also
-   satisfies the `actor_token` requirement of this profile and is used
-   for instance representation per {{access-token}}.
-
-The `actor_token`'s `aud` claim serves both purposes (the
-{{RFC7523}} client-assertion audience and this profile's actor-token
-audience). A single value identifying the AS satisfies both.
-
-The SPIFFE `client_id` claim omission mode
-({{spiffe-client-id-omission}}) does not apply to
-`client_instance_jwt` client authentication. Because the same JWT is
-the sole client authentication credential, the assertion MUST contain
-the `client_id` claim and the AS MUST verify it exactly as described
-above.
-
-The remaining steps of {{as-processing}} apply unchanged.
-
 ## SPIFFE Compatibility {#spiffe-compatibility}
 
 A SPIFFE workload typically obtains a JWT-SVID from the SPIFFE
@@ -1754,22 +1781,6 @@ The AS MAY return additional information via the error_description
 parameter; deployments MUST NOT include sensitive instance details
 (e.g., raw SPIFFE IDs of unrelated workloads) in error responses.
 
-## Processing Summary {#processing-summary}
-
-This non-normative summary shows how an AS dispatches token endpoint
-requests. The normative processing rules are in {{as-processing}} and
-the sections it references.
-
-| Request shape | AS behavior |
-| --- | --- |
-| No `actor_token` | Process using existing grant-type rules only. |
-| Exactly one of `actor_token` and `actor_token_type` | Reject with `invalid_request`. |
-| `actor_token_type` other than `urn:ietf:params:oauth:token-type:client-instance-jwt` | Process under that token type's specification, if supported; otherwise use the applicable error for the grant. |
-| `actor_token_type` is `urn:ietf:params:oauth:token-type:client-instance-jwt` with separate client authentication | Authenticate the client normally, validate the Client Instance Assertion, classify the grant, and issue a sender-constrained access token. |
-| `token_endpoint_auth_method` is `client_instance_jwt` | Use the Client Instance Assertion as both client authentication and actor token, subject to {{auth-via-actor-token}}. |
-| Grant classifies as delegation | Put the actor in `act`; keep the grant principal in top-level `sub`. |
-| Grant classifies as self-acting | Put the actor in top-level `sub`; omit top-level `act`. |
-
 # Resource Server Processing {#rs-processing}
 
 Resource servers consuming access tokens issued under this profile
@@ -1821,7 +1832,7 @@ Resource servers that distinguish "human-delegated" from "workload-
 self-acting" requests SHOULD make the determination based on the
 presence or absence of `act`, not on the format of `sub`.
 
-## Client Identity Semantics
+## Client Identity Semantics {#rs-client-identity}
 
 In both delegation and self-acting cases, the access token's
 top-level `client_id` is the client class (the CIMD URL identifying
@@ -2022,10 +2033,10 @@ This document defines separable implementation capabilities. A
 deployment or implementation claiming conformance MUST identify which
 of the following capabilities it supports.
 
-Grant-Type Extension AS:
+Actor Token Grant Extension AS:
 : An AS that supports presentation of `actor_token` and
   `actor_token_type` on the grant types listed in
-  {{grant-type-extension}}. Such an AS MUST dispatch by
+  {{permitted-grants}}. Such an AS MUST dispatch by
   `actor_token_type` and MUST NOT apply `client-instance-jwt` token
   validation rules to other actor token types.
 
@@ -2458,13 +2469,13 @@ Client instance identity is one motivating example: the instance acts
 on behalf of the subject (the human user or service principal) under
 the authority of the client class. Other actor delegation use cases
 share the same presentation need. The only normative move in
-{{grant-type-applicability}} is permitting `actor_token` and
+{{grant-extension}} is permitting `actor_token` and
 `actor_token_type` on additional grants; validation and access-token
 representation remain token-type-specific.
 
 The actor token grant extension is intentionally separable from the specific
 `actor_token_type` defined here. By isolating the actor token grant
-extension ({{grant-type-applicability}}), this document provides
+extension ({{grant-extension}}), this document provides
 future profiles a defined wire mechanism to build on, rather than
 each profile re-litigating the question of whether `actor_token` may
 appear on `authorization_code` or `client_credentials`. See
