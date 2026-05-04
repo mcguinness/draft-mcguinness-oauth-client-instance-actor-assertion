@@ -1382,7 +1382,7 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-adoption-and-migration" class="internal xref">Adoption and Migration</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.3.2.1">
-                    <p id="section-toc.1-1.10.2.3.2.1.1"><a href="#section-10.3.1" class="auto internal xref">10.3.1</a>.  <a href="#name-migration-without-reminted-" class="internal xref">Migration without reminted cnf</a></p>
+                    <p id="section-toc.1-1.10.2.3.2.1.1"><a href="#section-10.3.1" class="auto internal xref">10.3.1</a>.  <a href="#name-migration-without-re-minted" class="internal xref">Migration without re-minted cnf</a></p>
 </li>
                 </ul>
 </li>
@@ -1471,10 +1471,10 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
             <p id="section-toc.1-1.15.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-design-rationale" class="internal xref">Design Rationale</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.1">
-                <p id="section-toc.1-1.15.2.1.1"><a href="#appendix-A.1" class="auto internal xref"></a><a href="#name-why-not-a-client_instance-r" class="internal xref">Why not a client_instance request parameter?</a></p>
+                <p id="section-toc.1-1.15.2.1.1"><a href="#appendix-A.1" class="auto internal xref"></a><a href="#name-why-not-a-client_instance-r" class="internal xref">Why not a <code>client_instance</code> request parameter?</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.2">
-                <p id="section-toc.1-1.15.2.2.1"><a href="#appendix-A.2" class="auto internal xref"></a><a href="#name-why-extend-actor_token-to-n" class="internal xref">Why extend actor_token to non-token-exchange grants?</a></p>
+                <p id="section-toc.1-1.15.2.2.1"><a href="#appendix-A.2" class="auto internal xref"></a><a href="#name-why-extend-actor_token-to-n" class="internal xref">Why extend <code>actor_token</code> to non-token-exchange grants?</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.3">
                 <p id="section-toc.1-1.15.2.3.1"><a href="#appendix-A.3" class="auto internal xref"></a><a href="#name-why-client-metadata-as-the-" class="internal xref">Why client metadata as the trust anchor for instance issuers?</a></p>
@@ -1483,10 +1483,10 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.15.2.4.1"><a href="#appendix-A.4" class="auto internal xref"></a><a href="#name-why-a-dedicated-actor_token" class="internal xref">Why a dedicated actor_token_type URN?</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.5">
-                <p id="section-toc.1-1.15.2.5.1"><a href="#appendix-A.5" class="auto internal xref"></a><a href="#name-why-reuse-actor_token-in-th" class="internal xref">Why reuse actor_token in the self-acting case?</a></p>
+                <p id="section-toc.1-1.15.2.5.1"><a href="#appendix-A.5" class="auto internal xref"></a><a href="#name-why-reuse-actor_token-in-th" class="internal xref">Why reuse <code>actor_token</code> in the self-acting case?</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.6">
-                <p id="section-toc.1-1.15.2.6.1"><a href="#appendix-A.6" class="auto internal xref"></a><a href="#name-why-a-token_endpoint_auth_m" class="internal xref">Why a token_endpoint_auth_method rather than a client_assertion_type?</a></p>
+                <p id="section-toc.1-1.15.2.6.1"><a href="#appendix-A.6" class="auto internal xref"></a><a href="#name-why-a-token_endpoint_auth_m" class="internal xref">Why a <code>token_endpoint_auth_method</code> rather than a <code>client_assertion_type</code>?</a></p>
 </li>
             </ul>
 </li>
@@ -1568,7 +1568,7 @@ instance issuer published in the client's metadata.<a href="#section-1-6.2.1" cl
           <p id="section-1-6.3.1">Requires issued access tokens to be sender-constrained to a key
 the instance possesses, and specifies how the instance
 assertion's <code>cnf</code> claim drives that binding in the interoperable
-reminted assertion format.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
+re-minted assertion format.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-6.4">
           <p id="section-1-6.4.1">Registers <code>client_instance_jwt</code> as a <code>token_endpoint_auth_method</code>
@@ -1621,7 +1621,7 @@ For the <code>client-instance-jwt</code> token type, delegation requests
 represent the instance in <code>act</code> (<a href="#access-token-delegation" class="auto internal xref">Section 8.6.2</a>) and
 self-acting requests (notably <code>client_credentials</code>) represent it
 in top-level <code>sub</code> (<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>); <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>'s
-"actor" framing strictly addresses only the delegation case but
+"actor" framing strictly addresses only the delegation case, but
 this profile reuses the <code>actor_token</code> wire artifact for both, with
 classification determined by the grant rather than the assertion
 (see <a href="#rationale-self-acting" class="auto internal xref">Appendix "Why reuse actor_token in the self-acting case?"</a>). Use on a token-exchange request
@@ -1728,7 +1728,7 @@ as both <code>client_assertion</code> and <code>actor_token</code> in a single r
         <h3 id="name-relationship-to-wimse-workl">
 <a href="#section-2.4" class="section-number selfRef">2.4. </a><a href="#name-relationship-to-wimse-workl" class="section-name selfRef">Relationship to WIMSE Workload Credentials</a>
         </h3>
-<p id="section-2.4-1">The IETF Workload Identity in Multi System Environments (WIMSE)
+<p id="section-2.4-1">The IETF Workload Identity in Multi-System Environments (WIMSE)
 working group is defining specifications for workload identity,
 including a Workload Identity Token <span>[<a href="#WIMSE-CREDS" class="cite xref">WIMSE-CREDS</a>]</span> (a JWT credential
 asserting a workload's identity) and the broader WIMSE architecture
@@ -1794,7 +1794,7 @@ between an OAuth client and its instances.<a href="#section-3-3.4.1" class="pilc
 <dt id="section-3-3.5">Instance Issuer:</dt>
         <dd style="margin-left: 1.5em" id="section-3-3.6">
           <p id="section-3-3.6.1">An authority trusted by the client to authenticate client
-instances and issue instance assertions on their behalf. Examples include
+instances and issue instance assertions for those instances. Examples include
 workload identity providers (e.g., a SPIFFE control plane
 <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>) and platform-managed identity services.<a href="#section-3-3.6.1" class="pilcrow">¶</a></p>
 </dd>
@@ -2179,7 +2179,10 @@ endorsed by the client. Where the deployment supports it, this
 is naturally enforced by access-token introspection and short
 access-token lifetimes; AS implementations <span class="bcp14">MAY</span> additionally revoke
 such tokens per <span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>, including via the per-instance
-mechanism described in <a href="#revocation" class="auto internal xref">Section 10.1</a>.<a href="#section-5.3.3-2" class="pilcrow">¶</a></p>
+mechanism described in <a href="#revocation" class="auto internal xref">Section 10.1</a>. ASes <span class="bcp14">MAY</span> apply the same
+policy to changes in a descriptor's <code>jwks_uri</code>, <code>jwks</code>, or
+<code>spiffe_bundle_endpoint</code> keys that <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> permits for changes
+in client-level keys.<a href="#section-5.3.3-2" class="pilcrow">¶</a></p>
 <p id="section-5.3.3-3">To bound the compromise recovery window, ASes issuing access tokens
 under this profile <span class="bcp14">SHOULD</span> set the access token TTL no longer than
 the metadata refresh interval plus the instance assertion's <code>exp</code>
@@ -2606,8 +2609,11 @@ minutes or less); see <a href="#security-replay" class="auto internal xref">Sect
 <code>sub_profile</code> (<span class="bcp14">RECOMMENDED</span>):</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.16">
             <p id="section-7.2-2.16.1">One or more OAuth Entity Profile names <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span>
-classifying the actor. Its syntax (a space-delimited string of
-profile names) is the one defined by <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>. This
+classifying the actor. <span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span> defines this claim as
+<span class="bcp14">OPTIONAL</span>; this profile elevates it to <span class="bcp14">RECOMMENDED</span> so resource
+servers can apply actor-class-aware policy without bespoke
+configuration. Its syntax (a space-delimited string of profile
+names) is the one defined by <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>. This
 document registers the value <code>client_instance</code>
 (<a href="#iana-entity-profile" class="auto internal xref">Section 13.6</a>). Issuers <span class="bcp14">MAY</span> include additional values
 registered with the "Actor Profile" usage location in the OAuth
@@ -3180,7 +3186,7 @@ which mechanism established the binding and which key or certificate
 was bound to the instance. If the AS cannot establish such an
 instance-specific, policy-backed binding, it <span class="bcp14">MUST</span> reject the request
 with <code>invalid_request</code> (<a href="#errors" class="auto internal xref">Section 8.9</a>). This is a SPIFFE compatibility
-path only. A reminted Client Instance Assertion <span class="bcp14">MUST</span> contain <code>cnf</code> so
+path only. A re-minted Client Instance Assertion <span class="bcp14">MUST</span> contain <code>cnf</code> so
 that the binding key is supplied by the same authority that named the
 instance.<a href="#section-8.5-9" class="pilcrow">¶</a></p>
 <p id="section-8.5-10">Deployments combining client-level Mutual-TLS-bound client
@@ -3489,17 +3495,17 @@ OAuth <code>client_id</code> claim. To allow such SVIDs to be presented as
 <code>actor_token</code> without re-minting, this profile defines an optional
 SPIFFE compatibility mode driven entirely by descriptor
 configuration. An AS is not required to support raw JWT-SVID
-compatibility in order to support reminted Client Instance
+compatibility in order to support re-minted Client Instance
 Assertions with <code>subject_syntax</code> = "spiffe".<a href="#section-8.8-1" class="pilcrow">¶</a></p>
 <p id="section-8.8-2">The AS <span class="bcp14">MUST</span> select the validation path (raw JWT-SVID compatibility or
-reminted Client Instance Assertion) once, from the matched
+re-minted Client Instance Assertion) once, from the matched
 descriptor's configuration, before validating the assertion, and
 <span class="bcp14">MUST</span> apply that path's rules exclusively. A descriptor that satisfies
 the conditions in <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a> selects raw JWT-SVID
-compatibility; otherwise the reminted-assertion rules in <a href="#claims" class="auto internal xref">Section 7.2</a>
+compatibility; otherwise the re-minted assertion rules in <a href="#claims" class="auto internal xref">Section 7.2</a>
 and <a href="#signing" class="auto internal xref">Section 7.3</a> apply.<a href="#section-8.8-2" class="pilcrow">¶</a></p>
 <p id="section-8.8-3">When a raw JWT-SVID is presented under this compatibility mode, it is
-not a reminted Client Instance Assertion and is not required to carry
+not a re-minted Client Instance Assertion and is not required to carry
 the <code>client-instance+jwt</code> JWS <code>typ</code> value. The AS instead validates the
 JWT-SVID according to the SPIFFE JWT-SVID validation rules and the
 descriptor constraints in this section. The AS <span class="bcp14">MUST</span> accept only
@@ -3560,7 +3566,7 @@ CIMD document or stored at the AS), is itself the per-client binding:
 a workload's SPIFFE ID is bound to a client by the client explicitly
 listing the prefix that contains it, or by omitting <code>spiffe_id</code> and
 thereby delegating the whole trust domain. This is the same model
-SPIFFE-CLIENT-AUTH uses for client authentication, applied here to
+<span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> uses for client authentication, applied here to
 actor identity. Clients <span class="bcp14">SHOULD</span> include <code>spiffe_id</code> unless
 whole-domain delegation is intentional.<a href="#section-8.8.1-5" class="pilcrow">¶</a></p>
 </section>
@@ -3577,8 +3583,8 @@ and applicability to the trust domain in the descriptor's
 <code>trust_domain</code> (or the trust domain implied by <code>spiffe_id</code>), and <span class="bcp14">MUST</span>
 reject instance assertions whose <code>iss</code> does not correspond to a key in the
 bundle for the relevant trust domain. The bundle endpoint format,
-freshness, and rotation rules follow SPIFFE; see
-<span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> for the analogous handling in client
+freshness, rotation rules, and TLS authentication (WebPKI) follow
+<span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>, the same handling used for client
 authentication.<a href="#section-8.8.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3623,7 +3629,7 @@ defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> t
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">reminted Client Instance Assertion <code>typ</code> JOSE header is not <code>client-instance+jwt</code> (<a href="#signing" class="auto internal xref">Section 7.3</a>)</td>
+              <td class="text-left" rowspan="1" colspan="1">re-minted Client Instance Assertion <code>typ</code> JOSE header is not <code>client-instance+jwt</code> (<a href="#signing" class="auto internal xref">Section 7.3</a>)</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_request</code>
 </td>
@@ -3975,9 +3981,10 @@ declare <code>instance_issuers</code> continues to work unchanged, and existing
 access tokens in circulation when a client adds <code>instance_issuers</code>
 remain valid for their original lifetime.
 An AS <span class="bcp14">MAY</span> implement this profile while continuing to serve clients
-that don't use it: token requests are dispatched on
-<code>actor_token_type</code>, with <code>urn:ietf:params:oauth:token-type:client-
-instance-jwt</code> triggering this profile's processing
+that do not use it: token requests are dispatched on
+<code>actor_token_type</code>, with
+<code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>
+triggering this profile's processing
 (<a href="#as-processing" class="auto internal xref">Section 8.2</a>) and other (or absent) values processed under
 their own specifications. ASes <span class="bcp14">SHOULD</span> advertise support via
 <code>actor_token_types_supported</code> (<a href="#as-metadata" class="auto internal xref">Section 6.2</a>). A client <span class="bcp14">MAY</span>
@@ -3988,10 +3995,10 @@ instance assertions for every issued access token can register
 <code>actor_token</code>.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
 <div id="adoption-without-cnf">
 <section id="section-10.3.1">
-          <h4 id="name-migration-without-reminted-">
-<a href="#section-10.3.1" class="section-number selfRef">10.3.1. </a><a href="#name-migration-without-reminted-" class="section-name selfRef">Migration without reminted cnf</a>
+          <h4 id="name-migration-without-re-minted">
+<a href="#section-10.3.1" class="section-number selfRef">10.3.1. </a><a href="#name-migration-without-re-minted" class="section-name selfRef">Migration without re-minted cnf</a>
           </h4>
-<p id="section-10.3.1-1">Reminted Client Instance Assertions require <code>cnf</code> (<a href="#claims" class="auto internal xref">Section 7.2</a>).
+<p id="section-10.3.1-1">Re-minted Client Instance Assertions require <code>cnf</code> (<a href="#claims" class="auto internal xref">Section 7.2</a>).
 A deployment whose workload identity system does not yet emit
 per-instance keys has three options:<a href="#section-10.3.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -4052,7 +4059,7 @@ validation rules to other actor token types.<a href="#section-11-2.2.1" class="p
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>. Such an AS
 <span class="bcp14">MUST</span> implement <a href="#as-processing" class="auto internal xref">Section 8.2</a>, <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>,
 <a href="#access-token" class="auto internal xref">Section 8.6</a>, <a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>, and <a href="#errors" class="auto internal xref">Section 8.9</a>. It <span class="bcp14">MUST</span> also
-implement <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>. This capability covers reminted
+implement <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>. This capability covers re-minted
 Client Instance Assertions containing <code>cnf</code>; support for raw
 JWT-SVID compatibility is a separate capability.<a href="#section-11-2.4.1" class="pilcrow">¶</a></p>
 </dd>
@@ -4248,7 +4255,7 @@ apply per-issuer rate limits and bounded cache caps; a sustained
 high rate of distinct <code>jti</code> values from a single issuer is a signal
 of either a misbehaving runtime or compromise.<a href="#section-12.3-5" class="pilcrow">¶</a></p>
 <p id="section-12.3-6">The replay surface depends on whether <code>cnf</code> is present and verified
-at presentation (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). For reminted Client
+at presentation (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). For re-minted Client
 Instance Assertions <code>cnf</code> is required, making them non-bearer at
 presentation: an attacker with only the JWT cannot use it without
 also possessing the <code>cnf</code> private key. The only profile-defined
@@ -4866,7 +4873,7 @@ text.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <div id="why-not-a-clientinstance-request-parameter">
 <section id="appendix-A.1">
         <h3 id="name-why-not-a-client_instance-r">
-<a href="#name-why-not-a-client_instance-r" class="section-name selfRef">Why not a client_instance request parameter?</a>
+<a href="#name-why-not-a-client_instance-r" class="section-name selfRef">Why not a <code>client_instance</code> request parameter?</a>
         </h3>
 <p id="appendix-A.1-1">A new top-level <code>client_instance</code> parameter would have to flow through
 the authorization request, the token request, introspection, the
@@ -4878,7 +4885,7 @@ keeps the protocol surface unchanged.<a href="#appendix-A.1-1" class="pilcrow">�
 <div id="why-extend-actortoken-to-non-token-exchange-grants">
 <section id="appendix-A.2">
         <h3 id="name-why-extend-actor_token-to-n">
-<a href="#name-why-extend-actor_token-to-n" class="section-name selfRef">Why extend actor_token to non-token-exchange grants?</a>
+<a href="#name-why-extend-actor_token-to-n" class="section-name selfRef">Why extend <code>actor_token</code> to non-token-exchange grants?</a>
         </h3>
 <p id="appendix-A.2-1"><span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> already defines request parameters for presenting an
 actor token and identifying its token type. Those parameters are not
@@ -4941,7 +4948,7 @@ and lets clients advertise support via <code>actor_token_types_supported</code>.
 <div id="rationale-self-acting">
 <section id="appendix-A.5">
         <h3 id="name-why-reuse-actor_token-in-th">
-<a href="#name-why-reuse-actor_token-in-th" class="section-name selfRef">Why reuse actor_token in the self-acting case?</a>
+<a href="#name-why-reuse-actor_token-in-th" class="section-name selfRef">Why reuse <code>actor_token</code> in the self-acting case?</a>
         </h3>
 <p id="appendix-A.5-1">In the self-acting case (<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>) the issued
 access token's principal is the instance itself, not a separate
@@ -4984,7 +4991,7 @@ its placement in the issued access token (<code>act</code> vs. <code>sub</code>)
 <div id="rationale-auth-method">
 <section id="appendix-A.6">
         <h3 id="name-why-a-token_endpoint_auth_m">
-<a href="#name-why-a-token_endpoint_auth_m" class="section-name selfRef">Why a token_endpoint_auth_method rather than a client_assertion_type?</a>
+<a href="#name-why-a-token_endpoint_auth_m" class="section-name selfRef">Why a <code>token_endpoint_auth_method</code> rather than a <code>client_assertion_type</code>?</a>
         </h3>
 <p id="appendix-A.6-1"><span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> models its workload-identity-as-client-auth
 mechanism as a <code>client_assertion_type</code>. The natural question is why
