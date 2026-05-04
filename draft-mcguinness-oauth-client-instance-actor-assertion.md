@@ -216,31 +216,20 @@ operate on different OAuth parameters and trust sources:
 | Trust source (client metadata) | SPIFFE bundle endpoint and `spiffe_id` | `instance_issuers` |
 | Where the SPIFFE ID surfaces | Validated against `spiffe_id`; not propagated | Surfaced in `act.sub` or top-level `sub` of issued access tokens |
 
-The two specifications are orthogonal and MAY be combined.
-{{SPIFFE-CLIENT-AUTH}} answers "may this workload act as this
-client?" (a yes/no prefix match against `spiffe_id`); this profile
-answers "which specific instance is acting?" (a named, bindable
-identity surfaced in `act.sub` or `sub`). A common combined pattern
-uses {{SPIFFE-CLIENT-AUTH}} with a wildcard `spiffe_id` for client
-authentication and this profile to surface the specific instance
-and bind the access token to it. Where {{SPIFFE-CLIENT-AUTH}}
-alone suffices (no need to name instances downstream), this
-profile is not needed.
+The two specifications are orthogonal and MAY be combined: a typical
+combined deployment uses {{SPIFFE-CLIENT-AUTH}} (with a wildcard
+`spiffe_id`) to authenticate the OAuth client and this profile to
+surface and bind the specific instance. The same SVID MAY be
+presented as both `client_assertion` and `actor_token` in a single
+request. Where naming the instance downstream is not needed,
+{{SPIFFE-CLIENT-AUTH}} alone suffices and this profile is not
+required.
 
-This document does not require SPIFFE. Instance issuers may issue
-non-SPIFFE JWT instance assertions (any `subject_syntax` other than
-"spiffe"), and the client itself may authenticate via
-`private_key_jwt`, {{SPIFFE-CLIENT-AUTH}}, or any other registered
-method.
-
-For SPIFFE deployments, this profile defines first-class support for
-SPIFFE subject syntax and trust-bundle resolution, and optional
-compatibility for presenting JWT-SVIDs from the SPIFFE Workload API
-directly as `actor_token` without re-minting; the descriptor format
-and processing rules are in {{instance-issuers}} and
-{{spiffe-compatibility}}. A deployment combining
-{{SPIFFE-CLIENT-AUTH}} with this profile MAY present the same SVID
-as both `client_assertion` and `actor_token` in a single request.
+This document does not require SPIFFE. Instance issuers may use any
+`subject_syntax`, and the client itself may authenticate via any
+registered method. SPIFFE deployments get first-class support
+({{instance-issuers}}, {{spiffe-compatibility}}), including optional
+direct presentation of JWT-SVIDs as `actor_token` without re-minting.
 
 ## Relationship to WIMSE Workload Credentials {#relationship-wimse}
 
@@ -427,20 +416,13 @@ are the parts a new profile is expected to redefine.
 This section describes the architecture, registration models, and
 trust delegation that underpin the `client-instance-jwt` profile.
 
-OAuth clients in deployed practice routinely abstract over many
-concrete runtimes. A single registered OAuth client commonly ships
-as multiple application forms (e.g., the Slack OAuth client deploys
-as iOS, Android, web, and server-side runtimes; the Microsoft Graph
-OAuth client serves the entire Office suite of applications). The
-relationship between the registered client and its runtimes is
-class-and-instance: the OAuth client is the application class, and
-each runtime is a client instance of that class. This profile
-makes that implicit relationship explicit, so each instance can be
-named, attested, and bound to access tokens individually. The same
-pattern applies to agent platforms: the platform (or harness) is
-the OAuth client, each running agent or session is a client
-instance attested by the platform, and a sub-agent spawned by an
-agent is represented as a nested actor via token-exchange
+A registered OAuth client commonly abstracts over many concrete
+runtimes (e.g., the Slack OAuth client across iOS, Android, web, and
+server-side; an agent platform across each running agent or session).
+This profile makes that class-and-instance relationship explicit so
+each runtime can be named, attested, and bound to access tokens
+individually. For agent platforms, a sub-agent spawned by an agent
+is represented as a nested actor via token-exchange
 ({{chain-merging}}).
 
 ## Architecture {#architecture}
@@ -623,62 +605,40 @@ the AS's JWKS or SPIFFE-bundle cache TTL for the issuer (since a
 compromised issuer signing key remains usable until the AS re-fetches
 the verification keys).
 
-Recommended defaults that satisfy this bound: instance assertion
-`exp` of 5 minutes or less ({{security-replay}}); access-token TTL
-of 30 minutes or less paired with a metadata refresh interval
-(CIMD cache TTL or static-registration propagation lag) of 30
-minutes or less, giving a trust-withdrawal latency bound of
-approximately 35 minutes.
-
-These defaults balance trust-withdrawal latency against
-token-endpoint and metadata-fetch load. Deployments that prioritize
-faster recovery (for example, 5-minute access tokens with 5-minute
-caches, giving a sub-15-minute bound) and deployments that
-prioritize throughput (for example, 60-minute access tokens with
-1-hour CIMD caches matching HTTP caching norms, giving an
-approximately 2-hour bound) are both common operational choices.
-Looser deployments SHOULD support active access-token revocation
-({{revocation}}) and introspection-based status checks at the
-resource server, so that incident response is not gated solely on
-natural token expiration.
-
-The trust-withdrawal latency bound is the deployment's effective
-incident response window for instance-issuer compromise: a
-compromised issuer's tokens may continue to validate for up to
-this window after the client detaches the issuer or rotates its
-keys. Operators SHOULD treat this bound as a deployment-time SLO
-and choose values that match their incident-response requirements.
+Recommended defaults: instance assertion `exp` of 5 minutes or less
+({{security-replay}}); access-token TTL of 30 minutes or less paired
+with a metadata refresh interval of 30 minutes or less, giving a
+trust-withdrawal latency bound of approximately 35 minutes. Tighter
+deployments (5-minute access tokens with 5-minute caches, sub-15
+minutes) and looser deployments (60-minute tokens with 1-hour caches,
+approximately 2 hours) are both common; looser deployments SHOULD
+support active revocation ({{revocation}}) and introspection-based
+status checks at the resource server. Operators SHOULD treat this
+bound as a deployment-time SLO matching their incident-response
+requirements.
 
 ### Cross-Organization Federation {#cross-org-federation}
 
 A client MAY list instance issuers operated by a different
-organization than the client itself, including cases where the
-client's SPIFFE trust domain (if any) differs from the instance's
-trust domain. The per-client minting rule ({{trust-model-delegation}})
-applies unchanged: the foreign issuer MUST mint instance assertions
-naming this `client_id` only for runtimes authorized as instances
-of this client. Beyond the protocol-level descriptor bounds,
-clients SHOULD have an out-of-band trust agreement with foreign
-issuers
-covering authorized workloads, descriptor bounds the issuer agrees
-to honor, and key-rotation and revocation procedures; the AS cannot
-verify such an agreement exists, but its absence amplifies
-cross-organization compromise risk. Omitting `spiffe_id` from a
-foreign SPIFFE descriptor delegates the whole foreign trust domain
-and SHOULD NOT be used unless the trust agreement explicitly
-authorizes every workload in that trust domain to act as an instance
-of the client.
+organization, including cases where SPIFFE trust domains differ.
+The per-client minting rule ({{trust-model-delegation}}) applies
+unchanged: the foreign issuer MUST mint instance assertions naming
+this `client_id` only for runtimes authorized as instances of this
+client. Clients SHOULD have an out-of-band trust agreement with
+foreign issuers covering authorized workloads, descriptor bounds,
+and key-rotation and revocation procedures; the AS cannot verify
+such an agreement exists, but its absence amplifies compromise risk.
+Omitting `spiffe_id` from a foreign SPIFFE descriptor delegates the
+whole foreign trust domain and SHOULD NOT be used absent explicit
+trust-agreement authorization for every workload in that domain.
 
-For SPIFFE deployments where trust domains differ, the trust
-relationship SHOULD be expressed via SPIFFE federation: the AS
-resolves the foreign trust bundle via the descriptor's
-`spiffe_bundle_endpoint` ({{instance-issuers}}), which MUST be
-operated by the foreign organization or its delegate. Multi-AS
-federation, where the same workload obtains tokens from multiple
-ASes, is supported structurally: each AS resolves its own client
-metadata independently, and workloads request audience-specific
-JWT-SVIDs per target AS so that `aud`-based replay protection
-({{security-replay}}) holds across destinations.
+For SPIFFE cross-trust-domain deployments, the AS SHOULD resolve
+the foreign trust bundle via the descriptor's `spiffe_bundle_endpoint`,
+which MUST be operated by the foreign organization or its delegate.
+Multi-AS federation is supported structurally: each AS resolves its
+own client metadata independently, and workloads request
+audience-specific JWT-SVIDs per target AS so that `aud`-based replay
+protection ({{security-replay}}) holds across destinations.
 
 # Metadata and Discovery {#metadata}
 
