@@ -240,9 +240,8 @@ directly as `actor_token` without re-minting; the descriptor format
 and processing rules are in {{instance-issuers}} and
 {{spiffe-compatibility}}. A deployment combining
 {{SPIFFE-CLIENT-AUTH}} with this profile MAY present the same SVID
-as both `client_assertion` and `actor_token` in a single request
-({{spiffe-combined}}); an end-to-end recipe is in
-{{appendix-spiffe-recipe}}.
+as both `client_assertion` and `actor_token` in a single request;
+an end-to-end recipe is in {{appendix-spiffe-recipe}}.
 
 ## Relationship to WIMSE Workload Credentials {#relationship-wimse}
 
@@ -476,58 +475,64 @@ through the instance assertion.
 When the client class registers `token_endpoint_auth_method`
 `client_instance_jwt` ({{instance-assertion-auth}}), these two trust
 anchors collapse onto a single artifact: the instance assertion
-both authenticates the client class (via the CIMD endorsement of
-its issuer) and identifies the instance. In that mode the request
+both authenticates the client class (via the client metadata
+endorsement of its issuer) and identifies the instance. In that mode the request
 carries no separate `client_assertion`. See {{instance-assertion-auth}}
 for the token request and validation procedure.
 
 ## Client Registration Models {#registration-models}
 
 This profile applies to OAuth clients regardless of how their
-metadata is registered with the AS. Two models are supported:
+metadata is registered with the AS. For most existing OAuth
+deployments, this means RFC 7591-style static registration
+administered by the AS operator (whether via the dynamic
+registration endpoint or pre-registered out of band); CIMD is the
+more recent option that adds public discovery and cross-organization
+auditability where those are required. The descriptor format and
+processing rules are identical in both cases.
+
+Static registration ({{RFC7591}}):
+: The `client_id` is opaque or AS-assigned. Metadata is registered
+  via the dynamic registration endpoint or out of band, and stays
+  internal to the AS. Updates take effect when the registration
+  store is updated. This model integrates with existing RFC
+  7591-based registration toolchains and is the typical mode for
+  closed or managed deployments where the trust relationship does
+  not need to be publicly discoverable.
 
 Client ID Metadata Document ({{CIMD}}):
 : The `client_id` is an HTTPS URL that dereferences to a metadata
-  document. The AS fetches the document on demand and caches it.
-  This model suits cross-organization deployments and public
-  discovery: the trust relationship between class and instance
-  issuers is auditable in a publicly resolvable document, and other
-  parties (including resource servers, federation peers, and SPIFFE
-  control planes) can read it directly.
+  document. The AS fetches the document on demand and caches it;
+  updates take effect after the cache window expires (or upon
+  explicit re-fetch). This model suits cross-organization
+  deployments where the trust relationship between class and
+  instance issuers must be auditable in a publicly resolvable
+  document, and is operationally easier for cross-organization
+  SPIFFE federation ({{cross-org-federation}}) because the foreign
+  organization can publicly publish its bundle endpoint and instance
+  descriptors. Under static registration, equivalent federation
+  requires manual coordination of registration between
+  organizations.
 
-Dynamic Client Registration ({{RFC7591}}):
-: The `client_id` is opaque (or otherwise AS-assigned) and the
-  metadata is registered with the AS via the dynamic registration
-  endpoint or pre-registered out of band. The metadata stays
-  internal to the AS. This model suits closed or managed deployments
-  where the metadata should not be publicly discoverable, and
-  integrates with existing RFC 7591-based registration toolchains.
-
-The runtime behavior is identical in both models. The descriptor
-format ({{instance-issuers}}), the instance-assertion auth mode
-({{instance-assertion-auth}}), the SPIFFE compatibility features
-({{spiffe-compatibility}}), and the AS processing rules
-({{as-processing}}) all apply uniformly. The only difference is
-whether the AS obtains the metadata by dereferencing the CIMD URL or
-from stored registration data.
-
-Cross-organization SPIFFE federation ({{cross-org-federation}}) is
-operationally easier under CIMD because the foreign organization
-can publicly publish its bundle endpoint and instance descriptors;
-under RFC 7591, equivalent federation requires manual coordination
-of registration between the organizations.
+The descriptor format ({{instance-issuers}}), the instance-assertion
+auth mode ({{instance-assertion-auth}}), the SPIFFE compatibility
+features ({{spiffe-compatibility}}), and the AS processing rules
+({{as-processing}}) all apply uniformly to both models. The only
+deployment-time differences are how metadata updates propagate (cache
+TTL versus admin update) and whether the trust relationship is
+publicly discoverable.
 
 ## Trust Delegation Model {#trust-model}
 
 This profile defines a three-party trust delegation between the
 client class, the instance issuer, and the AS. The client class
 *delegates* attestation of its runtime instances to one or more
-instance issuers; the AS *relies on* that delegation as expressed in
-the CIMD document.
+instance issuers; the AS *relies on* that delegation as expressed
+in the client's registered metadata.
 
 ### Delegation by the Client Class {#trust-model-delegation}
 
-By listing an instance issuer in its CIMD `instance_issuers`
+By listing an instance issuer in its `instance_issuers` metadata
 ({{instance-issuers}}), a client class delegates to that issuer the
 authority to attest that a concrete runtime is an instance of the
 client class. This delegation is bounded by the descriptor; the AS
@@ -536,8 +541,6 @@ limits:
 
 * The asserted `sub` MUST fall within `trust_domain` when present and
   MUST conform to `subject_syntax` when present.
-* The asserted `sub_profile` values MUST be a subset of
-  `actor_profiles_supported` when present.
 * The signing `alg` MUST be among `signing_alg_values_supported` when
   present.
 
@@ -551,17 +554,18 @@ cross-class instance impersonation when the same instance issuer is
 listed by multiple client classes (for example, in multi-tenant
 SaaS).
 
-Because the CIMD listing endorses the issuer to mint tokens naming
-this `client_id`, an instance assertion signed by such an issuer is itself
-attributable to the client class. A class MAY exploit this to use
+Because the `instance_issuers` listing endorses the issuer to mint
+tokens naming this `client_id`, an instance assertion signed by such
+an issuer is itself attributable to the client class. A class MAY exploit this to use
 the instance assertion as its client credential; see
 {{instance-assertion-auth}}.
 
 ### Authority of the Authorization Server {#trust-model-as}
 
-The AS treats the CIMD `instance_issuers` list as authoritative: it
-derives its trust in an instance assertion solely from the descriptor whose
-issuer member matches the instance assertion's `iss` claim. This document
+The AS treats the registered `instance_issuers` list as
+authoritative: it derives its trust in an instance assertion solely
+from the descriptor whose issuer member matches the instance
+assertion's `iss` claim. This document
 does not define out-of-band or AS-side configuration of additional
 instance issuers for a `client_id`; deployments requiring such
 configuration MUST do so via a separate specification.
@@ -569,28 +573,33 @@ configuration MUST do so via a separate specification.
 ### Trust Lifecycle {#trust-lifecycle}
 
 The trust relationship between client class and instance issuer is
-mutable. When the CIMD document changes (for example, an instance
-issuer is removed, its `jwks_uri` or `jwks` rotates, its `trust_domain` is
-replaced, or its `actor_profiles_supported` or
-`signing_alg_values_supported` narrows), the AS applies the same
-freshness and re-fetch rules it applies to other CIMD-published
-trust material such as `jwks_uri` (see {{CIMD}}).
+mutable. When the client's metadata changes (for example, an
+instance issuer is removed, its `jwks_uri` or `jwks` rotates, its
+`trust_domain` is replaced, or its `signing_alg_values_supported`
+narrows), updates take effect according to the registration model:
+for CIMD, the AS applies the same freshness and re-fetch rules it
+applies to other CIMD-published trust material such as `jwks_uri`
+(see {{CIMD}}); for static registration, updates take effect when
+the AS's registration store is updated and re-read.
 
-For the cache window during which the AS may continue to honor a
-stale descriptor, this profile imposes no additional revocation
-requirement on previously issued access tokens. After the AS has
-adopted the updated CIMD document, the AS SHOULD treat further use
-of access tokens whose `act` claim either (a) names a removed instance
-issuer, or (b) falls outside the descriptor's updated scope, as no
-longer endorsed by the client class. Where the deployment supports
-it, this is naturally enforced by access-token introspection and
-short access-token lifetimes; AS implementations MAY additionally
-revoke such tokens per {{RFC7009}}, including via the per-instance
+While the AS may continue to honor a stale descriptor (within the
+CIMD cache window, or before a static-registration update has been
+applied), this profile imposes no additional revocation requirement
+on previously issued access tokens. After the AS has adopted the
+updated metadata, the AS SHOULD treat further use of access tokens
+whose `act` claim either (a) names a removed instance issuer, or
+(b) falls outside the descriptor's updated scope, as no longer
+endorsed by the client class. Where the deployment supports it, this
+is naturally enforced by access-token introspection and short
+access-token lifetimes; AS implementations MAY additionally revoke
+such tokens per {{RFC7009}}, including via the per-instance
 mechanism described in {{revocation}}.
 
 To bound the compromise recovery window, ASes issuing access tokens
 under this profile SHOULD set the access token TTL no longer than
-the AS's CIMD cache TTL plus the instance assertion's `exp` window.
+the metadata refresh interval plus the instance assertion's `exp`
+window (for CIMD, the cache TTL; for static registration, the
+expected lag between an admin update and AS-side propagation).
 Deployments that cannot satisfy this bound MUST support active
 access-token revocation ({{revocation}}) and SHOULD support
 introspection-based status checks at the resource server.
@@ -598,31 +607,23 @@ introspection-based status checks at the resource server.
 ### Cross-Organization Federation {#cross-org-federation}
 
 A client class MAY list instance issuers operated by a different
-organization than the class itself. This is the cross-organization
-case: the class belongs to organization A, the instance issuer is
-operated by organization B, and the AS resides in either A, B, or a
-third party. In SPIFFE terms, the class's trust domain may differ
-from the instance's trust domain.
+organization than the class itself, including cases where the
+class's SPIFFE trust domain (if any) differs from the instance's
+trust domain. The per-class minting rule ({{trust-model-delegation}})
+applies unchanged: the foreign issuer MUST mint instance assertions
+naming this `client_id` only for runtimes authorized as instances
+of this class. Beyond the protocol-level descriptor bounds, classes
+SHOULD have an out-of-band trust agreement with foreign issuers
+covering authorized workloads, descriptor bounds the issuer agrees
+to honor, and key-rotation and revocation procedures; the AS cannot
+verify such an agreement exists, but its absence amplifies
+cross-organization compromise risk.
 
-This document permits cross-organization descriptors with the
-following constraints:
-
-* The class MUST have a documented trust agreement with the foreign
-  issuer covering at minimum: which workloads the foreign issuer is
-  authorized to attest as instances of the class, the descriptor
-  bounds (`trust_domain`, `spiffe_id`, `actor_profiles_supported`,
-  `signing_alg_values_supported`) the issuer agrees to honor, and key-
-  rotation and revocation procedures.
-* The foreign issuer MUST enforce the per-class minting rule
-  ({{trust-model-delegation}}).
-* For SPIFFE deployments where trust domains differ, the trust
-  relationship SHOULD be expressed via SPIFFE federation: the AS
-  resolves the foreign trust bundle via the descriptor's
-  `spiffe_bundle_endpoint` ({{instance-issuers}}), which MUST be
-  operated by the foreign organization or its delegate.
-
-Cross-domain RS processing of `act.sub` follows {{ACTOR-PROFILE}};
-this profile adds no new RS-side rules for federation. Multi-AS
+For SPIFFE deployments where trust domains differ, the trust
+relationship SHOULD be expressed via SPIFFE federation: the AS
+resolves the foreign trust bundle via the descriptor's
+`spiffe_bundle_endpoint` ({{instance-issuers}}), which MUST be
+operated by the foreign organization or its delegate. Multi-AS
 federation, where the same workload obtains tokens from multiple
 ASes, is supported structurally: each AS resolves its own client
 metadata independently, and workloads request audience-specific
@@ -698,12 +699,12 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
 
 `subject_syntax` (OPTIONAL):
 : A short identifier indicating the syntactic profile of the `sub`
-  claim used by this issuer. Defined values are "uri" (default,
-  arbitrary StringOrURI) and "spiffe" (a SPIFFE ID {{SPIFFE}}; see
-  also {{SPIFFE-CLIENT-AUTH}} for the related SPIFFE-based client
-  authentication profile). Other values MAY be defined by future
-  specifications. An AS that does not understand the value MUST reject
-  instance assertions for that descriptor with `invalid_grant`.
+  claim used by this issuer. This document defines two values: "uri"
+  (default, arbitrary StringOrURI) and "spiffe" (a SPIFFE ID
+  {{SPIFFE}}; see also {{SPIFFE-CLIENT-AUTH}} for the related
+  SPIFFE-based client authentication profile). An AS that does not
+  understand the value MUST reject instance assertions for that
+  descriptor with `invalid_grant`.
 
 `trust_domain` (OPTIONAL):
 : When `subject_syntax` is "spiffe", a SPIFFE trust domain that the
@@ -726,12 +727,6 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
   This member, when present, structurally binds a workload subtree
   to this client class; see {{spiffe-client-id-omission}}.
 
-`actor_profiles_supported` (OPTIONAL):
-: A JSON array of `sub_profile` values from the OAuth Entity Profiles
-  registry {{ENTITY-PROFILES}} that this issuer is authorized to
-  assert. If present, the AS MUST reject any instance assertion whose
-  `sub_profile` contains values not listed.
-
 Example client metadata document with a SPIFFE instance issuer:
 
 ~~~ json
@@ -745,8 +740,7 @@ Example client metadata document with a SPIFFE instance issuer:
       "jwks_uri": "https://workload.openai.example.com/jwks.json",
       "subject_syntax": "spiffe",
       "trust_domain": "openai.example.com",
-      "signing_alg_values_supported": ["ES256"],
-      "actor_profiles_supported": ["client_instance", "ai_agent"]
+      "signing_alg_values_supported": ["ES256"]
     }
   ]
 }
@@ -769,14 +763,6 @@ This document defines the following AS metadata parameters for
 Other values MAY appear and are processed under their own
 specifications; their trust resolution is not via `instance_issuers`.
 
-`subject_syntaxes_supported`:
-: OPTIONAL. A JSON array of `subject_syntax` values
-  ({{instance-issuers}}) that the AS understands when validating
-  client instance assertions. If the AS publishes this array, a
-  client class SHOULD only register `instance_issuers` descriptors
-  whose `subject_syntax` appears in it. If absent, clients MUST assume
-  the AS supports at least the default value "uri".
-
 In addition, an AS that supports {{instance-assertion-auth}} MUST
 advertise `client_instance_jwt` in
 `token_endpoint_auth_methods_supported` ({{RFC8414}}).
@@ -794,14 +780,13 @@ Example AS metadata document (abridged):
   "actor_token_types_supported": [
     "urn:ietf:params:oauth:token-type:client-instance-jwt"
   ],
-  "subject_syntaxes_supported": ["uri", "spiffe"],
   "dpop_signing_alg_values_supported": ["ES256", "RS256"]
 }
 ~~~
 
 # Client Instance Assertion Format {#client-instance-jwt}
 
-This section defines `client-instance-jwt` — a specific
+This section defines `client-instance-jwt`, a specific
 `actor_token_type` registered under this document for asserting
 client instance identity. Tokens of this type are presented under
 the actor token grant extension defined in
@@ -858,8 +843,8 @@ The following claims are defined for client instance assertions.
 
 `iss` (REQUIRED):
 : The instance issuer identifier. MUST exactly match an issuer
-  member of an `instance_issuers` descriptor in the client class CIMD
-  metadata.
+  member of an `instance_issuers` descriptor in the client class's
+  registered metadata.
 
 `sub` (REQUIRED):
 : The identifier of the client instance, in the syntax declared by
@@ -912,14 +897,12 @@ The following claims are defined for client instance assertions.
 `sub_profile` (RECOMMENDED):
 : One or more OAuth Entity Profile names {{ENTITY-PROFILES}}
   classifying the actor. Its syntax (a space-delimited string of
-  profile names) is the one defined by {{ACTOR-PROFILE}}, which
-  matches the format of the `actor_profiles_supported` descriptor
-  member ({{instance-issuers}}) when each member of that array is
-  treated as a single profile name. This document registers the
-  value `client_instance` ({{iana-entity-profile}}). Issuers MAY
-  include additional values registered with the "Actor Profile"
-  usage location in the OAuth Entity Profiles registry, or
-  privately defined collision-resistant values, per
+  profile names) is the one defined by {{ACTOR-PROFILE}}. This
+  document registers the value `client_instance`
+  ({{iana-entity-profile}}). Issuers MAY include additional values
+  registered with the "Actor Profile" usage location in the OAuth
+  Entity Profiles registry, or privately defined collision-resistant
+  values, per
   {{ACTOR-PROFILE}}.
 
 `cnf` (REQUIRED unless the token is a raw JWT-SVID accepted under {{spiffe-client-id-omission}}):
@@ -1096,10 +1079,10 @@ Before the steps below, the AS MUST reject the request with
 
 1. **Authenticate the client.** Authenticate the client class using
    its registered `token_endpoint_auth_method` per {{RFC6749}} and, if
-   applicable, {{RFC7523}}. The CIMD `client_id` is the client class.
-   When the registered method is `client_instance_jwt`, follow
-   {{instance-assertion-auth}} instead of presenting a separate
-   client-controlled credential.
+   applicable, {{RFC7523}}. The `client_id` identifies the client
+   class. When the registered method is `client_instance_jwt`,
+   follow {{instance-assertion-auth}} instead of presenting a
+   separate client-controlled credential.
 
 2. **Match the token type.** If `actor_token_type` is not
    `urn:ietf:params:oauth:token-type:client-instance-jwt`, processing
@@ -1128,8 +1111,8 @@ Before the steps below, the AS MUST reject the request with
 6. **Validate JWT claims.** Validate `iss`, `sub`, `aud`, `exp`, `iat`, `nbf`,
    and `jti` per {{claims}} and {{RFC7523}} Section 3, subject to the
    raw JWT-SVID exceptions in {{spiffe-client-id-omission}}. Enforce
-   `subject_syntax`, `trust_domain`, `signing_alg_values_supported`, and
-   `actor_profiles_supported` when present in the descriptor.
+   `subject_syntax`, `trust_domain`, and `signing_alg_values_supported`
+   when present in the descriptor.
 
 7. **Verify `client_id` binding.** If the instance assertion contains a
    `client_id` claim, it MUST exactly equal the authenticated
@@ -1163,20 +1146,30 @@ a refresh token) per the requested grant.
 ## Client Authentication via Instance Assertion {#instance-assertion-auth}
 
 A client class MAY register the `token_endpoint_auth_method` value
-`client_instance_jwt` in its CIMD metadata to indicate that
-the AS authenticates the client implicitly from a presented
-instance assertion, without requiring a separate `client_assertion` or other
+`client_instance_jwt` in its registered metadata (whether published
+as a CIMD document or stored at the AS) to indicate that the AS
+authenticates the client implicitly from a presented instance
+assertion, without requiring a separate `client_assertion` or other
 credential controlled by the class itself.
 
-This mode is appropriate where the class has no online private key
-that an instance can use, for example when the class identifier is
-a logical CIMD URL with class-key custody centralized away from the
-runtime, or when the workload identity provider trusted to attest
-instances is also the only authority the class wishes to publish.
-The trust chain to the class is preserved: the class's CIMD listing
-of the instance issuer is itself the endorsement, and a token signed
-by such an issuer naming this `client_id` is attributable to the
-class.
+This mode is the natural choice for workload-only deployments (for
+example, agentic services, autoscaled microservices, or ephemeral
+functions) where there is no human user authorizing operations and
+the team operating the runtime is also the natural owner of the
+workload identity provider. For these deployments, requiring a
+separate class-level credential typically means provisioning a
+private key into every pod alongside the instance-attested
+`actor_token`, which (per {{security-instance-assertion-auth}}) does
+not meaningfully improve defense against runtime compromise. The
+mode is also appropriate where the class identifier is a logical
+CIMD URL with class-key custody centralized away from the runtime,
+or where the workload identity provider trusted to attest instances
+is the only authority the class wishes to publish.
+
+The trust chain to the class is preserved: the class's listing of
+the instance issuer in its registered metadata is itself the
+endorsement, and a token signed by such an issuer naming this
+`client_id` is attributable to the class.
 
 ### Request Format {#instance-assertion-auth-request}
 
@@ -1204,7 +1197,8 @@ When the registered `token_endpoint_auth_method` for the `client_id` is
 `client_instance_jwt`, the AS replaces step 1 of {{as-processing}}
 ("Authenticate the client") with the following procedure:
 
-1. Resolve CIMD metadata for `client_id`.
+1. Resolve client metadata for `client_id` (per the registration
+   model: dereference the CIMD URL or read stored registration data).
 2. Validate the presented `actor_token` using the token-type check,
    instance issuer descriptor lookup, signature verification, and JWT
    claim validation rules in {{as-processing}}.
@@ -1523,62 +1517,42 @@ original grant to shape the refreshed access token; the original
 classification is *inherited* and is not re-derived from the refresh
 request itself.
 
-A client MAY include the `actor_token` and `actor_token_type`
-({{token-request}}) parameters on a refresh token request to supply
-a fresh client instance assertion. When present:
+Refresh tokens issued under this profile MUST be sender-constrained
+to the originating instance's `cnf` key, by the same mechanism used
+to sender-constrain the access token ({{sender-constrained}}). Only
+the originating instance can present the refresh token. A client MAY
+include `actor_token` and `actor_token_type` ({{token-request}}) on
+a refresh request to supply a fresh instance assertion (for example,
+to rotate the underlying assertion before its `exp`); when present,
+the `actor_token` MUST be bound to the same `cnf` key as the refresh
+token and MUST validate per {{as-processing}}. The AS MUST reject
+with `invalid_grant` any refresh request whose presented
+`actor_token` is not bound to the same `cnf` key as the refresh
+token.
 
-* `actor_token_type` MUST be
-  `urn:ietf:params:oauth:token-type:client-instance-jwt`;
-* the `actor_token` MUST validate per {{as-processing}}, including
-  token-type checking, instance issuer descriptor lookup, signature
-  verification, JWT claim validation, `client_id` binding, and `aud`
-  validation;
-* the instance assertion's `sub` MAY differ from the previous instance (for
-  example, when the original instance has terminated and a successor
-  instance is now operating under the same client class), provided
-  the new `sub` satisfies the descriptor's `subject_syntax`,
-  `trust_domain`, and `actor_profiles_supported` constraints;
-* the AS MUST update the refreshed access token's `act` (delegation)
-  or `sub` (self-acting) and `cnf` to reflect the new instance assertion,
-  preserving any nested upstream actor chain per {{ACTOR-PROFILE}};
-* the AS MUST re-establish sender-constraint per
-  {{sender-constrained}} against the new key.
+Because the refresh token is bound to the originating instance, it
+is implicitly invalidated when that instance terminates. This keeps
+`act.sub` (delegation) or `sub` (self-acting) stable across the
+refresh chain, matching the expectation of audit pipelines that a
+token's actor identity does not change after issuance.
 
-If `actor_token` is absent on a refresh request, the AS MAY either
-copy the previously validated actor identity into the refreshed
-access token or reject the request with `invalid_request` and require
-a fresh instance assertion. The choice is a matter of AS policy and SHOULD
-be documented by the deployment.
+Deployments requiring cross-instance session continuity (for
+example, agent platforms whose runtime is recycled but whose session
+should continue) MUST handle this at the deployment layer rather
+than through refresh-token semantics. Suitable mechanisms include:
 
-Refresh tokens issued under this profile MUST follow one of two
-explicit modes:
+* re-authorizing the client class through a fresh authorization
+  grant (e.g., a new authorization_code flow with passive sign-in);
+* using token-exchange ({{RFC8693}}) to mint a new instance-bound
+  token chain in the successor instance from a long-lived parent
+  token held by the platform; or
+* persisting session state outside the refresh token (e.g., in a
+  shared store keyed by the user-and-class) and obtaining new tokens
+  through a fresh grant.
 
-Fixed-instance refresh:
-: The refresh token is sender-constrained to the originating
-  instance's `cnf` key, by the same mechanism used to sender-
-  constrain the access token ({{sender-constrained}}). In this mode,
-  a refresh request from a successor instance MUST fail unless that
-  successor possesses the originating instance's binding key, which
-  deployments SHOULD avoid. This mode provides the strongest theft
-  resistance and is the default.
-
-Successor-instance refresh:
-: The deployment intentionally permits a successor instance of the
-  same client class to use the refresh token with a fresh instance
-  assertion and a new sender-constrained key. This mode is a
-  credential-theft amplifier: any present-or-future instance of the
-  class that obtains the refresh token can use it to obtain access
-  tokens by presenting its own instance assertion. Deployments using
-  this mode MUST document the policy that authorizes successor use,
-  MUST audit the instance transition, and MUST document the audit
-  consequence: the resulting access token's `act.sub` (delegation
-  case) or `sub` (self-acting case) names the *current* instance,
-  not the instance that originally received the refresh token, and
-  audit pipelines reading these claims will see the instance change
-  mid-stream.
-
-Issuing access tokens with stale instance identity across long
-refresh windows is discouraged; see {{security-replay}}.
+This profile does not extend refresh-token semantics to
+cross-instance succession; doing so would break the per-instance
+audit-stability invariant the profile is designed to provide.
 
 ## SPIFFE Compatibility {#spiffe-compatibility}
 
@@ -1634,12 +1608,13 @@ the `actor_token` has no `client_id` claim. In this mode:
   carry `iat` or `jti`; if either claim is present, the AS MUST
   validate it per {{claims}} and {{security-replay}}.
 
-The security rationale is that the descriptor's `spiffe_id`, signed
-into the client class's CIMD document and dereferenced by the AS,
-is itself the per-class binding: a workload's SPIFFE ID is bound to
-a class by the class explicitly listing the prefix that contains it.
-This is the same model SPIFFE-CLIENT-AUTH uses for client
-authentication, applied here to actor identity.
+The security rationale is that the descriptor's `spiffe_id`,
+present in the client class's registered metadata (whether
+published as a CIMD document or stored at the AS), is itself the
+per-class binding: a workload's SPIFFE ID is bound to a class by
+the class explicitly listing the prefix that contains it. This is
+the same model SPIFFE-CLIENT-AUTH uses for client authentication,
+applied here to actor identity.
 
 ### SPIFFE Trust Bundle Resolution {#spiffe-bundle-resolution}
 
@@ -1653,30 +1628,6 @@ bundle for the relevant trust domain. The bundle endpoint format,
 freshness, and rotation rules follow SPIFFE; see
 {{SPIFFE-CLIENT-AUTH}} for the analogous handling in client
 authentication.
-
-### Combined Authentication and Actor Identity {#spiffe-combined}
-
-A SPIFFE deployment that uses {{SPIFFE-CLIENT-AUTH}} for client
-authentication MAY use the same JWT-SVID as the `actor_token` under
-this profile, in the same token request:
-
-* The SVID is presented as `client_assertion` with
-  `client_assertion_type` =
-  `urn:ietf:params:oauth:client-assertion-type:jwt-spiffe` per
-  {{SPIFFE-CLIENT-AUTH}} (validated against the client's `spiffe_id`
-  CIMD member).
-* The same SVID is presented as `actor_token` with `actor_token_type` =
-  `urn:ietf:params:oauth:token-type:client-instance-jwt` (validated
-  against an `instance_issuers` descriptor under this profile).
-
-The SVID's `aud` MUST identify the AS in a form acceptable to both
-specifications (typically a single value identifying the AS
-satisfies both). The two parameters carry the same JWT bytes; the
-AS performs both validations against the same artifact.
-
-This is a non-normative coordination pattern; neither
-{{SPIFFE-CLIENT-AUTH}} nor this document requires it. A future
-profile MAY define a single auth method that subsumes both roles.
 
 ## Error Responses {#errors}
 
@@ -1701,7 +1652,7 @@ defined in {{as-processing}} to error codes:
 | `client_id` binding mismatch | `invalid_grant` |
 | `client_id` claim absent and SPIFFE compatibility conditions not met ({{spiffe-client-id-omission}}) | `invalid_grant` |
 | `spiffe_id` prefix match fails ({{instance-issuers}}) | `invalid_grant` |
-| `subject_syntax`, `sub_profile`, or `trust_domain` constraint fails | `invalid_grant` |
+| `subject_syntax` or `trust_domain` constraint fails | `invalid_grant` |
 | `subject_syntax` is "spiffe" but `sub` is not a valid SPIFFE ID | `invalid_grant` |
 | delegation chain depth exceeds AS local maximum ({{ACTOR-PROFILE}}) | `invalid_request` |
 | `actor_token` carries an `act` claim ({{ACTOR-PROFILE}}) | `invalid_grant` |
@@ -1822,13 +1773,12 @@ responses for access tokens issued under this profile MUST honor
 both per-token revocation and per-instance revocation: an
 introspection response MUST return active = false for any access
 token that has been revoked under either model. Introspection MUST
-also honor the trust update and CIMD freshness rules in
-{{trust-lifecycle}}: when the AS has adopted an updated CIMD
-document that removes an instance issuer or narrows a descriptor's
-scope so that an issued access token's `act` (or, for self-acting
-tokens, `sub`) is no longer endorsed, introspection responses for
-that access token MUST return active = false within the AS's CIMD
-cache window.
+also honor the trust update rules in {{trust-lifecycle}}: when the
+AS has adopted updated client metadata that removes an instance
+issuer or narrows a descriptor's scope so that an issued access
+token's `act` (or, for self-acting tokens, `sub`) is no longer
+endorsed, introspection responses for that access token MUST return
+active = false once the AS has applied the update.
 
 ### Revocation and Refresh Tokens {#revocation-refresh}
 
@@ -1864,10 +1814,11 @@ alongside the standard {{RFC7662}} response fields.
 
 ## Adoption and Migration {#adoption}
 
-This profile is designed for incremental adoption. Existing CIMD
-documents that do not declare `instance_issuers` continue to work
-unchanged, and existing access tokens in circulation when a class
-adds `instance_issuers` remain valid for their original lifetime.
+This profile is designed for incremental adoption. Existing client
+metadata (CIMD documents or static registrations) that does not
+declare `instance_issuers` continues to work unchanged, and existing
+access tokens in circulation when a class adds `instance_issuers`
+remain valid for their original lifetime.
 An AS MAY implement this profile while continuing to serve clients
 that don't use it: token requests are dispatched on
 `actor_token_type`, with `urn:ietf:params:oauth:token-type:client-
@@ -1969,14 +1920,16 @@ or more instance issuers. A compromised or misconfigured instance
 issuer can mint instance assertions that the AS will accept as legitimate
 instances of the named client class. Client classes SHOULD list only
 instance issuers under their own administrative control (or
-contractually equivalent), and SHOULD set `trust_domain`,
-`actor_profiles_supported`, and `signing_alg_values_supported` to bound
-what each issuer is allowed to assert.
+contractually equivalent), and SHOULD set `trust_domain` and
+`signing_alg_values_supported` to bound what each issuer is allowed
+to assert.
 
-The CIMD document is itself trust-affecting: an attacker who can
+Client metadata is itself trust-affecting: an attacker who can
 modify it can add a new instance issuer under their control. Client
-classes publishing CIMD metadata MUST protect the publication channel
-(per {{CIMD}}'s requirement of HTTPS) and the storage backing it.
+classes publishing CIMD metadata MUST protect the publication
+channel (per {{CIMD}}'s requirement of HTTPS) and the storage
+backing it; deployments using static registration MUST protect the
+registration store and any administrative API used to update it.
 
 ## Instance Lifecycle {#security-lifecycle}
 
@@ -2000,11 +1953,11 @@ Revocation within the validity window:
 Trust withdrawal:
 : To stop accepting instance assertions from an issuer (e.g., after a
   workload identity compromise), the client class removes the issuer
-  from `instance_issuers`, replaces or removes `trust_domain`, reduces
-  `actor_profiles_supported`, or rotates `jwks` at the issuer level. The
-  AS's response is governed by {{trust-lifecycle}}: subsequent uses
-  of access tokens whose `act` references the withdrawn scope are
-  treated as no longer endorsed.
+  from `instance_issuers`, replaces or removes `trust_domain`, or
+  rotates `jwks` at the issuer level. The AS's response is governed
+  by {{trust-lifecycle}}: subsequent uses of access tokens whose
+  `act` references the withdrawn scope are treated as no longer
+  endorsed.
 
 Refresh windows are a particular concern: an access token refreshed
 without a new instance assertion may carry stale instance identity long after
@@ -2019,14 +1972,49 @@ except for raw JWT-SVIDs accepted under the SPIFFE compatibility
 mode in {{spiffe-client-id-omission}}. After the AS has identified
 the issuer and validated the instance assertion signature, it MUST
 reject a token whose (`iss`, `jti`) pair has already been seen
-within the token's validity window. The AS MUST retain replay-cache
-entries at least until the token's `exp` time, plus any allowed clock
-skew. For a raw JWT-SVID, the AS MUST apply this replay check when
-`jti` is present; when `jti` is absent, deployments rely on
-sender-constraint, short SVID lifetimes, and audience restriction to
-bound replay. Issuers SHOULD use short lifetimes (five minutes or
-less) both to limit replay exposure and because client instances
-often have lifetimes of seconds to minutes.
+within the token's validity window. An AS MAY skip this check for
+assertions whose `cnf` claim has been verified at presentation per
+{{sender-constrained}}, since cnf-bound proof of possession already
+restricts replay to a holder of the private key.
+The MUST applies unconditionally to assertions without a verified
+`cnf` (including raw JWT-SVIDs accepted under
+{{spiffe-client-id-omission}} when `jti` is present). When the AS
+applies the replay check, it MUST retain replay-cache entries at
+least until the token's `exp` time, plus any allowed clock skew. For
+a raw JWT-SVID, the AS MUST apply the replay check when `jti` is
+present; when `jti` is absent, deployments rely on sender-constraint,
+short SVID lifetimes, and audience restriction to bound replay.
+Issuers SHOULD use short lifetimes (five minutes or less) both to
+limit replay exposure and because client instances often have
+lifetimes of seconds to minutes.
+
+Replay-cache cardinality at fleet scale is bounded by the rate of
+distinct (`iss`, `jti`) tuples persisted during the retention
+window. ASes that take the cnf-bound exemption above persist cache
+entries only for cnf-less paths; cnf-bound assertions impose no
+cache cost. ASes that retain the strict (unconditional) check across
+all paths should expect roughly N × (`exp` / T) active entries,
+where N is the count of concurrent instances minting assertions and
+T is the inter-mint interval; with T close to `exp`, this approaches
+N entries.
+
+Distributed AS deployments (multi-replica or geographically
+distributed) MUST share the replay cache or coordinate to prevent
+cross-replica replay for any path on which the strict check applies;
+per-replica in-memory caches do not protect against an attacker
+presenting the same (`iss`, `jti`) to multiple replicas in
+succession. A shared key-value store with TTL eviction (eviction
+time = `exp` plus permitted clock skew) is a natural fit. The
+shared-cache requirement does not apply on the cnf-bound path when
+the AS takes the exemption, since cnf+PoP verification is itself
+correctness-preserving across replicas.
+
+Replay-cache flooding is a denial-of-service surface: an attacker
+holding a compromised instance issuer's signing key can mint
+validly-signed assertions with arbitrary `jti` values. ASes SHOULD
+apply per-issuer rate limits and bounded cache caps; a sustained
+high rate of distinct `jti` values from a single issuer is a signal
+of either a misbehaving runtime or compromise.
 
 When refreshing access tokens ({{refresh}}), AS implementations
 SHOULD prefer requiring a fresh instance assertion rather than perpetuating
@@ -2061,11 +2049,11 @@ from being presented under a different client class's authentication.
 The `client_instance_jwt` authentication method
 ({{instance-assertion-auth}}) eliminates the requirement for the client
 class to control a private key used at the token endpoint. The
-trust chain to the class is preserved (the CIMD listing endorses the
-instance issuer), but the AS no longer requires possession of two
-independent keys to issue a token: compromise of any CIMD-listed
-instance issuer is sufficient to mint tokens that authenticate as
-the class.
+trust chain to the class is preserved (the metadata listing
+endorses the instance issuer), but the AS no longer requires
+possession of two independent keys to issue a token: compromise of
+any listed instance issuer is sufficient to mint tokens that
+authenticate as the class.
 
 In contrast, modes such as `private_key_jwt` require an attacker to
 possess both an instance issuer's signing key (to mint the
@@ -2073,18 +2061,36 @@ instance assertion) and the class's private key (to assert the client) before an
 token can be issued. Where the operational model permits, deployments
 SHOULD prefer two-key authentication.
 
+Two-key authentication provides defense in depth only when the keys
+live in different security domains. Loading both into the runtime
+workload (e.g., the class's `private_key_jwt` key mounted as a
+secret alongside an instance-attested `actor_token`) does not
+meaningfully raise the bar against runtime compromise; an attacker
+who compromises the runtime obtains both. Genuine separation
+requires the class's key to live outside the runtime, typically in
+an HSM or signing service that authenticates callers via independent
+workload attestation, so that compromise of the runtime exposes only
+the right to request signatures, not the key itself. Where this
+separation is not operationally feasible, deployments SHOULD use
+{{instance-assertion-auth}} instead, which makes the single-key
+model explicit and applies the hardening guidance in this section
+rather than relying on nominal two-key authentication that does not
+actually separate custody.
+
 When `client_instance_jwt` is used, classes SHOULD constrain
-each instance issuer's authority through `trust_domain`,
-`actor_profiles_supported`, and `signing_alg_values_supported`, and
-SHOULD list only the minimum set of `instance_issuers` necessary.
+each instance issuer's authority through `trust_domain` and
+`signing_alg_values_supported`, and SHOULD list only the minimum
+set of `instance_issuers` necessary.
 
 Trust withdrawal under this auth method has immediate consequences
 for client authentication: removing an instance issuer from
-`instance_issuers` (or narrowing its descriptor scope) immediately
-invalidates client authentications that depended on that issuer's
-endorsement. The AS MUST stop accepting `client_instance_jwt`
-authentications via the removed or narrowed issuer within its CIMD
-cache window per {{trust-lifecycle}}.
+`instance_issuers` (or narrowing its descriptor scope) invalidates
+client authentications that depended on that issuer's endorsement.
+The AS MUST stop accepting `client_instance_jwt` authentications via
+the removed or narrowed issuer once it has applied the metadata
+update (per {{trust-lifecycle}}: at the end of the CIMD cache window
+under CIMD, or upon AS-side propagation of the registration update
+under static registration).
 
 ## Mode-Switch Between Delegation and Self-Acting {#security-mode-switch}
 
@@ -2239,18 +2245,6 @@ Metadata Name:
 Metadata Description:
 : JSON array of `actor_token_type` values supported at the token
   endpoint.
-
-Specification Document(s):
-: {{as-metadata}} of this document
-
-### subject_syntaxes_supported
-
-Metadata Name:
-: `subject_syntaxes_supported`
-
-Metadata Description:
-: JSON array of `subject_syntax` values understood by the AS when
-  validating client instance assertions.
 
 Specification Document(s):
 : {{as-metadata}} of this document
@@ -2568,8 +2562,7 @@ at the same SPIFFE bundle endpoint:
           "https://spiffe.example.com/bundle",
       "subject_syntax": "spiffe",
       "trust_domain": "example.com",
-      "spiffe_id": "spiffe://example.com/agent/*",
-      "actor_profiles_supported": ["client_instance"]
+      "spiffe_id": "spiffe://example.com/agent/*"
     }
   ]
 }
@@ -2694,8 +2687,7 @@ The examples share a common deployment:
 * Client class: https://app.example.com/agent
 * CIMD document declares one instance issuer
   https://workload.app.example.com (`subject_syntax` "uri",
-  `signing_alg_values_supported` containing `ES256`, and
-  `actor_profiles_supported` containing `client_instance`).
+  `signing_alg_values_supported` containing `ES256`).
 * AS: https://as.example.com.
 * Resource server: https://api.example.com.
 * All access tokens are `DPoP`-bound; the instance assertion's `cnf` carries
@@ -2936,65 +2928,6 @@ Issued access token:
 ~~~
 
 Resulting chain depth is 2, well within typical AS-local maximums.
-
-## Refresh Token with Instance Succession {#appendix-examples-refresh}
-{:numbered="false"}
-
-The original instance inst-01 obtained an access token and refresh
-token (from the authorization_code example above), then terminated.
-A successor instance inst-04 obtains the refresh token (via a
-deployment-specific handoff such as a shared persistent state) and
-presents a fresh instance assertion to refresh.
-
-Refresh request:
-
-~~~ http-message
-POST /token HTTP/1.1
-Host: as.example.com
-Content-Type: application/x-www-form-urlencoded
-DPoP: <DPoP proof bound to inst-04's key>
-
-grant_type=refresh_token
-&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA
-&client_id=https%3A%2F%2Fapp.example.com%2Fagent
-&client_assertion_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
-&client_assertion=eyJhbGciOiJFUzI1NiIs...
-&actor_token=eyJhbGciOiJFUzI1NiIs... (inst-04's actor token)
-&actor_token_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
-~~~
-
-Per {{refresh}}, classification is inherited from the original grant
-(authorization_code → delegation). The actor identity changes from
-inst-01 to inst-04.
-
-Issued access token:
-
-~~~ json
-{
-  "iss":       "https://as.example.com",
-  "aud":       "https://api.example.com",
-  "sub":       "user:alice@example.com",
-  "client_id": "https://app.example.com/agent",
-  "scope":     "repo.write",
-  "iat":       1770003610,
-  "exp":       1770007210,
-  "cnf":       { "jkt": "DeF...456" },
-  "act": {
-    "iss":         "https://workload.app.example.com",
-    "sub":         "https://workload.app.example.com/inst-04",
-    "sub_profile": "client_instance",
-    "cnf":         { "jkt": "DeF...456" }
-  }
-}
-~~~
-
-The `act.sub` has switched from inst-01 to inst-04. Audit pipelines
-reading `act.sub` will see this change; the deployment SHOULD have
-documented this behavior per {{refresh}}, and SHOULD have considered
-whether the refresh token should have been sender-constrained to
-prevent transfer between instances.
 
 # Acknowledgments
 {:numbered="false"}
