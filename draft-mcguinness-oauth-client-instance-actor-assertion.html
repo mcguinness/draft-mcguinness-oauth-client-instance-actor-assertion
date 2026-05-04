@@ -1517,7 +1517,7 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.17.2.2.1"><a href="#appendix-C.2" class="auto internal xref"></a><a href="#name-client-credentials-self-act" class="internal xref">Client Credentials (Self-Acting)</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.3">
-                <p id="section-toc.1-1.17.2.3.1"><a href="#appendix-C.3" class="auto internal xref"></a><a href="#name-token-exchange-with-prior-d" class="internal xref">Token Exchange with Prior Delegation Chain</a></p>
+                <p id="section-toc.1-1.17.2.3.1"><a href="#appendix-C.3" class="auto internal xref"></a><a href="#name-token-exchange-with-prior-d" class="internal xref">Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)</a></p>
 </li>
             </ul>
 </li>
@@ -1980,7 +1980,12 @@ relationship between the registered client and its runtimes is
 class-and-instance: the OAuth client is the application class, and
 each runtime is a client instance of that class. This profile
 makes that implicit relationship explicit, so each instance can be
-named, attested, and bound to access tokens individually.<a href="#section-5-2" class="pilcrow">¶</a></p>
+named, attested, and bound to access tokens individually. The same
+pattern applies to agent platforms: the platform (or harness) is
+the OAuth client, each running agent or session is a client
+instance attested by the platform, and a sub-agent spawned by an
+agent is represented as a nested actor via token-exchange
+(<a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>).<a href="#section-5-2" class="pilcrow">¶</a></p>
 <div id="architecture">
 <section id="section-5.1">
         <h3 id="name-architecture">
@@ -3317,7 +3322,7 @@ appears at the top level as a property of the token, not as an
 actor claim).<a href="#section-8.6.2-3" class="pilcrow">¶</a></p>
 <p id="section-8.6.2-4">For a worked example see <a href="#appendix-examples-auth-code" class="auto internal xref">Appendix "Authorization Code with User Delegation"</a>; for a
 nested actor chain (token-exchange whose <code>subject_token</code> already
-carries an <code>act</code> chain), see <a href="#appendix-examples-token-exchange" class="auto internal xref">Appendix "Token Exchange with Prior Delegation Chain"</a>.<a href="#section-8.6.2-4" class="pilcrow">¶</a></p>
+carries an <code>act</code> chain), see <a href="#appendix-examples-token-exchange" class="auto internal xref">Appendix "Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)"</a>.<a href="#section-8.6.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="access-token-self-acting">
@@ -5375,14 +5380,14 @@ principal):<a href="#appendix-C.2-4" class="pilcrow">¶</a></p>
 <div id="appendix-examples-token-exchange">
 <section id="appendix-C.3">
         <h3 id="name-token-exchange-with-prior-d">
-<a href="#name-token-exchange-with-prior-d" class="section-name selfRef">Token Exchange with Prior Delegation Chain</a>
+<a href="#name-token-exchange-with-prior-d" class="section-name selfRef">Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)</a>
         </h3>
-<p id="appendix-C.3-1">A user-delegated access token issued by an upstream service is
-exchanged at the AS for a downstream-resource-scoped token. The
-agent's instance presents an instance assertion; the inbound <code>subject_token</code>
-already carries an <code>act</code> chain from a previous hop.<a href="#appendix-C.3-1" class="pilcrow">¶</a></p>
-<p id="appendix-C.3-2">Inbound <code>subject_token</code> (decoded; issued earlier by an upstream
-service named "service-router"):<a href="#appendix-C.3-2" class="pilcrow">¶</a></p>
+<p id="appendix-C.3-1">A parent agent's user-delegated access token is exchanged at the AS
+for a sub-agent's downstream-resource-scoped token. The sub-agent
+runtime presents an instance assertion; the inbound <code>subject_token</code>
+already carries an <code>act</code> chain naming the parent agent.<a href="#appendix-C.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-C.3-2">Inbound <code>subject_token</code> (decoded; issued earlier when a parent agent
+"agent-orchestrator-alpha" obtained access on the user's behalf):<a href="#appendix-C.3-2" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-C.3-3">
 <pre>
 {
@@ -5391,9 +5396,9 @@ service named "service-router"):<a href="#appendix-C.3-2" class="pilcrow">¶</a>
   "sub":       "user:alice@example.com",
   "scope":     "repo.write",
   "act": {
-    "iss":         "https://upstream.example.com",
-    "sub":         "service-router",
-    "sub_profile": "service"
+    "iss":         "https://platform.example.com",
+    "sub":         "agent:orchestrator-alpha",
+    "sub_profile": "client_instance"
   }
 }
 </pre><a href="#appendix-C.3-3" class="pilcrow">¶</a>
@@ -5420,15 +5425,16 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
 </pre><a href="#appendix-C.3-5" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.3-6">The <code>actor_token</code> is the agent instance inst-03, with no <code>act</code> of its
-own (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, <code>actor_token</code> <span class="bcp14">MUST NOT</span> carry <code>act</code>).<a href="#appendix-C.3-6" class="pilcrow">¶</a></p>
+<p id="appendix-C.3-6">The <code>actor_token</code> is the sub-agent runtime inst-03, with no <code>act</code> of
+its own (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, <code>actor_token</code> <span class="bcp14">MUST NOT</span> carry <code>act</code>).<a href="#appendix-C.3-6" class="pilcrow">¶</a></p>
 <p id="appendix-C.3-7">Chain construction per <a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>:<a href="#appendix-C.3-7" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-C.3-8.1">
-            <p id="appendix-C.3-8.1.1">Outermost: the validated <code>actor_token</code> (inst-03).<a href="#appendix-C.3-8.1.1" class="pilcrow">¶</a></p>
+            <p id="appendix-C.3-8.1.1">Outermost: the validated <code>actor_token</code> (sub-agent inst-03).<a href="#appendix-C.3-8.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-C.3-8.2">
-            <p id="appendix-C.3-8.2.1">Inner: the <code>subject_token</code>'s <code>act</code> chain, preserved (service-router).<a href="#appendix-C.3-8.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-C.3-8.2.1">Inner: the <code>subject_token</code>'s <code>act</code> chain, preserved
+(agent-orchestrator-alpha).<a href="#appendix-C.3-8.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="appendix-C.3-9">Issued access token:<a href="#appendix-C.3-9" class="pilcrow">¶</a></p>
@@ -5449,15 +5455,20 @@ own (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</s
     "sub_profile": "client_instance",
     "cnf":         { "jkt": "AbC...123" },
     "act": {
-      "iss":         "https://upstream.example.com",
-      "sub":         "service-router",
-      "sub_profile": "service"
+      "iss":         "https://platform.example.com",
+      "sub":         "agent:orchestrator-alpha",
+      "sub_profile": "client_instance"
     }
   }
 }
 </pre><a href="#appendix-C.3-10" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.3-11">Resulting chain depth is 2, well within typical AS-local maximums.<a href="#appendix-C.3-11" class="pilcrow">¶</a></p>
+<p id="appendix-C.3-11">Resulting chain depth is 2, well within typical AS-local maximums.
+The chain reads outward-in as: sub-agent inst-03 acted on behalf of
+the parent agent agent-orchestrator-alpha, which acted on behalf of
+user alice. Each <code>act</code> layer names a distinct runtime; resource
+servers and audit pipelines can attribute the request to the
+specific sub-agent that performed it.<a href="#appendix-C.3-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
