@@ -834,7 +834,8 @@ Table of Contents
 
    issuer (REQUIRED):  A StringOrURI [RFC7519] identifying the instance
       issuer.  This value MUST exactly match the iss claim of accepted
-      instance assertions.
+      instance assertions and MUST be unique within the instance_issuers
+      array.
 
    A descriptor MUST contain exactly one of jwks_uri, jwks, and
    spiffe_bundle_endpoint.  If two or more are present, or all are
@@ -877,20 +878,18 @@ Table of Contents
    spiffe_id (OPTIONAL):  When subject_syntax is "spiffe", a SPIFFE ID
       that further bounds which workloads this issuer may attest as
       instances of this client.  The value is a SPIFFE ID, optionally
-      with a trailing "/_" wildcard, using the same syntax and matching
-      rules as [SPIFFE-CLIENT-AUTH].  Without "/_", the instance
-      assertion's sub MUST equal this value exactly; with "/*", the
-      instance assertion's sub MUST be a SPIFFE ID whose prefix before
-      the wildcard matches this value's prefix and whose path begins
-      with the prefix's path.  If both spiffe_id and trust_domain are
-      present, the trust domain in spiffe_id MUST equal trust_domain.
-      This member, when present, structurally binds a workload subtree
-      to this client; see Section 8.8.1.  If subject_syntax is "spiffe"
-      and spiffe_id is absent, trust_domain MUST be present and the
-      descriptor delegates the entire trust domain to this instance
-      issuer.  Clients SHOULD include spiffe_id; omitting it is
-      appropriate only when every workload in the SPIFFE trust domain is
-      authorized to act as an instance of the client.
+      with a trailing "/_" wildcard.  Without "/_", the instance
+      assertion's sub MUST equal this value exactly; with "/*", matching
+      follows the spiffe_id matching rule of [SPIFFE-CLIENT-AUTH].  If
+      both spiffe_id and trust_domain are present, the trust domain in
+      spiffe_id MUST equal trust_domain.  This member, when present,
+      structurally binds a workload subtree to this client; see
+      Section 8.8.1.  If subject_syntax is "spiffe" and spiffe_id is
+      absent, trust_domain MUST be present and the descriptor delegates
+      the entire trust domain to this instance issuer.  Clients SHOULD
+      include spiffe_id; omitting it is appropriate only when every
+      workload in the SPIFFE trust domain is authorized to act as an
+      instance of the client.
 
    Example client metadata document with a SPIFFE instance issuer:
 
@@ -1253,7 +1252,9 @@ Table of Contents
         signing_alg_values_supported when present in the descriptor.  If
         subject_syntax is "spiffe" and spiffe_id is absent, require
         trust_domain and treat the descriptor as delegating the whole
-        trust domain.
+        trust domain.  Validate the JWS typ per Section 7.3 and reject
+        unrecognized crit header parameters per Section 7.2.  Apply the
+        (iss, jti) replay check per Section 12.3.
 
    7.   *Verify client_id binding.* If the instance assertion contains a
         client_id claim, it MUST exactly equal the authenticated
@@ -1335,8 +1336,10 @@ Table of Contents
 8.3.2.  Validation Procedure
 
    When the registered token_endpoint_auth_method for the client_id is
-   client_instance_jwt, the AS replaces step 1 of Section 8.2
-   ("Authenticate the client") with the following procedure:
+   client_instance_jwt, the pre-conditions of Section 8.2 (rejecting
+   mismatched or malformed actor_token/actor_token_type) still apply,
+   and the AS replaces step 1 of Section 8.2 ("Authenticate the client")
+   with the following procedure:
 
    1.  Resolve client metadata for client_id (per the registration
        model: dereference the CIMD URL or read stored registration
@@ -1850,75 +1853,81 @@ Table of Contents
    Section 2.2.2.  The following table maps the validation failures
    defined in Section 8.2 to error codes:
 
-      +===================================+========================+
-      | Failure                           | Error code             |
-      +===================================+========================+
-      | actor_token present but           | invalid_request        |
-      | actor_token_type absent           |                        |
-      +-----------------------------------+------------------------+
-      | actor_token_type present but      | invalid_request        |
-      | actor_token absent                |                        |
-      +-----------------------------------+------------------------+
-      | client-instance-jwt actor_token   | invalid_request        |
-      | not a syntactically valid JWT     |                        |
-      +-----------------------------------+------------------------+
-      | reminted Client Instance          | invalid_request        |
-      | Assertion typ JOSE header is not  |                        |
-      | client-instance+jwt (Section 7.3) |                        |
-      +-----------------------------------+------------------------+
-      | cnf possession verification fails | invalid_request        |
-      | (Section 8.5)                     |                        |
-      +-----------------------------------+------------------------+
-      | instance-specific binding key     | invalid_request        |
-      | cannot be established             |                        |
-      | (Section 8.5)                     |                        |
-      +-----------------------------------+------------------------+
-      | actor_token_type not understood   | unsupported_token_type |
-      | and required for the grant        | ([RFC8693])            |
-      +-----------------------------------+------------------------+
-      | iss not found in instance_issuers | invalid_grant          |
-      +-----------------------------------+------------------------+
-      | signature invalid                 | invalid_grant          |
-      +-----------------------------------+------------------------+
-      | alg not in                        | invalid_grant          |
-      | signing_alg_values_supported, or  |                        |
-      | alg is "none"                     |                        |
-      +-----------------------------------+------------------------+
-      | crit header includes unrecognized | invalid_grant          |
-      | parameter                         |                        |
-      +-----------------------------------+------------------------+
-      | aud, exp, iat, nbf, or jti        | invalid_grant          |
-      | validation fails                  |                        |
-      +-----------------------------------+------------------------+
-      | client_id binding mismatch        | invalid_grant          |
-      +-----------------------------------+------------------------+
-      | client_id claim absent and SPIFFE | invalid_grant          |
-      | compatibility conditions not met  |                        |
-      | (Section 8.8.1)                   |                        |
-      +-----------------------------------+------------------------+
-      | spiffe_id prefix match fails      | invalid_grant          |
-      | (Section 6.1.1)                   |                        |
-      +-----------------------------------+------------------------+
-      | SPIFFE descriptor omits both      | invalid_grant          |
-      | spiffe_id and trust_domain        |                        |
-      +-----------------------------------+------------------------+
-      | subject_syntax or trust_domain    | invalid_grant          |
-      | constraint fails                  |                        |
-      +-----------------------------------+------------------------+
-      | subject_syntax is "spiffe" but    | invalid_grant          |
-      | sub is not a valid SPIFFE ID      |                        |
-      +-----------------------------------+------------------------+
-      | delegation chain depth exceeds AS | invalid_request        |
-      | local maximum ([ACTOR-PROFILE])   |                        |
-      +-----------------------------------+------------------------+
-      | actor_token carries an act claim  | invalid_grant          |
-      | ([ACTOR-PROFILE])                 |                        |
-      +-----------------------------------+------------------------+
-      | classification ambiguous          | invalid_grant          |
-      | (Section 8.6.1)                   |                        |
-      +-----------------------------------+------------------------+
+    +========================================+========================+
+    | Failure                                | Error code             |
+    +========================================+========================+
+    | actor_token present but                | invalid_request        |
+    | actor_token_type absent                |                        |
+    +----------------------------------------+------------------------+
+    | actor_token_type present but           | invalid_request        |
+    | actor_token absent                     |                        |
+    +----------------------------------------+------------------------+
+    | client-instance-jwt actor_token not a  | invalid_request        |
+    | syntactically valid JWT                |                        |
+    +----------------------------------------+------------------------+
+    | reminted Client Instance Assertion typ | invalid_request        |
+    | JOSE header is not client-instance+jwt |                        |
+    | (Section 7.3)                          |                        |
+    +----------------------------------------+------------------------+
+    | cnf possession verification fails      | invalid_request        |
+    | (Section 8.5)                          |                        |
+    +----------------------------------------+------------------------+
+    | instance-specific binding key cannot   | invalid_request        |
+    | be established (Section 8.5)           |                        |
+    +----------------------------------------+------------------------+
+    | actor_token_type not understood and    | unsupported_token_type |
+    | required for the grant                 | ([RFC8693])            |
+    +----------------------------------------+------------------------+
+    | iss not found in instance_issuers      | invalid_grant          |
+    +----------------------------------------+------------------------+
+    | signature invalid                      | invalid_grant          |
+    +----------------------------------------+------------------------+
+    | alg not in                             | invalid_grant          |
+    | signing_alg_values_supported, or alg   |                        |
+    | is "none"                              |                        |
+    +----------------------------------------+------------------------+
+    | crit header includes unrecognized      | invalid_grant          |
+    | parameter                              |                        |
+    +----------------------------------------+------------------------+
+    | aud, exp, iat, nbf, or jti validation  | invalid_grant          |
+    | fails                                  |                        |
+    +----------------------------------------+------------------------+
+    | client_id binding mismatch             | invalid_grant          |
+    +----------------------------------------+------------------------+
+    | client_id claim absent and SPIFFE      | invalid_grant          |
+    | compatibility conditions not met       |                        |
+    | (Section 8.8.1)                        |                        |
+    +----------------------------------------+------------------------+
+    | spiffe_id prefix match fails           | invalid_grant          |
+    | (Section 6.1.1)                        |                        |
+    +----------------------------------------+------------------------+
+    | SPIFFE descriptor omits both spiffe_id | invalid_grant          |
+    | and trust_domain                       |                        |
+    +----------------------------------------+------------------------+
+    | descriptor has zero or multiple of     | invalid_grant          |
+    | jwks_uri / jwks /                      |                        |
+    | spiffe_bundle_endpoint (Section 6.1.1) |                        |
+    +----------------------------------------+------------------------+
+    | instance_issuers absent or empty for   | invalid_grant          |
+    | client (Section 6.1.1)                 |                        |
+    +----------------------------------------+------------------------+
+    | subject_syntax or trust_domain         | invalid_grant          |
+    | constraint fails                       |                        |
+    +----------------------------------------+------------------------+
+    | subject_syntax is "spiffe" but sub is  | invalid_grant          |
+    | not a valid SPIFFE ID                  |                        |
+    +----------------------------------------+------------------------+
+    | delegation chain depth exceeds AS      | invalid_request        |
+    | local maximum ([ACTOR-PROFILE])        |                        |
+    +----------------------------------------+------------------------+
+    | actor_token carries an act claim       | invalid_grant          |
+    | ([ACTOR-PROFILE])                      |                        |
+    +----------------------------------------+------------------------+
+    | classification ambiguous               | invalid_grant          |
+    | (Section 8.6.1)                        |                        |
+    +----------------------------------------+------------------------+
 
-                                 Table 4
+                                  Table 4
 
    The AS MAY return additional information via the error_description
    parameter; deployments MUST NOT include sensitive instance details

@@ -2300,7 +2300,8 @@ log it for the client operator.<a href="#section-6.1.1-1" class="pilcrow">¶</a>
             <dt id="section-6.1.1-3.1">issuer (<span class="bcp14">REQUIRED</span>):</dt>
             <dd style="margin-left: 1.5em" id="section-6.1.1-3.2">
               <p id="section-6.1.1-3.2.1">A StringOrURI <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> identifying the instance issuer. This
-value <span class="bcp14">MUST</span> exactly match the <code>iss</code> claim of accepted instance assertions.<a href="#section-6.1.1-3.2.1" class="pilcrow">¶</a></p>
+value <span class="bcp14">MUST</span> exactly match the <code>iss</code> claim of accepted instance assertions
+and <span class="bcp14">MUST</span> be unique within the <code>instance_issuers</code> array.<a href="#section-6.1.1-3.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
@@ -2368,12 +2369,10 @@ with the client itself under <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xr
             <dd style="margin-left: 1.5em" id="section-6.1.1-5.14">
               <p id="section-6.1.1-5.14.1">When <code>subject_syntax</code> is "spiffe", a SPIFFE ID that further bounds
 which workloads this issuer may attest as instances of this client.
-The value is a SPIFFE ID, optionally with a trailing "/<em>" wildcard,
-using the same syntax and matching rules as <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>.
+The value is a SPIFFE ID, optionally with a trailing "/<em>" wildcard.
 Without "/</em>", the instance assertion's <code>sub</code> <span class="bcp14">MUST</span> equal this value exactly;
-with "/*", the instance assertion's <code>sub</code> <span class="bcp14">MUST</span> be a SPIFFE ID whose prefix
-before the wildcard matches this value's prefix and whose path
-begins with the prefix's path. If both <code>spiffe_id</code> and <code>trust_domain</code>
+with "/*", matching follows the <code>spiffe_id</code> matching rule of
+<span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>. If both <code>spiffe_id</code> and <code>trust_domain</code>
 are present, the trust domain in <code>spiffe_id</code> <span class="bcp14">MUST</span> equal <code>trust_domain</code>.
 This member, when present, structurally binds a workload subtree
 to this client; see <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>. If
@@ -2858,7 +2857,9 @@ raw JWT-SVID exceptions in <a href="#spiffe-client-id-omission" class="auto inte
 <code>signing_alg_values_supported</code> when present in the descriptor. If
 <code>subject_syntax</code> is "spiffe" and <code>spiffe_id</code> is absent, require
 <code>trust_domain</code> and treat the descriptor as delegating the whole
-trust domain.<a href="#section-8.2-4.6.1" class="pilcrow">¶</a></p>
+trust domain. Validate the JWS <code>typ</code> per <a href="#signing" class="auto internal xref">Section 7.3</a> and reject
+unrecognized <code>crit</code> header parameters per <a href="#claims" class="auto internal xref">Section 7.2</a>. Apply the
+<code>(iss, jti)</code> replay check per <a href="#security-replay" class="auto internal xref">Section 12.3</a>.<a href="#section-8.2-4.6.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-4.7">
             <p id="section-8.2-4.7.1"><strong>Verify <code>client_id</code> binding.</strong> If the instance assertion contains a
@@ -2958,8 +2959,10 @@ grant_type=client_credentials
 <a href="#section-8.3.2" class="section-number selfRef">8.3.2. </a><a href="#name-validation-procedure" class="section-name selfRef">Validation Procedure</a>
           </h4>
 <p id="section-8.3.2-1">When the registered <code>token_endpoint_auth_method</code> for the <code>client_id</code> is
-<code>client_instance_jwt</code>, the AS replaces step 1 of <a href="#as-processing" class="auto internal xref">Section 8.2</a>
-("Authenticate the client") with the following procedure:<a href="#section-8.3.2-1" class="pilcrow">¶</a></p>
+<code>client_instance_jwt</code>, the pre-conditions of <a href="#as-processing" class="auto internal xref">Section 8.2</a> (rejecting
+mismatched or malformed <code>actor_token</code>/<code>actor_token_type</code>) still apply,
+and the AS replaces step 1 of <a href="#as-processing" class="auto internal xref">Section 8.2</a> ("Authenticate the
+client") with the following procedure:<a href="#section-8.3.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-8.3.2-2">
 <li id="section-8.3.2-2.1">
               <p id="section-8.3.2-2.1.1">Resolve client metadata for <code>client_id</code> (per the registration
@@ -3681,6 +3684,19 @@ defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> t
             <tr>
               <td class="text-left" rowspan="1" colspan="1">SPIFFE descriptor omits both <code>spiffe_id</code> and <code>trust_domain</code>
 </td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_grant</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">descriptor has zero or multiple of <code>jwks_uri</code> / <code>jwks</code> / <code>spiffe_bundle_endpoint</code> (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_grant</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>instance_issuers</code> absent or empty for client (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>)</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_grant</code>
 </td>
