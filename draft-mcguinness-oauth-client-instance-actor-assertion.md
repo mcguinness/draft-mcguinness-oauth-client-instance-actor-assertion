@@ -6,7 +6,7 @@ category: std
 docname: draft-mcguinness-oauth-client-instance-actor-assertion-latest
 submissiontype: IETF
 number:
-date: 2026-05-01
+date: 2026-05-03
 v: 3
 ipr: trust200902
 area: "Security"
@@ -132,12 +132,13 @@ a user, or services invoked under a delegation grant). See
 **An actor token type for client instance identity.** Building on
 the actor token grant extension, this document:
 
-* Treats the OAuth `client_id` as identifying a client *class*, and
-  defines client metadata describing the *instance issuers* trusted
-  to assert that a particular runtime is an instance of that class.
-  The metadata applies whether the client is identified by a Client
-  ID Metadata Document {{CIMD}} or registered via {{RFC7591}}; see
-  {{registration-models}}.
+* Recognizes that the OAuth `client_id` identifies an application
+  class with concrete runtime instances (a relationship already
+  implicit in deployed OAuth practice; see {{client-instance-model}}),
+  and defines client metadata describing the *instance issuers*
+  trusted to attest those instances. The metadata applies whether
+  the client is identified by a Client ID Metadata Document {{CIMD}}
+  or registered via {{RFC7591}}; see {{registration-models}}.
 * Registers a new `actor_token_type`,
   `urn:ietf:params:oauth:token-type:client-instance-jwt`, that
   carries the instance identity as a JWT {{RFC7519}} signed by an
@@ -290,23 +291,15 @@ This document uses the following terms:
 OAuth Client:
 : As defined in {{RFC6749}}, identified by a `client_id` (a CIMD
   URL or a registered `client_id` under {{RFC7591}}; see
-  {{registration-models}}). In this profile, the OAuth client is
-  also the issuer (in the OAuth metadata sense) that publishes the
-  set of instance issuers permitted to authenticate its runtime
-  instances. OAuth clients in deployed practice routinely
-  represent application classes that abstract over multiple
-  runtimes: a single registered client commonly ships as iOS,
-  Android, web, and server-side runtimes (e.g., Slack), or as
-  every application in a productivity suite (e.g., Microsoft
-  Graph). This profile names those concrete runtimes "client
-  instances".
+  {{registration-models}}). In this profile, the OAuth client
+  publishes the set of instance issuers permitted to authenticate
+  its runtime instances ({{client-instance-model}}).
 
 Client Instance:
-: A concrete runtime of an OAuth client, for example a particular
-  process, container, function invocation, or session. The
-  OAuth-client-to-client-instance relationship is class-and-
-  instance: the registered OAuth client is the application class,
-  and each runtime is an instance of that class.
+: A concrete runtime of an OAuth client (for example, a particular
+  process, container, function invocation, or session). See
+  {{client-instance-model}} for the class-and-instance relationship
+  between an OAuth client and its instances.
 
 Instance Issuer:
 : An authority trusted by the client to authenticate client
@@ -331,14 +324,14 @@ Actor Token Grant Extension:
   `client-instance-jwt` actor token type builds on the extension;
   other profiles may define their own actor token types under it.
 
-Delegation case:
+Delegation Case:
 : A token request whose grant produces a principal distinct from the
   instance presenting the `actor_token` (for example, a user under
   authorization_code or jwt-bearer). The issued access token's `sub`
   is the principal and the instance appears in `act` per
   {{access-token-delegation}}.
 
-Self-acting case:
+Self-Acting Case:
 : A token request whose grant produces no principal distinct from
   the instance (notably `client_credentials`). The issued access
   token's `sub` is the instance and `act` is omitted per
@@ -526,9 +519,10 @@ Client ID Metadata Document ({{CIMD}}):
   document. The AS fetches the document on demand and caches it;
   updates take effect after the cache window expires (or upon
   explicit re-fetch). This model suits cross-organization
-  deployments where the trust relationship between class and
-  instance issuers must be auditable in a publicly resolvable
-  document, and is operationally easier for cross-organization
+  deployments where the trust relationship between the OAuth
+  client and its instance issuers must be auditable in a publicly
+  resolvable document, and is operationally easier for
+  cross-organization
   SPIFFE federation ({{cross-org-federation}}) because the foreign
   organization can publicly publish its bundle endpoint and instance
   descriptors. Under static registration, equivalent federation
@@ -652,12 +646,13 @@ and choose values that match their incident-response requirements.
 
 A client MAY list instance issuers operated by a different
 organization than the client itself, including cases where the
-class's SPIFFE trust domain (if any) differs from the instance's
+client's SPIFFE trust domain (if any) differs from the instance's
 trust domain. The per-client minting rule ({{trust-model-delegation}})
 applies unchanged: the foreign issuer MUST mint instance assertions
 naming this `client_id` only for runtimes authorized as instances
-of this client. Beyond the protocol-level descriptor bounds, classes
-SHOULD have an out-of-band trust agreement with foreign issuers
+of this client. Beyond the protocol-level descriptor bounds,
+clients SHOULD have an out-of-band trust agreement with foreign
+issuers
 covering authorized workloads, descriptor bounds the issuer agrees
 to honor, and key-rotation and revocation procedures; the AS cannot
 verify such an agreement exists, but its absence amplifies
@@ -878,8 +873,8 @@ Assertion by adding the claims required by this profile and signing
 with a key registered in the issuer's descriptor. From the AS's
 perspective, the adapter is the instance issuer; the adapter SHOULD
 enforce the per-client authorization rule above, since underlying
-workload-identity systems typically do not know about OAuth client
-classes.
+workload-identity systems typically do not know about OAuth clients
+or their class-and-instance relationship.
 
 ## JWT Claims {#claims}
 
@@ -912,8 +907,8 @@ The following claims are defined for client instance assertions.
   {{RFC9068}} Section 2.2 (which itself defers to {{RFC8693}}
   Section 4.3 for the underlying definition). Note that RFC 9068
   defines `client_id` as the OAuth client to which a JWT access token
-  was issued; in this profile, the claim instead names the client
-  class to which the asserted instance belongs. It binds the actor
+  was issued; in this profile, the claim instead names the OAuth
+  client to which the asserted instance belongs. It binds the actor
   token to a specific client and is not part of the actor's
   identity (per {{ACTOR-PROFILE}}, `client_id` identifies an OAuth
   client, not an actor). When present, the AS MUST reject the token
@@ -1120,8 +1115,8 @@ Before the steps below, the AS MUST reject the request with
 
 1. **Authenticate the client.** Authenticate the client using
    its registered `token_endpoint_auth_method` per {{RFC6749}} and, if
-   applicable, {{RFC7523}}. The `client_id` identifies the client
-   class. When the registered method is `client_instance_jwt`,
+   applicable, {{RFC7523}}. The `client_id` identifies the OAuth
+   client. When the registered method is `client_instance_jwt`,
    follow {{instance-assertion-auth}} instead of presenting a
    separate client-controlled credential.
 
@@ -1327,8 +1322,8 @@ consent.
 
 ASes that record consent SHOULD record the descriptor scope under
 which consent was granted (in particular, the descriptor's issuer
-and `trust_domain`), and MAY refuse access tokens for the same client
-class issued under a different descriptor scope than the one
+and `trust_domain`), and MAY refuse access tokens for the same
+client issued under a different descriptor scope than the one
 consented. This matters for clients deployed across multiple
 trust domains (for example, "production" vs. "staging" SPIFFE trust
 domains, or distinct PaaS environments) where the user's consent to
@@ -1515,7 +1510,7 @@ issuance, and the resource server trusts the AS.
 A client that lists multiple instance issuers SHOULD ensure
 those issuers' `sub` spaces do not collide within the client (for
 example, by using disjoint naming conventions, prefixes, or a
-SPIFFE trust-domain split). Single-issuer classes have no collision
+SPIFFE trust-domain split). Single-issuer clients have no collision
 risk. ASes MAY apply additional namespacing (for example, prefixing
 `sub` with the descriptor's issuer in a deterministic form such as
 `<issuer>#<sub>`) when they cannot otherwise determine that
@@ -1904,7 +1899,7 @@ per-instance keys has three options:
 * **Defer adoption** until the workload identity system can emit
   per-instance keys directly.
 
-ASes and class operators SHOULD NOT enable the
+ASes and OAuth client operators SHOULD NOT enable the
 `client_instance_jwt` authentication method
 ({{instance-assertion-auth}}) without `cnf`: that mode has no
 fallback client credential, so a `cnf`-less assertion is fully
@@ -1976,7 +1971,7 @@ This subsection summarizes the security implications.
 A client delegates the authentication of its instances to one
 or more instance issuers. A compromised or misconfigured instance
 issuer can mint instance assertions that the AS will accept as legitimate
-instances of the named client. Client classes SHOULD list only
+instances of the named client. Clients SHOULD list only
 instance issuers under their own administrative control (or
 contractually equivalent), and SHOULD set `trust_domain` and
 `signing_alg_values_supported` to bound what each issuer is allowed
@@ -1986,8 +1981,8 @@ trust-withdrawal latency bound in {{trust-lifecycle}}; operators
 SHOULD plan incident response around this window.
 
 Client metadata is itself trust-affecting: an attacker who can
-modify it can add a new instance issuer under their control. Client
-classes publishing CIMD metadata MUST protect the publication
+modify it can add a new instance issuer under their control.
+Clients publishing CIMD metadata MUST protect the publication
 channel (per {{CIMD}}'s requirement of HTTPS) and the storage
 backing it; deployments using static registration MUST protect the
 registration store and any administrative API used to update it.
@@ -2108,8 +2103,8 @@ from being presented under a different client's authentication.
 ## Hardening client_instance_jwt Authentication {#security-instance-assertion-auth}
 
 The `client_instance_jwt` authentication method
-({{instance-assertion-auth}}) eliminates the requirement for the client
-class to control a private key used at the token endpoint. The
+({{instance-assertion-auth}}) eliminates the requirement for the
+client to control a private key used at the token endpoint. The
 trust chain to the client is preserved (the metadata listing
 endorses the instance issuer), but the AS no longer requires
 possession of two independent keys to issue a token: compromise of
@@ -2138,7 +2133,7 @@ model explicit and applies the hardening guidance in this section
 rather than relying on nominal two-key authentication that does not
 actually separate custody.
 
-When `client_instance_jwt` is used, classes SHOULD constrain
+When `client_instance_jwt` is used, clients SHOULD constrain
 each instance issuer's authority through `trust_domain` and
 `signing_alg_values_supported`, and SHOULD list only the minimum
 set of `instance_issuers` necessary.
@@ -2536,8 +2531,8 @@ or (b) overloading `client_assertion_type` with the actor-token
 URN, which conflicts with that URN's role as `actor_token_type`.
 Modeling it as a `token_endpoint_auth_method` captures what is
 actually happening, namely that the AS authenticates the client
-class implicitly from its client-metadata endorsement of the
-instance assertion's issuer, while keeping `client_assertion` and
+implicitly from its client-metadata endorsement of the instance
+assertion's issuer, while keeping `client_assertion` and
 `actor_token` semantically distinct.
 
 # SPIFFE Deployment Recipe {#appendix-spiffe-recipe}
@@ -2748,10 +2743,16 @@ that interacts with this profile. Examples are non-normative and
 omit unrelated headers or grant-specific details that do not affect
 actor processing.
 
+The examples use a CIMD-style `client_id` for clarity; the same
+flows apply identically to static-registration deployments
+({{registration-models}}), where the `client_id` is opaque or
+AS-assigned and the metadata is read from the AS's registration
+store rather than dereferenced.
+
 The examples share a common deployment:
 
-* Client class: https://app.example.com/agent
-* CIMD document declares one instance issuer
+* OAuth client: https://app.example.com/agent
+* Client metadata declares one instance issuer
   https://workload.app.example.com (`subject_syntax` "uri",
   `signing_alg_values_supported` containing `ES256`).
 * AS: https://as.example.com.
