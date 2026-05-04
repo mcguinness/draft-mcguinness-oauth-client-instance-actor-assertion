@@ -715,7 +715,8 @@ An instance issuer descriptor has the following members:
 
 issuer (REQUIRED):
 : A StringOrURI {{RFC7519}} identifying the instance issuer. This
-  value MUST exactly match the `iss` claim of accepted instance assertions.
+  value MUST exactly match the `iss` claim of accepted instance assertions
+  and MUST be unique within the `instance_issuers` array.
 
 A descriptor MUST contain exactly one of `jwks_uri`, `jwks`, and
 `spiffe_bundle_endpoint`. If two or more are present, or all are
@@ -761,12 +762,10 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
 `spiffe_id` (OPTIONAL):
 : When `subject_syntax` is "spiffe", a SPIFFE ID that further bounds
   which workloads this issuer may attest as instances of this client.
-  The value is a SPIFFE ID, optionally with a trailing "/*" wildcard,
-  using the same syntax and matching rules as {{SPIFFE-CLIENT-AUTH}}.
+  The value is a SPIFFE ID, optionally with a trailing "/*" wildcard.
   Without "/*", the instance assertion's `sub` MUST equal this value exactly;
-  with "/*", the instance assertion's `sub` MUST be a SPIFFE ID whose prefix
-  before the wildcard matches this value's prefix and whose path
-  begins with the prefix's path. If both `spiffe_id` and `trust_domain`
+  with "/*", matching follows the `spiffe_id` matching rule of
+  {{SPIFFE-CLIENT-AUTH}}. If both `spiffe_id` and `trust_domain`
   are present, the trust domain in `spiffe_id` MUST equal `trust_domain`.
   This member, when present, structurally binds a workload subtree
   to this client; see {{spiffe-client-id-omission}}. If
@@ -1163,7 +1162,9 @@ Before the steps below, the AS MUST reject the request with
    `signing_alg_values_supported` when present in the descriptor. If
    `subject_syntax` is "spiffe" and `spiffe_id` is absent, require
    `trust_domain` and treat the descriptor as delegating the whole
-   trust domain.
+   trust domain. Validate the JWS `typ` per {{signing}} and reject
+   unrecognized `crit` header parameters per {{claims}}. Apply the
+   `(iss, jti)` replay check per {{security-replay}}.
 
 7. **Verify `client_id` binding.** If the instance assertion contains a
    `client_id` claim, it MUST exactly equal the authenticated
@@ -1249,8 +1250,10 @@ grant_type=client_credentials
 ### Validation Procedure {#instance-assertion-auth-validation}
 
 When the registered `token_endpoint_auth_method` for the `client_id` is
-`client_instance_jwt`, the AS replaces step 1 of {{as-processing}}
-("Authenticate the client") with the following procedure:
+`client_instance_jwt`, the pre-conditions of {{as-processing}} (rejecting
+mismatched or malformed `actor_token`/`actor_token_type`) still apply,
+and the AS replaces step 1 of {{as-processing}} ("Authenticate the
+client") with the following procedure:
 
 1. Resolve client metadata for `client_id` (per the registration
    model: dereference the CIMD URL or read stored registration data).
@@ -1755,6 +1758,8 @@ defined in {{as-processing}} to error codes:
 | `client_id` claim absent and SPIFFE compatibility conditions not met ({{spiffe-client-id-omission}}) | `invalid_grant` |
 | `spiffe_id` prefix match fails ({{instance-issuers}}) | `invalid_grant` |
 | SPIFFE descriptor omits both `spiffe_id` and `trust_domain` | `invalid_grant` |
+| descriptor has zero or multiple of `jwks_uri` / `jwks` / `spiffe_bundle_endpoint` ({{instance-issuers}}) | `invalid_grant` |
+| `instance_issuers` absent or empty for client ({{instance-issuers}}) | `invalid_grant` |
 | `subject_syntax` or `trust_domain` constraint fails | `invalid_grant` |
 | `subject_syntax` is "spiffe" but `sub` is not a valid SPIFFE ID | `invalid_grant` |
 | delegation chain depth exceeds AS local maximum ({{ACTOR-PROFILE}}) | `invalid_request` |
