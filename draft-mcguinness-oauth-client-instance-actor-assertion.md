@@ -144,13 +144,14 @@ the actor token grant extension, this document:
   instance issuer published in the client's metadata.
 * Requires issued access tokens to be sender-constrained to a key
   the instance possesses, and specifies how the instance
-  assertion's `cnf` claim drives that binding.
+  assertion's `cnf` claim drives that binding in the interoperable
+  reminted assertion format.
 * Registers `client_instance_jwt` as a `token_endpoint_auth_method`
   value, allowing deployments without an online class-controlled
   credential to authenticate the client via the instance assertion
   alone.
-* Defines first-class support for SPIFFE workload identity,
-  including direct presentation of JWT-SVIDs as `actor_token`.
+* Defines first-class support for SPIFFE workload identity, including
+  optional direct presentation of JWT-SVIDs as `actor_token`.
 * Defines authorization server metadata so that clients can
   discover support.
 
@@ -232,10 +233,11 @@ non-SPIFFE JWT instance assertions (any `subject_syntax` other than
 `private_key_jwt`, {{SPIFFE-CLIENT-AUTH}}, or any other registered
 method.
 
-For SPIFFE deployments, this profile defines first-class support to
-enable presenting JWT-SVIDs from the SPIFFE Workload API directly as
-`actor_token` without re-minting; the descriptor format and
-processing rules are in {{instance-issuers}} and
+For SPIFFE deployments, this profile defines first-class support for
+SPIFFE subject syntax and trust-bundle resolution, and optional
+compatibility for presenting JWT-SVIDs from the SPIFFE Workload API
+directly as `actor_token` without re-minting; the descriptor format
+and processing rules are in {{instance-issuers}} and
 {{spiffe-compatibility}}. A deployment combining
 {{SPIFFE-CLIENT-AUTH}} with this profile MAY present the same SVID
 as both `client_assertion` and `actor_token` in a single request
@@ -862,6 +864,11 @@ The following claims are defined for client instance assertions.
 `sub` (REQUIRED):
 : The identifier of the client instance, in the syntax declared by
   the descriptor's `subject_syntax` (default: arbitrary StringOrURI).
+  The value MUST be collision-resistant within the scope in which it
+  is used as an access-token subject. If the AS cannot determine that
+  the asserted value is collision-resistant for self-acting tokens, it
+  MUST reject the request or map the value to an AS-scoped
+  collision-resistant subject before issuance.
 
 `aud` (REQUIRED):
 : The intended audience, identifying the AS. The AS validates `aud` per
@@ -915,18 +922,21 @@ The following claims are defined for client instance assertions.
   privately defined collision-resistant values, per
   {{ACTOR-PROFILE}}.
 
-`cnf` (RECOMMENDED):
+`cnf` (REQUIRED unless the token is a raw JWT-SVID accepted under {{spiffe-client-id-omission}}):
 : A confirmation claim {{RFC7800}} carrying a key bound to this
-  instance. When present, the `cnf` value MUST contain exactly one
-  of `jkt` (a JWK SHA-256 thumbprint per {{RFC9449}} Section 3.1) or
-  `x5t#S256` (an X.509 certificate SHA-256 thumbprint per
-  {{RFC8705}} Section 3); other confirmation methods registered
-  under {{RFC7800}} MAY appear in addition but MUST NOT be the only
-  member. The instance issuer MUST mint `cnf` from a key the named
-  runtime instance demonstrably possesses (e.g., an instance-
-  attested key, a per-instance workload key, or a `DPoP` public key
-  presented to the issuer at attestation time). Binding rules and
-  AS verification are defined in {{sender-constrained}}.
+  instance. The `cnf` value MUST contain exactly one of `jkt` (a JWK
+  SHA-256 thumbprint per {{RFC9449}} Section 3.1) or `x5t#S256` (an
+  X.509 certificate SHA-256 thumbprint per {{RFC8705}} Section 3);
+  other confirmation methods registered under {{RFC7800}} MAY appear
+  in addition but MUST NOT be the only member. The instance issuer
+  MUST mint `cnf` from a key the named runtime instance demonstrably
+  possesses (e.g., an instance-attested key, a per-instance workload
+  key, or a `DPoP` public key presented to the issuer at attestation
+  time). Binding rules and AS verification are defined in
+  {{sender-constrained}}. Raw JWT-SVID compatibility is the only
+  exception to this claim requirement, because the AS validates the
+  SVID without re-minting; see {{spiffe-client-id-omission}} and
+  {{sender-constrained}}.
 
 `nbf` (OPTIONAL):
 : Not-before time. If present, the AS MUST reject the token before
@@ -1204,9 +1214,9 @@ When the registered `token_endpoint_auth_method` for the `client_id` is
    {{sender-constrained}}. In this mode the `actor_token` serves as the
    sole client authentication credential, so the bearer-replay
    considerations in {{security-replay}} apply with no fallback
-   credential; ASes SHOULD reject requests in this mode whose
+   credential; ASes MUST reject requests in this mode whose
    `actor_token` lacks a `cnf` claim, and MUST verify possession of the
-   `cnf` key when present.
+   `cnf` key.
 5. Reject the request with `invalid_client` if any of the above fails.
 6. Treat the client as authenticated. The validated `actor_token` also
    satisfies the `actor_token` requirement of this profile and is used
@@ -1333,9 +1343,11 @@ class-level mTLS certificate authenticated under {{RFC8705}}, the
 class's `private_key_jwt` key, or any other class-controlled key not
 provisioned per-instance, is not sufficient.
 
-If the instance assertion does not include a `cnf` claim, the AS MUST
-establish an instance-specific binding through some other means
-whose key is attributable to the validated instance, for example:
+If the actor token is a raw JWT-SVID accepted under
+{{spiffe-client-id-omission}} and does not include a `cnf` claim, the
+AS MUST establish an instance-specific binding through some other
+means whose key is attributable to the validated instance, for
+example:
 
 * a per-instance mTLS client certificate provisioned by the instance
   issuer (or otherwise tied to instance attestation) and presented
@@ -1345,10 +1357,10 @@ whose key is attributable to the validated instance, for example:
   represents the same runtime named by the instance assertion's `sub`.
 
 If the AS cannot establish such an instance-specific binding, it
-MUST reject the request with `invalid_request` ({{errors}}). For this
-reason, instance issuers SHOULD include `cnf` in instance assertions so that
-the binding key is supplied by the same authority that named the
-instance.
+MUST reject the request with `invalid_request` ({{errors}}). This is
+a SPIFFE compatibility path only. A reminted Client Instance
+Assertion MUST contain `cnf` so that the binding key is supplied by
+the same authority that named the instance.
 
 Deployments combining class-level Mutual-TLS-bound client
 authentication ({{RFC8705}}) with this profile MUST establish
@@ -1445,7 +1457,8 @@ principal and there is no other party on whose behalf it acts. The
 AS MUST populate the issued access token from the validated client
 instance assertion:
 
-* `sub` = `actor_token`'s `sub`
+* `sub` = `actor_token`'s `sub`, or an AS-scoped
+  collision-resistant mapping of that value as described below
 * `sub_profile` = `actor_token`'s `sub_profile` (if present); the
   value `client_instance` SHOULD be included
 * `cnf` is set per {{sender-constrained}}
@@ -1457,9 +1470,14 @@ The instance issuer's identifier (the instance assertion's `iss`) is not
 represented as a claim in the self-acting access token. Trust in the
 instance issuer is structural: the AS validated the instance assertion
 against the descriptor in {{instance-issuers}} before issuance, and
-the resource server trusts the AS. Deployments that require
-in-token instance-issuer attribution for self-acting tokens may
-define a separate claim in a future profile.
+the resource server trusts the AS. Because the issuer is not carried
+in the token, the AS MUST ensure that the top-level `sub` it issues
+for a self-acting token is collision-resistant in the AS's subject
+namespace. If the validated instance assertion's `sub` is not
+globally collision-resistant, the AS MUST transform it into an
+AS-scoped collision-resistant value or reject the request.
+Deployments that require in-token instance-issuer attribution for
+self-acting tokens may define a separate claim in a future profile.
 
 In the issued access token, `client_id` (the class) and `sub` (the
 instance) are distinct, and `act` is absent. For a worked example
@@ -1532,20 +1550,32 @@ access token or reject the request with `invalid_request` and require
 a fresh instance assertion. The choice is a matter of AS policy and SHOULD
 be documented by the deployment.
 
-Refresh tokens issued under this profile SHOULD be sender-constrained
-to the originating instance's `cnf` key, by the same mechanism used to
-sender-constrain the access token ({{sender-constrained}}). A
-refresh token shared across successor instances of a class is a
-credential-theft amplifier: any present-or-future instance of the
-class can use it to obtain access tokens by presenting its own
-instance assertion. Where a deployment intentionally permits successor-instance
-refresh (for example, agentic workloads whose runtime is recycled
-but whose long-running session must continue), the deployment MUST
-document the audit consequence: the resulting access token's
-`act.sub` (delegation case) or `sub` (self-acting case) names the
-*current* instance, not the instance that originally received the
-refresh token, and audit pipelines reading these claims will see
-the instance change mid-stream.
+Refresh tokens issued under this profile MUST follow one of two
+explicit modes:
+
+Fixed-instance refresh:
+: The refresh token is sender-constrained to the originating
+  instance's `cnf` key, by the same mechanism used to sender-
+  constrain the access token ({{sender-constrained}}). In this mode,
+  a refresh request from a successor instance MUST fail unless that
+  successor possesses the originating instance's binding key, which
+  deployments SHOULD avoid. This mode provides the strongest theft
+  resistance and is the default.
+
+Successor-instance refresh:
+: The deployment intentionally permits a successor instance of the
+  same client class to use the refresh token with a fresh instance
+  assertion and a new sender-constrained key. This mode is a
+  credential-theft amplifier: any present-or-future instance of the
+  class that obtains the refresh token can use it to obtain access
+  tokens by presenting its own instance assertion. Deployments using
+  this mode MUST document the policy that authorizes successor use,
+  MUST audit the instance transition, and MUST document the audit
+  consequence: the resulting access token's `act.sub` (delegation
+  case) or `sub` (self-acting case) names the *current* instance,
+  not the instance that originally received the refresh token, and
+  audit pipelines reading these claims will see the instance change
+  mid-stream.
 
 Issuing access tokens with stale instance identity across long
 refresh windows is discouraged; see {{security-replay}}.
@@ -1553,12 +1583,15 @@ refresh windows is discouraged; see {{security-replay}}.
 ## SPIFFE Compatibility {#spiffe-compatibility}
 
 A SPIFFE workload typically obtains a JWT-SVID from the SPIFFE
-Workload API. JWT-SVIDs carry `sub` (the SPIFFE ID), `aud`, `exp`,
-and a signature, and may carry additional registered claims such as
-`iss`, `iat`, and `jti`; they do not carry an OAuth `client_id`
-claim. To allow such SVIDs to be presented as `actor_token` without
-re-minting, this profile defines a SPIFFE compatibility mode driven
-entirely by descriptor configuration.
+Workload API. JWT-SVIDs carry `iss` (the trust domain), `sub` (the
+SPIFFE ID), `aud`, `exp`, and a signature, and may carry additional
+registered claims such as `iat` and `jti`; they do not carry an
+OAuth `client_id` claim. To allow such SVIDs to be presented as
+`actor_token` without re-minting, this profile defines an optional
+SPIFFE compatibility mode driven entirely by descriptor
+configuration. An AS is not required to support raw JWT-SVID
+compatibility in order to support reminted Client Instance
+Assertions with `subject_syntax` = "spiffe".
 
 When a raw JWT-SVID is presented under this compatibility mode, it is
 not a reminted Client Instance Assertion and is not required to carry
@@ -1566,9 +1599,11 @@ the `client-instance+jwt` JWS `typ` value. The AS instead validates the
 JWT-SVID according to the SPIFFE JWT-SVID validation rules and the
 descriptor constraints in this section. The AS MUST accept only
 JWT-SVID claims that are valid under SPIFFE and MUST apply the
-additional `sub`, `aud`, `exp`, subject-syntax, `spiffe_id`, and
-trust-bundle checks defined by this profile. Because raw JWT-SVIDs
-do not require `jti`, an AS that accepts a raw JWT-SVID without `jti`
+additional `iss`, `sub`, `aud`, `exp`, subject-syntax, `spiffe_id`,
+and trust-bundle checks defined by this profile. The raw JWT-SVID's
+`iss` claim MUST identify the SPIFFE trust domain and MUST exactly
+match the descriptor's `issuer` member. Because raw JWT-SVIDs do not
+require `jti`, an AS that accepts a raw JWT-SVID without `jti`
 MUST rely on sender-constraint and short SVID lifetimes for replay
 protection; if `jti` is present, the AS MUST apply the replay-cache
 rule in {{security-replay}}. A deployment that re-mints the SVID into
@@ -1846,23 +1881,24 @@ instance assertions for every issued access token can register
 ({{instance-assertion-auth}}), which intrinsically requires the
 `actor_token`.
 
-### Migration without cnf {#adoption-without-cnf}
+### Migration without reminted cnf {#adoption-without-cnf}
 
-A class MAY deploy this profile before adopting per-instance proof-
-of-possession keys, but the bearer-replay protection in
-{{security-replay}} requires an instance-specific binding. Until
-the instance issuer can populate `cnf` on instance assertions, deployments
-MUST establish an instance-specific binding through some other
-means per {{sender-constrained}} (per-instance mTLS certificates
-provisioned by the issuer being the most common alternative), or
-the AS will reject the request. Short access-token lifetimes (e.g.,
-five minutes or less) further bound exposure during this transition.
+Reminted Client Instance Assertions under this profile require `cnf`
+({{claims}}). A class that has not yet adopted per-instance proof-
+of-possession keys therefore has two migration choices:
 
-ASes and class operators SHOULD NOT enable the
-`client_instance_jwt` authentication method
-({{instance-assertion-auth}}) until `cnf` is present in instance assertions:
-that mode has no fallback client credential, so an instance assertion
-without `cnf` is fully bearer at presentation
+* deploy raw JWT-SVID compatibility ({{spiffe-client-id-omission}})
+  with an instance-specific binding established by the AS under
+  {{sender-constrained}}; or
+* defer use of this profile until the instance issuer can populate
+  `cnf` in reminted Client Instance Assertions.
+
+The raw JWT-SVID path is deployment-specific compatibility, not the
+baseline interoperable assertion format. ASes and class operators
+SHOULD NOT enable the `client_instance_jwt` authentication method
+({{instance-assertion-auth}}) without `cnf`: that mode has no
+fallback client credential, so an instance assertion without `cnf`
+is fully bearer at presentation
 ({{security-instance-assertion-auth}}).
 
 # Conformance {#conformance}
@@ -1883,7 +1919,16 @@ Client Instance Assertion AS:
   `urn:ietf:params:oauth:token-type:client-instance-jwt`. Such an AS
   MUST implement {{as-processing}}, {{sender-constrained}},
   {{access-token}}, {{chain-merging}}, and {{errors}}. It MUST also
-  implement {{ACTOR-PROFILE}}.
+  implement {{ACTOR-PROFILE}}. This capability covers reminted
+  Client Instance Assertions containing `cnf`; support for raw
+  JWT-SVID compatibility is a separate capability.
+
+SPIFFE Raw JWT-SVID Compatibility AS:
+: An AS that accepts raw JWT-SVIDs as `actor_token` without
+  re-minting. Such an AS MUST implement {{spiffe-compatibility}},
+  MUST support descriptors using `spiffe_bundle_endpoint`, and MUST
+  establish instance-specific sender-constraint when the raw JWT-SVID
+  lacks `cnf`.
 
 Client Instance Assertion Auth Method AS:
 : An AS that supports the `client_instance_jwt`
@@ -1987,22 +2032,21 @@ When refreshing access tokens ({{refresh}}), AS implementations
 SHOULD prefer requiring a fresh instance assertion rather than perpetuating
 stale instance identity, especially across long refresh windows.
 
-The replay surface depends on whether the instance assertion carries `cnf`
-({{claims}}) and whether the AS verifies possession at presentation
-({{sender-constrained}}). When `cnf` is present and verified, the
-instance assertion is non-bearer at presentation: an attacker with only the
-JWT cannot use it without also possessing the `cnf` private key. When
-`cnf` is absent, an attacker who captures a live instance assertion within
-its `exp` window can present it once before the `jti` cache rejects
-replays (and not at all against a different AS thanks to `aud`
-binding). If a raw JWT-SVID without `jti` is accepted, the replay
-cache cannot provide single-use detection and the deployment relies
-on sender-constraint and short SVID lifetimes. For the
-instance-assertion auth mode in particular
-({{instance-assertion-auth}}), where the instance assertion is the
-only client credential, ASes SHOULD reject requests whose instance
-assertion lacks `cnf`; classes deploying this mode SHOULD ensure
-their instance issuers populate `cnf`.
+The replay surface depends on whether the instance assertion carries
+`cnf` ({{claims}}) and whether the AS verifies possession at
+presentation ({{sender-constrained}}). For reminted Client Instance
+Assertions, `cnf` is required: when it is present and verified, the
+instance assertion is non-bearer at presentation and an attacker with
+only the JWT cannot use it without also possessing the `cnf` private
+key. The only profile-defined case where `cnf` can be absent is raw
+JWT-SVID compatibility; in that case the AS MUST establish an
+instance-specific binding by other means per {{sender-constrained}}.
+If a raw JWT-SVID without `jti` is accepted, the replay cache cannot
+provide single-use detection and the deployment relies on sender-
+constraint and short SVID lifetimes. For the instance-assertion auth
+mode in particular ({{instance-assertion-auth}}), where the instance
+assertion is the only client credential, ASes MUST reject requests
+whose instance assertion lacks `cnf`.
 
 ## Audience and Confused Deputy {#security-audience}
 
@@ -2116,7 +2160,8 @@ sensitivity guidance above:
 * the authenticated `client_id` (the client class);
 * the validated instance assertion's `iss` (the instance issuer) and `sub`
   (the instance identifier);
-* the instance assertion's `jti` (for replay correlation);
+* the instance assertion's `jti` when present (for replay
+  correlation);
 * the `cnf` value or its thumbprint (binding the issued token to a
   specific key);
 * the descriptor scope under which validation succeeded (in
@@ -2339,6 +2384,14 @@ future profiles a defined wire mechanism to build on, rather than
 each profile re-litigating the question of whether `actor_token` may
 appear on `authorization_code` or `client_credentials`. See
 {{other-actor-token-types}}.
+
+If working group consensus prefers to progress the grant extension
+independently from the client instance assertion profile, the
+extension can be split into a companion specification without
+changing the `client-instance-jwt` token type. In that structure,
+this profile would depend on the companion grant-extension
+specification for the wire-level permission to carry `actor_token`
+and `actor_token_type` on non-token-exchange grants.
 
 ## Why CIMD as the trust anchor for instance issuers?
 {:numbered="false"}
