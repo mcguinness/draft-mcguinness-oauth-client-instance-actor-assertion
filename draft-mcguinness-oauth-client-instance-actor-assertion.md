@@ -1054,6 +1054,7 @@ client instance assertion. The client class authenticates with
 POST /token HTTP/1.1
 Host: as.example.com
 Content-Type: application/x-www-form-urlencoded
+DPoP: <DPoP proof bound to the instance's key>
 
 grant_type=client_credentials
 &scope=repo.write
@@ -1115,7 +1116,8 @@ Before the steps below, the AS MUST reject the request with
    {{spiffe-bundle-resolution}}.
 
 6. **Validate JWT claims.** Validate `iss`, `sub`, `aud`, `exp`, `iat`, `nbf`,
-   and `jti` per {{claims}} and {{RFC7523}} Section 3. Enforce
+   and `jti` per {{claims}} and {{RFC7523}} Section 3, subject to the
+   raw JWT-SVID exceptions in {{spiffe-client-id-omission}}. Enforce
    `subject_syntax`, `trust_domain`, `signing_alg_values_supported`, and
    `actor_profiles_supported` when present in the descriptor.
 
@@ -1221,8 +1223,13 @@ the sole client authentication credential, the assertion MUST contain
 the `client_id` claim and the AS MUST verify it exactly as described
 above.
 
-After this procedure completes, processing continues with step 2 of
-{{as-processing}} ("Match the token type") and onward.
+After this procedure completes, processing continues with step 8 of
+{{as-processing}} ("Enforce delegation policy") and onward, reusing
+the validated instance assertion. The AS MUST NOT re-apply the
+token-type check, descriptor lookup, signature verification, claim
+validation, or `client_id` binding checks to the same `actor_token`
+in a way that would cause the request to fail replay detection for
+its own presentation.
 
 ## Authorization-Time Consistency {#auth-time-consistency}
 
@@ -1546,19 +1553,27 @@ refresh windows is discouraged; see {{security-replay}}.
 ## SPIFFE Compatibility {#spiffe-compatibility}
 
 A SPIFFE workload typically obtains a JWT-SVID from the SPIFFE
-Workload API. JWT-SVIDs carry `iss` (the trust domain), `sub` (the
-SPIFFE ID), `aud`, `exp`, `iat`, and a signature, but do not carry an
-OAuth `client_id` claim. To allow such SVIDs to be presented as
-`actor_token` without re-minting, this profile defines a SPIFFE
-compatibility mode driven entirely by descriptor configuration.
+Workload API. JWT-SVIDs carry `sub` (the SPIFFE ID), `aud`, `exp`,
+and a signature, and may carry additional registered claims such as
+`iss`, `iat`, and `jti`; they do not carry an OAuth `client_id`
+claim. To allow such SVIDs to be presented as `actor_token` without
+re-minting, this profile defines a SPIFFE compatibility mode driven
+entirely by descriptor configuration.
 
 When a raw JWT-SVID is presented under this compatibility mode, it is
 not a reminted Client Instance Assertion and is not required to carry
 the `client-instance+jwt` JWS `typ` value. The AS instead validates the
-JWT-SVID using the SPIFFE trust bundle and descriptor constraints in
-this section. A deployment that re-mints the SVID into a Client
-Instance Assertion MUST use `typ` = `client-instance+jwt` per
-{{signing}}.
+JWT-SVID according to the SPIFFE JWT-SVID validation rules and the
+descriptor constraints in this section. The AS MUST accept only
+JWT-SVID claims that are valid under SPIFFE and MUST apply the
+additional `sub`, `aud`, `exp`, subject-syntax, `spiffe_id`, and
+trust-bundle checks defined by this profile. Because raw JWT-SVIDs
+do not require `jti`, an AS that accepts a raw JWT-SVID without `jti`
+MUST rely on sender-constraint and short SVID lifetimes for replay
+protection; if `jti` is present, the AS MUST apply the replay-cache
+rule in {{security-replay}}. A deployment that re-mints the SVID into
+a Client Instance Assertion MUST include the claims required by
+{{claims}} and MUST use `typ` = `client-instance+jwt` per {{signing}}.
 
 ### Client ID Claim Omission {#spiffe-client-id-omission}
 
@@ -1580,7 +1595,9 @@ the `actor_token` has no `client_id` claim. In this mode:
   exception narrows the *requirement* that the claim be present,
   not the *consistency* of the claim when present.
 * All other JWT claims and validation rules of {{claims}} continue
-  to apply unchanged.
+  to apply unchanged, except that a raw JWT-SVID is not required to
+  carry `iat` or `jti`; if either claim is present, the AS MUST
+  validate it per {{claims}} and {{security-replay}}.
 
 The security rationale is that the descriptor's `spiffe_id`, signed
 into the client class's CIMD document and dereferenced by the AS,
@@ -1952,14 +1969,19 @@ intervals when instance identity is present.
 
 ## Replay {#security-replay}
 
-Actor tokens MUST include `jti`, `exp`, and `iat` ({{claims}}). After the
-AS has identified the issuer and validated the instance assertion signature,
-it MUST reject a token whose (`iss`, `jti`) pair has already been seen
+Actor tokens MUST include `jti`, `exp`, and `iat` ({{claims}}),
+except for raw JWT-SVIDs accepted under the SPIFFE compatibility
+mode in {{spiffe-client-id-omission}}. After the AS has identified
+the issuer and validated the instance assertion signature, it MUST
+reject a token whose (`iss`, `jti`) pair has already been seen
 within the token's validity window. The AS MUST retain replay-cache
 entries at least until the token's `exp` time, plus any allowed clock
-skew. Issuers SHOULD use short lifetimes (five minutes or less) both
-to limit replay exposure and because client instances often have
-lifetimes of seconds to minutes.
+skew. For a raw JWT-SVID, the AS MUST apply this replay check when
+`jti` is present; when `jti` is absent, deployments rely on
+sender-constraint, short SVID lifetimes, and audience restriction to
+bound replay. Issuers SHOULD use short lifetimes (five minutes or
+less) both to limit replay exposure and because client instances
+often have lifetimes of seconds to minutes.
 
 When refreshing access tokens ({{refresh}}), AS implementations
 SHOULD prefer requiring a fresh instance assertion rather than perpetuating
@@ -1973,11 +1995,14 @@ JWT cannot use it without also possessing the `cnf` private key. When
 `cnf` is absent, an attacker who captures a live instance assertion within
 its `exp` window can present it once before the `jti` cache rejects
 replays (and not at all against a different AS thanks to `aud`
-binding). For the instance-assertion auth mode in particular
-({{instance-assertion-auth}}), where the instance assertion is the only client
-credential, ASes SHOULD reject requests whose instance assertion lacks `cnf`;
-classes deploying this mode SHOULD ensure their instance issuers
-populate `cnf`.
+binding). If a raw JWT-SVID without `jti` is accepted, the replay
+cache cannot provide single-use detection and the deployment relies
+on sender-constraint and short SVID lifetimes. For the
+instance-assertion auth mode in particular
+({{instance-assertion-auth}}), where the instance assertion is the
+only client credential, ASes SHOULD reject requests whose instance
+assertion lacks `cnf`; classes deploying this mode SHOULD ensure
+their instance issuers populate `cnf`.
 
 ## Audience and Confused Deputy {#security-audience}
 
@@ -2508,12 +2533,14 @@ client and as a permitted instance.
 A workload spiffe://example.com/agent/inst-01 obtains a JWT-SVID
 from the SPIFFE Workload API with audience set to the AS
 (https://as.example.com), then issues a `client_credentials` request
-that uses the SVID as both `client_assertion` and `actor_token`:
+that uses the SVID as both `client_assertion` and `actor_token` and
+presents a DPoP proof with a workload-held key:
 
 ~~~ http-message
 POST /token HTTP/1.1
 Host: as.example.com
 Content-Type: application/x-www-form-urlencoded
+DPoP: <DPoP proof bound to the workload's key>
 
 grant_type=client_credentials
 &scope=repo.write
@@ -2542,14 +2569,18 @@ grant_type=client_credentials
   "sub": "spiffe://example.com/agent/inst-01",
   "aud": "https://as.example.com",
   "iat": 1770000000,
-  "exp": 1770000300,
-  "jti": "1a2b3c4d-5e6f"
+  "exp": 1770000300
 }
 ~~~
 
 The SVID has no `client_id` claim and is not re-minted; SPIFFE
 compatibility ({{spiffe-client-id-omission}}) handles the binding
-structurally via the descriptor's `spiffe_id`.
+structurally via the descriptor's `spiffe_id`. This example uses a
+separate workload-held DPoP key for sender-constraint; the AS accepts
+that key only because deployment-specific policy binds it to the same
+runtime named by the JWT-SVID's `sub`. Deployments that require the
+instance issuer itself to assert the binding key can instead re-mint
+the SVID into a Client Instance Assertion containing `cnf`.
 
 ## AS Processing {#appendix-spiffe-as}
 {:numbered="false"}
@@ -2569,8 +2600,11 @@ The AS:
    {{spiffe-client-id-omission}}.
 4. Classifies as self-acting (`client_credentials` grant).
 5. Issues a sender-constrained access token. The `cnf` is established
-   per the deployment's binding mechanism (typically the SVID's key
-   for `DPoP`, or the X.509-SVID's certificate for mTLS).
+   per the deployment's binding mechanism. In this example, the AS
+   accepts the DPoP proof key because local policy or attestation
+   binds that key to the workload named by the JWT-SVID. With mTLS,
+   a per-instance X.509-SVID certificate can serve as the binding
+   key.
 
 ## Issued Access Token {#appendix-spiffe-access-token}
 {:numbered="false"}
