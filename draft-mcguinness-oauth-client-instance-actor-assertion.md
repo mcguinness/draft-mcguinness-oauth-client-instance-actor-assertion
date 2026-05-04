@@ -437,7 +437,12 @@ relationship between the registered client and its runtimes is
 class-and-instance: the OAuth client is the application class, and
 each runtime is a client instance of that class. This profile
 makes that implicit relationship explicit, so each instance can be
-named, attested, and bound to access tokens individually.
+named, attested, and bound to access tokens individually. The same
+pattern applies to agent platforms: the platform (or harness) is
+the OAuth client, each running agent or session is a client
+instance attested by the platform, and a sub-agent spawned by an
+agent is represented as a nested actor via token-exchange
+({{chain-merging}}).
 
 ## Architecture {#architecture}
 
@@ -2929,16 +2934,16 @@ principal):
 The RS treats `sub` as the workload identity (not a human user) per
 {{rs-self-acting}}.
 
-## Token Exchange with Prior Delegation Chain {#appendix-examples-token-exchange}
+## Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent) {#appendix-examples-token-exchange}
 {:numbered="false"}
 
-A user-delegated access token issued by an upstream service is
-exchanged at the AS for a downstream-resource-scoped token. The
-agent's instance presents an instance assertion; the inbound `subject_token`
-already carries an `act` chain from a previous hop.
+A parent agent's user-delegated access token is exchanged at the AS
+for a sub-agent's downstream-resource-scoped token. The sub-agent
+runtime presents an instance assertion; the inbound `subject_token`
+already carries an `act` chain naming the parent agent.
 
-Inbound `subject_token` (decoded; issued earlier by an upstream
-service named "service-router"):
+Inbound `subject_token` (decoded; issued earlier when a parent agent
+"agent-orchestrator-alpha" obtained access on the user's behalf):
 
 ~~~ json
 {
@@ -2947,9 +2952,9 @@ service named "service-router"):
   "sub":       "user:alice@example.com",
   "scope":     "repo.write",
   "act": {
-    "iss":         "https://upstream.example.com",
-    "sub":         "service-router",
-    "sub_profile": "service"
+    "iss":         "https://platform.example.com",
+    "sub":         "agent:orchestrator-alpha",
+    "sub_profile": "client_instance"
   }
 }
 ~~~
@@ -2976,13 +2981,14 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
 ~~~
 
-The `actor_token` is the agent instance inst-03, with no `act` of its
-own (per {{ACTOR-PROFILE}}, `actor_token` MUST NOT carry `act`).
+The `actor_token` is the sub-agent runtime inst-03, with no `act` of
+its own (per {{ACTOR-PROFILE}}, `actor_token` MUST NOT carry `act`).
 
 Chain construction per {{chain-merging}}:
 
-* Outermost: the validated `actor_token` (inst-03).
-* Inner: the `subject_token`'s `act` chain, preserved (service-router).
+* Outermost: the validated `actor_token` (sub-agent inst-03).
+* Inner: the `subject_token`'s `act` chain, preserved
+  (agent-orchestrator-alpha).
 
 Issued access token:
 
@@ -3002,15 +3008,20 @@ Issued access token:
     "sub_profile": "client_instance",
     "cnf":         { "jkt": "AbC...123" },
     "act": {
-      "iss":         "https://upstream.example.com",
-      "sub":         "service-router",
-      "sub_profile": "service"
+      "iss":         "https://platform.example.com",
+      "sub":         "agent:orchestrator-alpha",
+      "sub_profile": "client_instance"
     }
   }
 }
 ~~~
 
 Resulting chain depth is 2, well within typical AS-local maximums.
+The chain reads outward-in as: sub-agent inst-03 acted on behalf of
+the parent agent agent-orchestrator-alpha, which acted on behalf of
+user alice. Each `act` layer names a distinct runtime; resource
+servers and audit pipelines can attribute the request to the
+specific sub-agent that performed it.
 
 # Acknowledgments
 {:numbered="false"}
