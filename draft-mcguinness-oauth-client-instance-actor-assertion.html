@@ -1491,41 +1491,24 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
-            <p id="section-toc.1-1.16.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-spiffe-deployment-recipe" class="internal xref">SPIFFE Deployment Recipe</a></p>
+            <p id="section-toc.1-1.16.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-worked-examples" class="internal xref">Worked Examples</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.1">
-                <p id="section-toc.1-1.16.2.1.1"><a href="#appendix-B.1" class="auto internal xref"></a><a href="#name-setup" class="internal xref">Setup</a></p>
+                <p id="section-toc.1-1.16.2.1.1"><a href="#appendix-B.1" class="auto internal xref"></a><a href="#name-authorization-code-with-use" class="internal xref">Authorization Code with User Delegation</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.2">
-                <p id="section-toc.1-1.16.2.2.1"><a href="#appendix-B.2" class="auto internal xref"></a><a href="#name-workload-token-request" class="internal xref">Workload Token Request</a></p>
+                <p id="section-toc.1-1.16.2.2.1"><a href="#appendix-B.2" class="auto internal xref"></a><a href="#name-client-credentials-self-act" class="internal xref">Client Credentials (Self-Acting)</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.3">
-                <p id="section-toc.1-1.16.2.3.1"><a href="#appendix-B.3" class="auto internal xref"></a><a href="#name-as-processing" class="internal xref">AS Processing</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.4">
-                <p id="section-toc.1-1.16.2.4.1"><a href="#appendix-B.4" class="auto internal xref"></a><a href="#name-issued-access-token" class="internal xref">Issued Access Token</a></p>
+                <p id="section-toc.1-1.16.2.3.1"><a href="#appendix-B.3" class="auto internal xref"></a><a href="#name-token-exchange-with-prior-d" class="internal xref">Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
-            <p id="section-toc.1-1.17.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-worked-examples" class="internal xref">Worked Examples</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.1">
-                <p id="section-toc.1-1.17.2.1.1"><a href="#appendix-C.1" class="auto internal xref"></a><a href="#name-authorization-code-with-use" class="internal xref">Authorization Code with User Delegation</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.2">
-                <p id="section-toc.1-1.17.2.2.1"><a href="#appendix-C.2" class="auto internal xref"></a><a href="#name-client-credentials-self-act" class="internal xref">Client Credentials (Self-Acting)</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.3">
-                <p id="section-toc.1-1.17.2.3.1"><a href="#appendix-C.3" class="auto internal xref"></a><a href="#name-token-exchange-with-prior-d" class="internal xref">Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)</a></p>
-</li>
-            </ul>
+            <p id="section-toc.1-1.17.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
-            <p id="section-toc.1-1.18.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19">
-            <p id="section-toc.1-1.19.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.18.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -1737,8 +1720,7 @@ directly as <code>actor_token</code> without re-minting; the descriptor format
 and processing rules are in <a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a> and
 <a href="#spiffe-compatibility" class="auto internal xref">Section 8.8</a>. A deployment combining
 <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> with this profile <span class="bcp14">MAY</span> present the same SVID
-as both <code>client_assertion</code> and <code>actor_token</code> in a single request;
-an end-to-end recipe is in <a href="#appendix-spiffe-recipe" class="auto internal xref">Appendix "SPIFFE Deployment Recipe"</a>.<a href="#section-2.3-6" class="pilcrow">¶</a></p>
+as both <code>client_assertion</code> and <code>actor_token</code> in a single request.<a href="#section-2.3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="relationship-wimse">
@@ -4774,8 +4756,12 @@ registration is contingent on the establishment of that registry.<a href="#secti
 <span class="refAuthor">Bertocci, V.</span>, <span class="refTitle">"JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens"</span>, <span class="seriesInfo">RFC 9068</span>, <span class="seriesInfo">DOI 10.17487/RFC9068</span>, <time datetime="2021-10" class="refDate">October 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9068">https://www.rfc-editor.org/rfc/rfc9068</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9449">[RFC9449]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Fett, D.</span>, <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Jones, M.</span>, and <span class="refAuthor">D. Waite</span>, <span class="refTitle">"OAuth 2.0 Demonstrating Proof of Possession (DPoP)"</span>, <span class="seriesInfo">RFC 9449</span>, <span class="seriesInfo">DOI 10.17487/RFC9449</span>, <time datetime="2023-09" class="refDate">September 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9449">https://www.rfc-editor.org/rfc/rfc9449</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SPIFFE-CLIENT-AUTH">[SPIFFE-CLIENT-AUTH]</dt>
+      <dd>
+<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Rose, S.</span>, and <span class="refAuthor">S. Thorgersen</span>, <span class="refTitle">"OAuth SPIFFE Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-spiffe-client-auth-01</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-01">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-01</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -4809,10 +4795,6 @@ registration is contingent on the establishment of that registry.<a href="#secti
 <dt id="SPIFFE">[SPIFFE]</dt>
         <dd>
 <span class="refAuthor">SPIFFE</span>, <span class="refTitle">"SPIFFE: Secure Production Identity Framework For Everyone"</span>, <time datetime="2024" class="refDate">2024</time>, <span>&lt;<a href="https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/">https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="SPIFFE-CLIENT-AUTH">[SPIFFE-CLIENT-AUTH]</dt>
-        <dd>
-<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Rose, S.</span>, and <span class="refAuthor">S. Thorgersen</span>, <span class="refTitle">"OAuth SPIFFE Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-spiffe-client-auth-01</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-01">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-01</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="WIMSE-ARCH">[WIMSE-ARCH]</dt>
         <dd>
@@ -4973,7 +4955,7 @@ claim names the client. The same JWT is required to do double duty
 only when the client chooses
 <code>token_endpoint_auth_method</code> = <code>client_instance_jwt</code>; in every
 other auth method, a separate client credential authenticates the
-class and the instance assertion names the instance.<a href="#appendix-A.6-3" class="pilcrow">¶</a></p>
+client and the instance assertion names the instance.<a href="#appendix-A.6-3" class="pilcrow">¶</a></p>
 <p id="appendix-A.6-4">Modeling the dual-use case as a <code>client_assertion_type</code> would have
 required either (a) inventing a second token type identical to
 client-instance-jwt to be the assertion, doubling the wire surface,
@@ -4988,233 +4970,57 @@ assertion's issuer, while keeping <code>client_assertion</code> and
 </div>
 </section>
 </div>
-<div id="appendix-spiffe-recipe">
-<section id="appendix-B">
-      <h2 id="name-spiffe-deployment-recipe">
-<a href="#name-spiffe-deployment-recipe" class="section-name selfRef">SPIFFE Deployment Recipe</a>
-      </h2>
-<p id="appendix-B-1">This appendix walks through an end-to-end SPIFFE deployment
-combining <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> for client authentication and this
-profile for instance identity, using the same JWT-SVID for both. The
-recipe is non-normative.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
-<p id="appendix-B-2">The same JWT-SVID flows from the SPIFFE Workload API through the AS
-to the resource server: no re-minting, no OAuth-aware adapter, one
-artifact serving both client authentication and instance identity.<a href="#appendix-B-2" class="pilcrow">¶</a></p>
-<div id="appendix-spiffe-setup">
-<section id="appendix-B.1">
-        <h3 id="name-setup">
-<a href="#name-setup" class="section-name selfRef">Setup</a>
-        </h3>
-<p id="appendix-B.1-1">The OAuth client is identified by a CIMD URL,
-https://app.example.com/agent. The client is deployed across SPIFFE
-workloads under the trust domain example.com, with all instances
-under the path prefix /agent.<a href="#appendix-B.1-1" class="pilcrow">¶</a></p>
-<p id="appendix-B.1-2">The client's CIMD document declares both client authentication
-(SPIFFE-CLIENT-AUTH) and instance trust (this profile). Both point
-at the same SPIFFE bundle endpoint:<a href="#appendix-B.1-2" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-B.1-3">
-<pre>
-{
-  "client_id": "https://app.example.com/agent",
-  "spiffe_id": "spiffe://example.com/agent/*",
-  "spiffe_bundle_endpoint":
-      "https://spiffe.example.com/bundle",
-  "instance_issuers": [
-    {
-      "issuer": "spiffe://example.com",
-      "spiffe_bundle_endpoint":
-          "https://spiffe.example.com/bundle",
-      "subject_syntax": "spiffe",
-      "trust_domain": "example.com",
-      "spiffe_id": "spiffe://example.com/agent/*"
-    }
-  ]
-}
-</pre><a href="#appendix-B.1-3" class="pilcrow">¶</a>
-</div>
-<p id="appendix-B.1-4">The top-level <code>spiffe_id</code> (under SPIFFE-CLIENT-AUTH) and the
-descriptor's <code>spiffe_id</code> (under this profile) intentionally match: any
-workload under spiffe://example.com/agent/* counts both as the
-client and as a permitted instance.<a href="#appendix-B.1-4" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="appendix-spiffe-request">
-<section id="appendix-B.2">
-        <h3 id="name-workload-token-request">
-<a href="#name-workload-token-request" class="section-name selfRef">Workload Token Request</a>
-        </h3>
-<p id="appendix-B.2-1">A workload spiffe://example.com/agent/inst-01 obtains a JWT-SVID
-from the SPIFFE Workload API with audience set to the AS
-(https://as.example.com), then issues a <code>client_credentials</code> request
-that uses the SVID as both <code>client_assertion</code> and <code>actor_token</code> and
-presents a DPoP proof with a workload-held key:<a href="#appendix-B.2-1" class="pilcrow">¶</a></p>
-<div class="lang-http-message sourcecode" id="appendix-B.2-2">
-<pre>
-POST /token HTTP/1.1
-Host: as.example.com
-Content-Type: application/x-www-form-urlencoded
-DPoP: &lt;DPoP proof bound to the workload's key&gt;
-
-grant_type=client_credentials
-&amp;scope=repo.write
-&amp;client_id=https%3A%2F%2Fapp.example.com%2Fagent
-&amp;client_assertion_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-spiffe
-&amp;client_assertion=eyJhbGciOiJFUzI1NiIs...
-&amp;actor_token=eyJhbGciOiJFUzI1NiIs...
-&amp;actor_token_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
-</pre><a href="#appendix-B.2-2" class="pilcrow">¶</a>
-</div>
-<p id="appendix-B.2-3"><code>client_assertion</code> and <code>actor_token</code> carry the byte-identical JWT-SVID:<a href="#appendix-B.2-3" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-B.2-4">
-<pre>
-{
-  "alg": "ES256",
-  "kid": "4vC8agycHu6rnkEEJYAH6VuCe4JoSkPV",
-  "typ": "JWT"
-}
-</pre><a href="#appendix-B.2-4" class="pilcrow">¶</a>
-</div>
-<div class="lang-json sourcecode" id="appendix-B.2-5">
-<pre>
-{
-  "iss": "spiffe://example.com",
-  "sub": "spiffe://example.com/agent/inst-01",
-  "aud": "https://as.example.com",
-  "iat": 1770000000,
-  "exp": 1770000300
-}
-</pre><a href="#appendix-B.2-5" class="pilcrow">¶</a>
-</div>
-<p id="appendix-B.2-6">The SVID has no <code>client_id</code> claim and is not re-minted; SPIFFE
-compatibility (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>) handles the binding
-structurally via the descriptor's <code>spiffe_id</code>. This example uses a
-separate workload-held DPoP key for sender-constraint; the AS accepts
-that key only because deployment-specific policy binds it to the same
-runtime named by the JWT-SVID's <code>sub</code>, and the AS logs that binding
-basis. Deployments that require the instance issuer itself to assert
-the binding key can instead re-mint the SVID into a Client Instance
-Assertion containing <code>cnf</code>.<a href="#appendix-B.2-6" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="appendix-spiffe-as">
-<section id="appendix-B.3">
-        <h3 id="name-as-processing">
-<a href="#name-as-processing" class="section-name selfRef">AS Processing</a>
-        </h3>
-<p id="appendix-B.3-1">The AS:<a href="#appendix-B.3-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="appendix-B.3-2">
-<li id="appendix-B.3-2.1">
-            <p id="appendix-B.3-2.1.1">Resolves the CIMD document at https://app.example.com/agent.<a href="#appendix-B.3-2.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="appendix-B.3-2.2">
-            <p id="appendix-B.3-2.2.1">Authenticates the client per <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>: the
-<code>client_assertion</code>'s <code>sub</code> (spiffe://example.com/agent/inst-01) is
-matched against the top-level <code>spiffe_id</code> (spiffe://example.com/agent/*),
-and the SVID signature is verified against the SPIFFE bundle.<a href="#appendix-B.3-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="appendix-B.3-2.3">
-            <p id="appendix-B.3-2.3.1">Validates the <code>actor_token</code> under this profile: matches the
-descriptor (issuer = spiffe://example.com), verifies the
-signature against the same SPIFFE bundle, validates JWT claims,
-confirms the <code>sub</code> falls under the descriptor's <code>spiffe_id</code>, and
-accepts the absence of a <code>client_id</code> claim per
-<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>.<a href="#appendix-B.3-2.3.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="appendix-B.3-2.4">
-            <p id="appendix-B.3-2.4.1">Classifies as self-acting (<code>client_credentials</code> grant).<a href="#appendix-B.3-2.4.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="appendix-B.3-2.5">
-            <p id="appendix-B.3-2.5.1">Issues a sender-constrained access token. The <code>cnf</code> is established
-per the deployment's binding mechanism. In this example, the AS
-accepts the DPoP proof key because local policy or attestation
-binds that key to the workload named by the JWT-SVID, and records
-the binding mechanism in audit logs. With mTLS, a per-instance
-X.509-SVID certificate can serve as the binding key.<a href="#appendix-B.3-2.5.1" class="pilcrow">¶</a></p>
-</li>
-        </ol>
-</section>
-</div>
-<div id="appendix-spiffe-access-token">
-<section id="appendix-B.4">
-        <h3 id="name-issued-access-token">
-<a href="#name-issued-access-token" class="section-name selfRef">Issued Access Token</a>
-        </h3>
-<div class="lang-json sourcecode" id="appendix-B.4-1">
-<pre>
-{
-  "iss": "https://as.example.com",
-  "aud": "https://api.example.com",
-  "sub": "spiffe://example.com/agent/inst-01",
-  "sub_profile": "client_instance",
-  "client_id": "https://app.example.com/agent",
-  "scope": "repo.write",
-  "iat": 1770000005,
-  "exp": 1770000305,
-  "cnf": { "jkt": "0ZcOCORZNYy...iguA4I" }
-}
-</pre><a href="#appendix-B.4-1" class="pilcrow">¶</a>
-</div>
-<p id="appendix-B.4-2">The access token's <code>client_id</code> is the client (the CIMD URL),
-<code>sub</code> is the SPIFFE ID of the specific instance, and <code>cnf</code> binds the
-token to the instance's key. No re-minting was required at any
-point in the workload's flow.<a href="#appendix-B.4-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-</section>
-</div>
 <div id="appendix-examples">
-<section id="appendix-C">
+<section id="appendix-B">
       <h2 id="name-worked-examples">
 <a href="#name-worked-examples" class="section-name selfRef">Worked Examples</a>
       </h2>
-<p id="appendix-C-1">This appendix gives end-to-end worked examples for each grant type
+<p id="appendix-B-1">This appendix gives end-to-end worked examples for each grant type
 that interacts with this profile. Examples are non-normative and
 omit unrelated headers or grant-specific details that do not affect
 actor processing. Timestamps and lifetimes in these examples are
 illustrative and do not override the lifetime guidance in
-<a href="#trust-lifecycle" class="auto internal xref">Section 5.3.3</a> and <a href="#security-replay" class="auto internal xref">Section 12.3</a>.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
-<p id="appendix-C-2">The examples use a CIMD-style <code>client_id</code> for clarity; the same
+<a href="#trust-lifecycle" class="auto internal xref">Section 5.3.3</a> and <a href="#security-replay" class="auto internal xref">Section 12.3</a>.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+<p id="appendix-B-2">The examples use a CIMD-style <code>client_id</code> for clarity; the same
 flows apply identically to static-registration deployments
 (<a href="#registration-models" class="auto internal xref">Section 5.2</a>), where the <code>client_id</code> is opaque or
 AS-assigned and the metadata is read from the AS's registration
-store rather than dereferenced.<a href="#appendix-C-2" class="pilcrow">¶</a></p>
-<p id="appendix-C-3">The examples share a common deployment:<a href="#appendix-C-3" class="pilcrow">¶</a></p>
+store rather than dereferenced.<a href="#appendix-B-2" class="pilcrow">¶</a></p>
+<p id="appendix-B-3">The examples share a common deployment:<a href="#appendix-B-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="appendix-C-4.1">
-          <p id="appendix-C-4.1.1">OAuth client: https://app.example.com/agent<a href="#appendix-C-4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="appendix-B-4.1">
+          <p id="appendix-B-4.1.1">OAuth client: https://app.example.com/agent<a href="#appendix-B-4.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="appendix-C-4.2">
-          <p id="appendix-C-4.2.1">Client metadata declares one instance issuer
+        <li class="normal" id="appendix-B-4.2">
+          <p id="appendix-B-4.2.1">Client metadata declares one instance issuer
 https://workload.app.example.com (<code>subject_syntax</code> "uri",
-<code>signing_alg_values_supported</code> containing <code>ES256</code>).<a href="#appendix-C-4.2.1" class="pilcrow">¶</a></p>
+<code>signing_alg_values_supported</code> containing <code>ES256</code>).<a href="#appendix-B-4.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="appendix-C-4.3">
-          <p id="appendix-C-4.3.1">AS: https://as.example.com.<a href="#appendix-C-4.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="appendix-B-4.3">
+          <p id="appendix-B-4.3.1">AS: https://as.example.com.<a href="#appendix-B-4.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="appendix-C-4.4">
-          <p id="appendix-C-4.4.1">Resource server: https://api.example.com.<a href="#appendix-C-4.4.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="appendix-B-4.4">
+          <p id="appendix-B-4.4.1">Resource server: https://api.example.com.<a href="#appendix-B-4.4.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="appendix-C-4.5">
-          <p id="appendix-C-4.5.1">All access tokens are <code>DPoP</code>-bound; the instance assertion's <code>cnf</code> carries
-the instance's <code>DPoP</code> key thumbprint.<a href="#appendix-C-4.5.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="appendix-B-4.5">
+          <p id="appendix-B-4.5.1">All access tokens are <code>DPoP</code>-bound; the instance assertion's <code>cnf</code> carries
+the instance's <code>DPoP</code> key thumbprint.<a href="#appendix-B-4.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <div id="appendix-examples-auth-code">
-<section id="appendix-C.1">
+<section id="appendix-B.1">
         <h3 id="name-authorization-code-with-use">
 <a href="#name-authorization-code-with-use" class="section-name selfRef">Authorization Code with User Delegation</a>
         </h3>
-<p id="appendix-C.1-1">Alice authorizes the agent (client) at the AS through a
+<p id="appendix-B.1-1">Alice authorizes the agent (client) at the AS through a
 standard authorization_code flow. The agent runs as instance
 inst-01, which presents an instance assertion at the token endpoint to
-identify itself.<a href="#appendix-C.1-1" class="pilcrow">¶</a></p>
-<p id="appendix-C.1-2">Authorization request from the agent (abridged). <code>dpop_jkt</code> carries
+identify itself.<a href="#appendix-B.1-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-2">Authorization request from the agent (abridged). <code>dpop_jkt</code> carries
 the thumbprint of inst-01's DPoP key (matching the instance assertion's
 <code>cnf.jkt</code>) to establish key-bound continuity per
-<a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>:<a href="#appendix-C.1-2" class="pilcrow">¶</a></p>
-<div class="lang-http-message sourcecode" id="appendix-C.1-3">
+<a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>:<a href="#appendix-B.1-2" class="pilcrow">¶</a></p>
+<div class="lang-http-message sourcecode" id="appendix-B.1-3">
 <pre>
 GET /authorize?response_type=code
   &amp;client_id=https%3A%2F%2Fapp.example.com%2Fagent
@@ -5225,15 +5031,15 @@ GET /authorize?response_type=code
   &amp;code_challenge_method=S256
   &amp;dpop_jkt=0ZcOCORZNYy...iguA4I HTTP/1.1
 Host: as.example.com
-</pre><a href="#appendix-C.1-3" class="pilcrow">¶</a>
+</pre><a href="#appendix-B.1-3" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.1-4">The AS authenticates Alice, displays consent for the client
+<p id="appendix-B.1-4">The AS authenticates Alice, displays consent for the client
 (per <a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a> consent applies to the client as a
 whole, not per-instance), binds the authorization code to the
 <code>dpop_jkt</code> value per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, and redirects with an
-authorization_code.<a href="#appendix-C.1-4" class="pilcrow">¶</a></p>
-<p id="appendix-C.1-5">Token request from instance inst-01:<a href="#appendix-C.1-5" class="pilcrow">¶</a></p>
-<div class="lang-http-message sourcecode" id="appendix-C.1-6">
+authorization_code.<a href="#appendix-B.1-4" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-5">Token request from instance inst-01:<a href="#appendix-B.1-5" class="pilcrow">¶</a></p>
+<div class="lang-http-message sourcecode" id="appendix-B.1-6">
 <pre>
 POST /token HTTP/1.1
 Host: as.example.com
@@ -5251,10 +5057,10 @@ grant_type=authorization_code
 &amp;actor_token=eyJhbGciOiJFUzI1NiIs...
 &amp;actor_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
-</pre><a href="#appendix-C.1-6" class="pilcrow">¶</a>
+</pre><a href="#appendix-B.1-6" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.1-7">Decoded <code>actor_token</code>:<a href="#appendix-C.1-7" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-C.1-8">
+<p id="appendix-B.1-7">Decoded <code>actor_token</code>:<a href="#appendix-B.1-7" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-B.1-8">
 <pre>
 {
   "iss":         "https://workload.app.example.com",
@@ -5267,46 +5073,46 @@ grant_type=authorization_code
   "jti":         "ac-1a2b3c",
   "cnf":         { "jkt": "0ZcOCORZNYy...iguA4I" }
 }
-</pre><a href="#appendix-C.1-8" class="pilcrow">¶</a>
+</pre><a href="#appendix-B.1-8" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.1-9">AS validation:<a href="#appendix-C.1-9" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="appendix-C.1-10">
-<li id="appendix-C.1-10.1">
-            <p id="appendix-C.1-10.1.1">Authenticates the client (<code>private_key_jwt</code>).<a href="#appendix-C.1-10.1.1" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-9">AS validation:<a href="#appendix-B.1-9" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="appendix-B.1-10">
+<li id="appendix-B.1-10.1">
+            <p id="appendix-B.1-10.1.1">Authenticates the client (<code>private_key_jwt</code>).<a href="#appendix-B.1-10.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-C.1-10.2">
-            <p id="appendix-C.1-10.2.1">Recognizes <code>actor_token_type</code>.<a href="#appendix-C.1-10.2.1" class="pilcrow">¶</a></p>
+          <li id="appendix-B.1-10.2">
+            <p id="appendix-B.1-10.2.1">Recognizes <code>actor_token_type</code>.<a href="#appendix-B.1-10.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-C.1-10.3">
-            <p id="appendix-C.1-10.3.1">Resolves CIMD for the agent.<a href="#appendix-C.1-10.3.1" class="pilcrow">¶</a></p>
+          <li id="appendix-B.1-10.3">
+            <p id="appendix-B.1-10.3.1">Resolves CIMD for the agent.<a href="#appendix-B.1-10.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-C.1-10.4">
-            <p id="appendix-C.1-10.4.1">Locates the descriptor by matching <code>iss</code>.<a href="#appendix-C.1-10.4.1" class="pilcrow">¶</a></p>
+          <li id="appendix-B.1-10.4">
+            <p id="appendix-B.1-10.4.1">Locates the descriptor by matching <code>iss</code>.<a href="#appendix-B.1-10.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-C.1-10.5">
-            <p id="appendix-C.1-10.5.1">Verifies signature via descriptor's <code>jwks_uri</code>.<a href="#appendix-C.1-10.5.1" class="pilcrow">¶</a></p>
+          <li id="appendix-B.1-10.5">
+            <p id="appendix-B.1-10.5.1">Verifies signature via descriptor's <code>jwks_uri</code>.<a href="#appendix-B.1-10.5.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-C.1-10.6">
-            <p id="appendix-C.1-10.6.1">Validates JWT claims.<a href="#appendix-C.1-10.6.1" class="pilcrow">¶</a></p>
+          <li id="appendix-B.1-10.6">
+            <p id="appendix-B.1-10.6.1">Validates JWT claims.<a href="#appendix-B.1-10.6.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-C.1-10.7">
-            <p id="appendix-C.1-10.7.1">Verifies <code>actor_token</code>.<code>client_id</code> == request <code>client_id</code>.<a href="#appendix-C.1-10.7.1" class="pilcrow">¶</a></p>
+          <li id="appendix-B.1-10.7">
+            <p id="appendix-B.1-10.7.1">Verifies <code>actor_token</code>.<code>client_id</code> == request <code>client_id</code>.<a href="#appendix-B.1-10.7.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-C.1-10.8">
-            <p id="appendix-C.1-10.8.1">Applies AS-local maximum delegation depth.<a href="#appendix-C.1-10.8.1" class="pilcrow">¶</a></p>
+          <li id="appendix-B.1-10.8">
+            <p id="appendix-B.1-10.8.1">Applies AS-local maximum delegation depth.<a href="#appendix-B.1-10.8.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-C.1-10.9">
-            <p id="appendix-C.1-10.9.1"><a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>: the request's <code>client_id</code> matches the
+          <li id="appendix-B.1-10.9">
+            <p id="appendix-B.1-10.9.1"><a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>: the request's <code>client_id</code> matches the
 <code>client_id</code> that received the code, and the DPoP proof's
 thumbprint matches both the code's <code>dpop_jkt</code> and the actor
-token's <code>cnf.jkt</code>.<a href="#appendix-C.1-10.9.1" class="pilcrow">¶</a></p>
+token's <code>cnf.jkt</code>.<a href="#appendix-B.1-10.9.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-C.1-10.10">
-            <p id="appendix-C.1-10.10.1">Classifies as delegation; issues sender-constrained access token.<a href="#appendix-C.1-10.10.1" class="pilcrow">¶</a></p>
+          <li id="appendix-B.1-10.10">
+            <p id="appendix-B.1-10.10.1">Classifies as delegation; issues sender-constrained access token.<a href="#appendix-B.1-10.10.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="appendix-C.1-11">Issued access token:<a href="#appendix-C.1-11" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-C.1-12">
+<p id="appendix-B.1-11">Issued access token:<a href="#appendix-B.1-11" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-B.1-12">
 <pre>
 {
   "iss":       "https://as.example.com",
@@ -5324,21 +5130,21 @@ token's <code>cnf.jkt</code>.<a href="#appendix-C.1-10.9.1" class="pilcrow">¶</
     "cnf":         { "jkt": "0ZcOCORZNYy...iguA4I" }
   }
 }
-</pre><a href="#appendix-C.1-12" class="pilcrow">¶</a>
+</pre><a href="#appendix-B.1-12" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.1-13">The RS authorizes the request based on (alice, inst-01) per
-<a href="#rs-processing" class="auto internal xref">Section 9</a>.<a href="#appendix-C.1-13" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-13">The RS authorizes the request based on (alice, inst-01) per
+<a href="#rs-processing" class="auto internal xref">Section 9</a>.<a href="#appendix-B.1-13" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="appendix-examples-client-credentials">
-<section id="appendix-C.2">
+<section id="appendix-B.2">
         <h3 id="name-client-credentials-self-act">
 <a href="#name-client-credentials-self-act" class="section-name selfRef">Client Credentials (Self-Acting)</a>
         </h3>
-<p id="appendix-C.2-1">A workload makes a <code>client_credentials</code> request with no human user
-involved.<a href="#appendix-C.2-1" class="pilcrow">¶</a></p>
-<p id="appendix-C.2-2">Token request:<a href="#appendix-C.2-2" class="pilcrow">¶</a></p>
-<div class="lang-http-message sourcecode" id="appendix-C.2-3">
+<p id="appendix-B.2-1">A workload makes a <code>client_credentials</code> request with no human user
+involved.<a href="#appendix-B.2-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.2-2">Token request:<a href="#appendix-B.2-2" class="pilcrow">¶</a></p>
+<div class="lang-http-message sourcecode" id="appendix-B.2-3">
 <pre>
 POST /token HTTP/1.1
 Host: as.example.com
@@ -5354,11 +5160,11 @@ grant_type=client_credentials
 &amp;actor_token=eyJhbGciOiJFUzI1NiIs...
 &amp;actor_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
-</pre><a href="#appendix-C.2-3" class="pilcrow">¶</a>
+</pre><a href="#appendix-B.2-3" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.2-4">Issued access token (self-acting; no user, instance is the
-principal):<a href="#appendix-C.2-4" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-C.2-5">
+<p id="appendix-B.2-4">Issued access token (self-acting; no user, instance is the
+principal):<a href="#appendix-B.2-4" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-B.2-5">
 <pre>
 {
   "iss":         "https://as.example.com",
@@ -5371,24 +5177,24 @@ principal):<a href="#appendix-C.2-4" class="pilcrow">¶</a></p>
   "exp":         1770003605,
   "cnf":         { "jkt": "PqR...XyZ" }
 }
-</pre><a href="#appendix-C.2-5" class="pilcrow">¶</a>
+</pre><a href="#appendix-B.2-5" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.2-6">The RS treats <code>sub</code> as the workload identity (not a human user) per
-<a href="#rs-self-acting" class="auto internal xref">Section 9.1</a>.<a href="#appendix-C.2-6" class="pilcrow">¶</a></p>
+<p id="appendix-B.2-6">The RS treats <code>sub</code> as the workload identity (not a human user) per
+<a href="#rs-self-acting" class="auto internal xref">Section 9.1</a>.<a href="#appendix-B.2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="appendix-examples-token-exchange">
-<section id="appendix-C.3">
+<section id="appendix-B.3">
         <h3 id="name-token-exchange-with-prior-d">
 <a href="#name-token-exchange-with-prior-d" class="section-name selfRef">Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)</a>
         </h3>
-<p id="appendix-C.3-1">A parent agent's user-delegated access token is exchanged at the AS
+<p id="appendix-B.3-1">A parent agent's user-delegated access token is exchanged at the AS
 for a sub-agent's downstream-resource-scoped token. The sub-agent
 runtime presents an instance assertion; the inbound <code>subject_token</code>
-already carries an <code>act</code> chain naming the parent agent.<a href="#appendix-C.3-1" class="pilcrow">¶</a></p>
-<p id="appendix-C.3-2">Inbound <code>subject_token</code> (decoded; issued earlier when a parent agent
-"agent-orchestrator-alpha" obtained access on the user's behalf):<a href="#appendix-C.3-2" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-C.3-3">
+already carries an <code>act</code> chain naming the parent agent.<a href="#appendix-B.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.3-2">Inbound <code>subject_token</code> (decoded; issued earlier when a parent agent
+"agent-orchestrator-alpha" obtained access on the user's behalf):<a href="#appendix-B.3-2" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-B.3-3">
 <pre>
 {
   "iss":       "https://upstream.example.com",
@@ -5401,10 +5207,10 @@ already carries an <code>act</code> chain naming the parent agent.<a href="#appe
     "sub_profile": "client_instance"
   }
 }
-</pre><a href="#appendix-C.3-3" class="pilcrow">¶</a>
+</pre><a href="#appendix-B.3-3" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.3-4">Token request:<a href="#appendix-C.3-4" class="pilcrow">¶</a></p>
-<div class="lang-http-message sourcecode" id="appendix-C.3-5">
+<p id="appendix-B.3-4">Token request:<a href="#appendix-B.3-4" class="pilcrow">¶</a></p>
+<div class="lang-http-message sourcecode" id="appendix-B.3-5">
 <pre>
 POST /token HTTP/1.1
 Host: as.example.com
@@ -5423,22 +5229,22 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &amp;actor_token=eyJhbGciOiJFUzI1NiIs...
 &amp;actor_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
-</pre><a href="#appendix-C.3-5" class="pilcrow">¶</a>
+</pre><a href="#appendix-B.3-5" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.3-6">The <code>actor_token</code> is the sub-agent runtime inst-03, with no <code>act</code> of
-its own (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, <code>actor_token</code> <span class="bcp14">MUST NOT</span> carry <code>act</code>).<a href="#appendix-C.3-6" class="pilcrow">¶</a></p>
-<p id="appendix-C.3-7">Chain construction per <a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>:<a href="#appendix-C.3-7" class="pilcrow">¶</a></p>
+<p id="appendix-B.3-6">The <code>actor_token</code> is the sub-agent runtime inst-03, with no <code>act</code> of
+its own (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, <code>actor_token</code> <span class="bcp14">MUST NOT</span> carry <code>act</code>).<a href="#appendix-B.3-6" class="pilcrow">¶</a></p>
+<p id="appendix-B.3-7">Chain construction per <a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>:<a href="#appendix-B.3-7" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="appendix-C.3-8.1">
-            <p id="appendix-C.3-8.1.1">Outermost: the validated <code>actor_token</code> (sub-agent inst-03).<a href="#appendix-C.3-8.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="appendix-B.3-8.1">
+            <p id="appendix-B.3-8.1.1">Outermost: the validated <code>actor_token</code> (sub-agent inst-03).<a href="#appendix-B.3-8.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="appendix-C.3-8.2">
-            <p id="appendix-C.3-8.2.1">Inner: the <code>subject_token</code>'s <code>act</code> chain, preserved
-(agent-orchestrator-alpha).<a href="#appendix-C.3-8.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="appendix-B.3-8.2">
+            <p id="appendix-B.3-8.2.1">Inner: the <code>subject_token</code>'s <code>act</code> chain, preserved
+(agent-orchestrator-alpha).<a href="#appendix-B.3-8.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="appendix-C.3-9">Issued access token:<a href="#appendix-C.3-9" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-C.3-10">
+<p id="appendix-B.3-9">Issued access token:<a href="#appendix-B.3-9" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-B.3-10">
 <pre>
 {
   "iss":       "https://as.example.com",
@@ -5461,30 +5267,30 @@ its own (per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>
     }
   }
 }
-</pre><a href="#appendix-C.3-10" class="pilcrow">¶</a>
+</pre><a href="#appendix-B.3-10" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C.3-11">Resulting chain depth is 2, well within typical AS-local maximums.
+<p id="appendix-B.3-11">Resulting chain depth is 2, well within typical AS-local maximums.
 The chain reads outward-in as: sub-agent inst-03 acted on behalf of
 the parent agent agent-orchestrator-alpha, which acted on behalf of
 user alice. Each <code>act</code> layer names a distinct runtime; resource
 servers and audit pipelines can attribute the request to the
-specific sub-agent that performed it.<a href="#appendix-C.3-11" class="pilcrow">¶</a></p>
+specific sub-agent that performed it.<a href="#appendix-B.3-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="acknowledgments">
-<section id="appendix-D">
+<section id="appendix-C">
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="appendix-D-1">The author thanks participants in the OAuth Working Group for
+<p id="appendix-C-1">The author thanks participants in the OAuth Working Group for
 discussions on client instance identity, workload identity, and
-actor-based delegation that informed this document.<a href="#appendix-D-1" class="pilcrow">¶</a></p>
+actor-based delegation that informed this document.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="authors-addresses">
-<section id="appendix-E">
+<section id="appendix-D">
       <h2 id="name-authors-address">
 <a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
       </h2>
