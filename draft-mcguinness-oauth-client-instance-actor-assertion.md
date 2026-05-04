@@ -202,8 +202,8 @@ JWT-SVID or X.509-SVID in place of a client secret. It registers the
 `urn:ietf:params:oauth:client-assertion-type:jwt-spiffe` and adds CIMD
 metadata (`spiffe_id`, `spiffe_bundle_endpoint`) for resolving the
 client's SPIFFE trust bundle. Notably, its `spiffe_id` field permits a
-trailing /* wildcard, enabling one OAuth client to be authenticated
-by any SPIFFE workload whose ID matches the prefix.
+trailing "/*" wildcard, enabling one OAuth client to be authenticated
+by any SPIFFE workload whose ID matches the path-segment prefix.
 
 This document operates at a different layer. Its scope is *actor /
 instance identity*, not client authentication. The two specifications
@@ -596,26 +596,27 @@ policy to changes in a descriptor's `jwks_uri`, `jwks`, or
 `spiffe_bundle_endpoint` keys that {{CIMD}} permits for changes
 in client-level keys.
 
-To bound the compromise recovery window, ASes issuing access tokens
-under this profile SHOULD set the access token TTL no longer than
-the metadata refresh interval plus the instance assertion's `exp`
-window (for CIMD, the cache TTL; for static registration, the
-expected lag between an admin update and AS-side propagation), plus
-the AS's JWKS or SPIFFE-bundle cache TTL for the issuer (since a
-compromised issuer signing key remains usable until the AS re-fetches
-the verification keys).
+The trust-withdrawal latency, that is, the worst-case time from
+metadata change to all derived access tokens having expired, is
+approximately the sum of the metadata refresh interval (for CIMD,
+the cache TTL; for static registration, the expected lag between an
+admin update and AS-side propagation), the instance assertion's
+`exp` window, the AS's JWKS or SPIFFE-bundle cache TTL for the
+issuer, and the access token TTL. ASes SHOULD size these components
+together so that the resulting latency matches their incident-response
+target.
 
 Recommended defaults: instance assertion `exp` of 5 minutes or less
 ({{security-replay}}); access-token TTL of 30 minutes or less paired
 with a metadata refresh interval of 30 minutes or less, giving a
-trust-withdrawal latency bound of approximately 35 minutes. Tighter
-deployments (5-minute access tokens with 5-minute caches, sub-15
-minutes) and looser deployments (60-minute tokens with 1-hour caches,
-approximately 2 hours) are both common; looser deployments SHOULD
-support active revocation ({{revocation}}) and introspection-based
-status checks at the resource server. Operators SHOULD treat this
-bound as a deployment-time SLO matching their incident-response
-requirements.
+trust-withdrawal latency of approximately 65 minutes. Tighter
+deployments (5-minute access tokens with 5-minute caches, approximately
+15 minutes) and looser deployments (60-minute tokens with 1-hour
+caches, approximately 2 hours) are both common; looser deployments
+SHOULD support active revocation ({{revocation}}) and
+introspection-based status checks at the resource server. Operators
+SHOULD treat this latency as a deployment-time SLO matching their
+incident-response requirements.
 
 ### Cross-Organization Federation {#cross-org-federation}
 
@@ -925,7 +926,7 @@ The following claims are defined for client instance assertions.
 : A confirmation claim {{RFC7800}} carrying a key bound to this
   instance. The `cnf` value MUST contain exactly one of `jkt` (a JWK
   SHA-256 thumbprint per {{RFC9449}} Section 3.1) or `x5t#S256` (an
-  X.509 certificate SHA-256 thumbprint per {{RFC8705}} Section 3);
+  X.509 certificate SHA-256 thumbprint per {{RFC8705}} Section 3.1);
   other confirmation methods registered under {{RFC7800}} MAY appear
   in addition but MUST NOT be the only member. The instance issuer
   MUST mint `cnf` from a key the named runtime instance demonstrably
@@ -953,8 +954,8 @@ understood, except where this document or {{ACTOR-PROFILE}} specifies
 processing rules. Future profiles requiring AS understanding of a
 new claim SHOULD use the JWS `crit` header parameter ({{RFC7515}}
 Section 4.1.11) to mark it must-understand; ASes MUST reject
-assertions whose `crit` header includes claims they do not implement,
-and MUST reject malformed `crit` headers per {{RFC8725}} Section 3.10.
+assertions whose `crit` header is malformed or includes claims they
+do not implement, per {{RFC7515}} Section 4.1.11.
 
 ## Signing and JOSE Header {#signing}
 
@@ -1680,10 +1681,11 @@ When all of the following hold for the descriptor that matches the
 
 * `subject_syntax` is "spiffe";
 * either (a) a `spiffe_id` member is present and the `actor_token`'s
-  `sub` satisfies the `spiffe_id` matching rule (exact match or
-  prefix match including the "/*" wildcard), or (b) `spiffe_id` is
-  absent, `trust_domain` is present, and the `actor_token`'s `sub`
-  falls within that trust domain;
+  `sub` satisfies the `spiffe_id` matching rule of {{instance-issuers}}
+  (exact match, or with "/*", path-segment prefix match per
+  {{SPIFFE-CLIENT-AUTH}}), or (b) `spiffe_id` is absent,
+  `trust_domain` is present, and the `actor_token`'s `sub` falls
+  within that trust domain;
 
 the AS MUST treat the descriptor as the per-client binding even if
 the `actor_token` has no `client_id` claim. In this mode:
@@ -2585,8 +2587,8 @@ The two cases differ in what the JWT names. A SPIFFE JWT-SVID
 presented as a `client_assertion` under {{SPIFFE-CLIENT-AUTH}} names
 *the client* (its `sub` is the `spiffe_id` of the workload acting
 as the client). The client-metadata listing of `spiffe_id`,
-including the permitted /* prefix wildcard, turns the SVID into a
-credential for the client. There is no separate notion of
+including the permitted "/*" path-segment wildcard, turns the SVID
+into a credential for the client. There is no separate notion of
 "instance" on the wire.
 
 A client instance assertion under this profile names *the
