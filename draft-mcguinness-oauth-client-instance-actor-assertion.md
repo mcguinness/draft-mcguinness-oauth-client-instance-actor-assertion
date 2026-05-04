@@ -275,13 +275,6 @@ the underlying credential's identity together with the required
 OAuth claims. From the AS's perspective, the adapter is the
 instance issuer.
 
-The WIMSE Workload Proof Token (WPT) {{WIMSE-WPT}} is a workload-to-
-workload HTTP signing mechanism (analogous to {{RFC9449}} DPoP for
-workloads). WPT operates at a different layer than this profile and
-does not interact with the OAuth token endpoint; sender-constraint
-of access tokens issued under this profile remains DPoP- or mTLS-
-based per {{sender-constrained}}.
-
 # Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
@@ -556,6 +549,10 @@ limits:
 
 * The asserted `sub` MUST fall within `trust_domain` when present and
   MUST conform to `subject_syntax` when present.
+* For SPIFFE descriptors, the asserted `sub` MUST satisfy
+  `spiffe_id` when present; if `spiffe_id` is absent, `trust_domain`
+  MUST be present and the asserted `sub` MUST fall within that trust
+  domain.
 * The signing `alg` MUST be among `signing_alg_values_supported` when
   present.
 
@@ -590,8 +587,9 @@ configuration MUST do so via a separate specification.
 The trust relationship between client and instance issuer is
 mutable. When the client's metadata changes (for example, an
 instance issuer is removed, its `jwks_uri` or `jwks` rotates, its
-`trust_domain` is replaced, or its `signing_alg_values_supported`
-narrows), updates take effect according to the registration model:
+`trust_domain` or `spiffe_id` is replaced, or its
+`signing_alg_values_supported` narrows), updates take effect
+according to the registration model:
 for CIMD, the AS applies the same freshness and re-fetch rules it
 applies to other CIMD-published trust material such as `jwks_uri`
 (see {{CIMD}}); for static registration, updates take effect when
@@ -656,7 +654,11 @@ issuers
 covering authorized workloads, descriptor bounds the issuer agrees
 to honor, and key-rotation and revocation procedures; the AS cannot
 verify such an agreement exists, but its absence amplifies
-cross-organization compromise risk.
+cross-organization compromise risk. Omitting `spiffe_id` from a
+foreign SPIFFE descriptor delegates the whole foreign trust domain
+and SHOULD NOT be used unless the trust agreement explicitly
+authorizes every workload in that trust domain to act as an instance
+of the client.
 
 For SPIFFE deployments where trust domains differ, the trust
 relationship SHOULD be expressed via SPIFFE federation: the AS
@@ -764,7 +766,13 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
   begins with the prefix's path. If both `spiffe_id` and `trust_domain`
   are present, the trust domain in `spiffe_id` MUST equal `trust_domain`.
   This member, when present, structurally binds a workload subtree
-  to this client; see {{spiffe-client-id-omission}}.
+  to this client; see {{spiffe-client-id-omission}}. If
+  `subject_syntax` is "spiffe" and `spiffe_id` is absent,
+  `trust_domain` MUST be present and the descriptor delegates the
+  entire trust domain to this instance issuer. Clients SHOULD include
+  `spiffe_id`; omitting it is appropriate only when every workload in
+  the SPIFFE trust domain is authorized to act as an instance of the
+  client.
 
 Example client metadata document with a SPIFFE instance issuer:
 
@@ -779,6 +787,7 @@ Example client metadata document with a SPIFFE instance issuer:
       "jwks_uri": "https://workload.openai.example.com/jwks.json",
       "subject_syntax": "spiffe",
       "trust_domain": "openai.example.com",
+      "spiffe_id": "spiffe://openai.example.com/codex/*",
       "signing_alg_values_supported": ["ES256"]
     }
   ]
@@ -1147,8 +1156,11 @@ Before the steps below, the AS MUST reject the request with
 6. **Validate JWT claims.** Validate `iss`, `sub`, `aud`, `exp`, `iat`, `nbf`,
    and `jti` per {{claims}} and {{RFC7523}} Section 3, subject to the
    raw JWT-SVID exceptions in {{spiffe-client-id-omission}}. Enforce
-   `subject_syntax`, `trust_domain`, and `signing_alg_values_supported`
-   when present in the descriptor.
+   `subject_syntax`, `trust_domain`, `spiffe_id`, and
+   `signing_alg_values_supported` when present in the descriptor. If
+   `subject_syntax` is "spiffe" and `spiffe_id` is absent, require
+   `trust_domain` and treat the descriptor as delegating the whole
+   trust domain.
 
 7. **Verify `client_id` binding.** If the instance assertion contains a
    `client_id` claim, it MUST exactly equal the authenticated
@@ -1206,6 +1218,10 @@ The trust chain to the client is preserved: the client's listing of
 the instance issuer in its registered metadata is itself the
 endorsement, and a token signed by such an issuer naming this
 `client_id` is attributable to the client.
+When `token_endpoint_auth_method` is `client_instance_jwt`, every
+accepted instance issuer for the client is also a client
+authentication trust root. Clients MUST NOT enable this method unless
+each listed issuer is authorized for that role.
 
 ### Request Format {#instance-assertion-auth-request}
 
@@ -1251,6 +1267,11 @@ When the registered `token_endpoint_auth_method` for the `client_id` is
 6. Treat the client as authenticated. The validated `actor_token` also
    satisfies the `actor_token` requirement of this profile and is used
    for instance representation per {{access-token}}.
+
+Because the `actor_token` is the client authentication credential in
+this mode, validation failures that would otherwise be returned as
+`invalid_grant` under {{as-processing}} are returned as
+`invalid_client`.
 
 The `actor_token`'s `aud` claim serves both purposes (the
 {{RFC7523}} client-assertion audience and this profile's actor-token
@@ -1314,11 +1335,19 @@ and the instance assertion's `cnf.x5t#S256` MUST match that certificate.
 
 User consent under this profile applies to the client as a
 whole; consent thereby covers all instances attested by listed
-instance issuers. ASes MAY display the client identifier and
-the trust domain of the instance issuer at consent time. The
-key-bound continuity above adds cryptographic guarantees about
-*which* instance redeems a code, but does not constitute per-instance
-consent.
+instance issuers. The key-bound continuity above adds cryptographic
+guarantees about *which* instance redeems a code, but does not by
+itself constitute per-instance consent.
+
+An AS MAY require per-instance or per-key authorization policy when
+the authorization request includes a sender-constraining key such as
+`dpop_jkt`. Such policy is deployment-specific: `dpop_jkt`
+identifies a key, not an instance, unless the AS has an
+authorization-time mapping from that key to an instance identity. In
+those deployments, the AS can require user or administrator approval
+for the specific instance or key and then verify at the token
+endpoint that the DPoP proof, authorization code binding, and
+instance assertion `cnf.jkt` all reference the approved key.
 
 ASes that record consent SHOULD record the descriptor scope under
 which consent was granted (in particular, the descriptor's issuer
@@ -1329,9 +1358,10 @@ trust domains (for example, "production" vs. "staging" SPIFFE trust
 domains, or distinct PaaS environments) where the user's consent to
 one is not necessarily consent to another.
 
-Per-instance consent (asking the user to authorize a specific
-runtime) is out of scope for this document; deployments requiring it
-MUST define it via a separate extension.
+This document does not define a general authorization endpoint
+mechanism for presenting instance identity. Deployments requiring
+standardized per-instance consent without an authorization-time key
+mapping need a separate extension.
 
 ## Sender-Constrained Access Tokens {#sender-constrained}
 
@@ -1381,8 +1411,12 @@ provisioned per-instance, is not sufficient.
 If the actor token is a raw JWT-SVID accepted under
 {{spiffe-client-id-omission}} and does not include a `cnf` claim, the
 AS MUST establish an instance-specific binding through some other
-means whose key is attributable to the validated instance, for
-example:
+means whose key is attributable to the validated instance. The AS
+MUST have explicit local policy identifying which binding mechanisms
+are acceptable for raw JWT-SVIDs, and MUST reject the request unless
+that policy establishes that the presented DPoP key or mTLS
+certificate belongs to the same runtime named by the JWT-SVID's
+`sub`. Acceptable binding mechanisms include:
 
 * a per-instance mTLS client certificate provisioned by the instance
   issuer (or otherwise tied to instance attestation) and presented
@@ -1391,11 +1425,14 @@ example:
   specific attestation or out-of-band binding to the instance issuer,
   represents the same runtime named by the instance assertion's `sub`.
 
-If the AS cannot establish such an instance-specific binding, it
-MUST reject the request with `invalid_request` ({{errors}}). This is
-a SPIFFE compatibility path only. A reminted Client Instance
-Assertion MUST contain `cnf` so that the binding key is supplied by
-the same authority that named the instance.
+The binding policy MUST be auditable: the AS MUST be able to record
+which mechanism established the binding and which key or certificate
+was bound to the instance. If the AS cannot establish such an
+instance-specific, policy-backed binding, it MUST reject the request
+with `invalid_request` ({{errors}}). This is a SPIFFE compatibility
+path only. A reminted Client Instance Assertion MUST contain `cnf` so
+that the binding key is supplied by the same authority that named the
+instance.
 
 Deployments combining class-level Mutual-TLS-bound client
 authentication ({{RFC8705}}) with this profile MUST establish
@@ -1510,15 +1547,24 @@ issuance, and the resource server trusts the AS.
 A client that lists multiple instance issuers SHOULD ensure
 those issuers' `sub` spaces do not collide within the client (for
 example, by using disjoint naming conventions, prefixes, or a
-SPIFFE trust-domain split). Single-issuer clients have no collision
-risk. ASes MAY apply additional namespacing (for example, prefixing
-`sub` with the descriptor's issuer in a deterministic form such as
-`<issuer>#<sub>`) when they cannot otherwise determine that
+SPIFFE trust-domain split). Single-issuer clients avoid cross-issuer
+collision, but the instance issuer still MUST NOT reassign an active
+or audit-relevant `sub` value to a different runtime. Issuers SHOULD
+use stable, non-reassigned subjects or include sufficient generation
+or session uniqueness in `sub` to distinguish runtime incarnations.
+If subject reassignment is unavoidable, the client, issuer, and AS
+audit logs need enough lifecycle metadata to distinguish the old and
+new runtimes. ASes MAY apply additional namespacing (for example,
+prefixing `sub` with the descriptor's issuer in a deterministic form
+such as `<issuer>#<sub>`) when they cannot otherwise determine that
 asserted `sub` values are unique within the client; such namespacing
 is a deployment-side choice and does not affect the wire format of
-the `actor_token`. Deployments that require in-token
-instance-issuer attribution for self-acting tokens may define a
-separate claim in a future profile.
+the `actor_token`. If the AS applies such namespacing, the resulting
+`sub` is an AS-scoped subject identifier; resource-server policy and
+audit tooling need to treat it as AS-issued rather than
+issuer-native. Deployments that require in-token instance-issuer
+attribution for self-acting tokens may define a separate claim in a
+future profile.
 
 In the issued access token, `client_id` (the client) and `sub` (the
 instance) are distinct, and `act` is absent. For a worked example
@@ -1572,10 +1618,11 @@ include `actor_token` and `actor_token_type` ({{token-request}}) on
 a refresh request to supply a fresh instance assertion (for example,
 to rotate the underlying assertion before its `exp`); when present,
 the `actor_token` MUST be bound to the same `cnf` key as the refresh
-token and MUST validate per {{as-processing}}. The AS MUST reject
-with `invalid_grant` any refresh request whose presented
-`actor_token` is not bound to the same `cnf` key as the refresh
-token.
+token and MUST pass the token-type check, instance issuer descriptor
+lookup, signature verification, JWT claim validation, and `client_id`
+binding checks defined in {{as-processing}}. The AS MUST reject with
+`invalid_grant` any refresh request whose presented `actor_token` is
+not bound to the same `cnf` key as the refresh token.
 
 Because the refresh token is bound to the originating instance, it
 is implicitly invalidated when that instance terminates. This keeps
@@ -1637,15 +1684,18 @@ When all of the following hold for the descriptor that matches the
 `actor_token`'s `iss`:
 
 * `subject_syntax` is "spiffe";
-* a `spiffe_id` member is present ({{instance-issuers}}); and
-* the `actor_token`'s `sub` satisfies the `spiffe_id` matching rule
-  (exact match or prefix match including the "/*" wildcard);
+* either (a) a `spiffe_id` member is present and the `actor_token`'s
+  `sub` satisfies the `spiffe_id` matching rule (exact match or
+  prefix match including the "/*" wildcard), or (b) `spiffe_id` is
+  absent, `trust_domain` is present, and the `actor_token`'s `sub`
+  falls within that trust domain;
 
 the AS MUST treat the descriptor as the per-client binding even if
 the `actor_token` has no `client_id` claim. In this mode:
 
-* The AS MUST verify that the `actor_token`'s `sub` falls under the
-  descriptor's `spiffe_id` (after applying the wildcard, if any).
+* The AS MUST verify that the `actor_token`'s `sub` satisfies the
+  descriptor's SPIFFE scope: `spiffe_id` when present, otherwise the
+  descriptor's whole `trust_domain`.
 * If the `actor_token` has a `client_id` claim, it MUST still equal the
   request's `client_id` parameter ({{as-processing}}); the
   exception narrows the *requirement* that the claim be present,
@@ -1655,13 +1705,15 @@ the `actor_token` has no `client_id` claim. In this mode:
   carry `iat` or `jti`; if either claim is present, the AS MUST
   validate it per {{claims}} and {{security-replay}}.
 
-The security rationale is that the descriptor's `spiffe_id`,
-present in the client's registered metadata (whether
-published as a CIMD document or stored at the AS), is itself the
-per-client binding: a workload's SPIFFE ID is bound to a client by
-the client explicitly listing the prefix that contains it. This is
-the same model SPIFFE-CLIENT-AUTH uses for client authentication,
-applied here to actor identity.
+The security rationale is that the descriptor's SPIFFE scope,
+present in the client's registered metadata (whether published as a
+CIMD document or stored at the AS), is itself the per-client binding:
+a workload's SPIFFE ID is bound to a client by the client explicitly
+listing the prefix that contains it, or by omitting `spiffe_id` and
+thereby delegating the whole trust domain. This is the same model
+SPIFFE-CLIENT-AUTH uses for client authentication, applied here to
+actor identity. Clients SHOULD include `spiffe_id` unless
+whole-domain delegation is intentional.
 
 ### SPIFFE Trust Bundle Resolution {#spiffe-bundle-resolution}
 
@@ -1699,6 +1751,7 @@ defined in {{as-processing}} to error codes:
 | `client_id` binding mismatch | `invalid_grant` |
 | `client_id` claim absent and SPIFFE compatibility conditions not met ({{spiffe-client-id-omission}}) | `invalid_grant` |
 | `spiffe_id` prefix match fails ({{instance-issuers}}) | `invalid_grant` |
+| SPIFFE descriptor omits both `spiffe_id` and `trust_domain` | `invalid_grant` |
 | `subject_syntax` or `trust_domain` constraint fails | `invalid_grant` |
 | `subject_syntax` is "spiffe" but `sub` is not a valid SPIFFE ID | `invalid_grant` |
 | delegation chain depth exceeds AS local maximum ({{ACTOR-PROFILE}}) | `invalid_request` |
@@ -1793,17 +1846,21 @@ revocation endpoint are required.
 
 When an instance is compromised or otherwise needs to be quarantined,
 a deployment may need to invalidate all access tokens whose
-`act.sub` (delegation case) or `sub` (self-acting case) names that
+validated instance issuer and instance subject identify that
 instance, without enumerating every issued token. ASes implementing
-this profile SHOULD support a per-instance revocation mode that:
+this profile SHOULD support a per-instance revocation mode keyed by
+the pair (instance issuer, instance subject):
 
-* invalidates all currently-active access tokens whose `act.sub` or
-  `sub` matches the specified instance identifier (and, optionally,
-  whose `act.iss` or descriptor scope matches additional constraints);
+* for delegation tokens, the key is (`act.iss`, `act.sub`);
+* for self-acting tokens, the key is the instance issuer recorded by
+  the AS at issuance time together with the access token's `sub`;
+* invalidates all currently-active access tokens matching that key,
+  with descriptor scope as an optional additional filter;
 * prevents issuance of new access tokens with that instance
-  identifier as actor or principal until a follow-up condition is
-  met (for example, expiration of an internal blocklist entry, or
-  removal of the instance from the workload identity system).
+  issuer-and-subject pair as actor or principal until a follow-up
+  condition is met (for example, expiration of an internal blocklist
+  entry, or removal of the instance from the workload identity
+  system).
 
 The mechanism for triggering per-instance revocation is deployment-
 specific and out of scope for this document; common patterns include
@@ -1832,10 +1889,9 @@ active = false once the AS has applied the update.
 When a refresh token is sender-constrained to the originating
 instance ({{refresh}}), per-instance revocation MUST also revoke
 the refresh token (and prevent any further access tokens it would
-mint). A deployment that intentionally permits successor-instance
-refresh ({{refresh}}) MUST decide whether per-instance revocation
-cascades to successors and document its choice; the safe default
-is that revocation of any successor in a chain revokes the chain.
+mint). This profile does not define successor-instance refresh;
+deployments that need cross-instance session continuity use the
+separate mechanisms described in {{refresh}}.
 
 ## Interactions with Other OAuth Extensions {#interactions}
 
@@ -1895,7 +1951,9 @@ per-instance keys has three options:
 * **Raw JWT-SVID compatibility** ({{spiffe-client-id-omission}})
   with AS-side instance binding under {{sender-constrained}}.
   SPIFFE-only and deployment-specific, not the baseline
-  interoperable assertion format.
+  interoperable assertion format. The AS needs explicit local policy
+  and audit records for how the presented DPoP key or mTLS
+  certificate is attributed to the SVID subject.
 * **Defer adoption** until the workload identity system can emit
   per-instance keys directly.
 
@@ -1931,8 +1989,8 @@ SPIFFE Raw JWT-SVID Compatibility AS:
 : An AS that accepts raw JWT-SVIDs as `actor_token` without
   re-minting. Such an AS MUST implement {{spiffe-compatibility}},
   MUST support descriptors using `spiffe_bundle_endpoint`, and MUST
-  establish instance-specific sender-constraint when the raw JWT-SVID
-  lacks `cnf`.
+  establish policy-backed, auditable instance-specific
+  sender-constraint when the raw JWT-SVID lacks `cnf`.
 
 Client Instance Assertion Auth Method AS:
 : An AS that supports the `client_instance_jwt`
@@ -1973,9 +2031,13 @@ or more instance issuers. A compromised or misconfigured instance
 issuer can mint instance assertions that the AS will accept as legitimate
 instances of the named client. Clients SHOULD list only
 instance issuers under their own administrative control (or
-contractually equivalent), and SHOULD set `trust_domain` and
-`signing_alg_values_supported` to bound what each issuer is allowed
-to assert. After a client detaches a compromised issuer, tokens
+contractually equivalent), and SHOULD set `spiffe_id`,
+`trust_domain`, and `signing_alg_values_supported` to bound what
+each issuer is allowed to assert. Clients using SPIFFE SHOULD include
+`spiffe_id`; omitting it delegates the whole SPIFFE trust domain and
+is appropriate only when every workload in that trust domain is
+authorized to act as an instance of the client. After a client
+detaches a compromised issuer, tokens
 minted under the prior trust may continue to validate up to the
 trust-withdrawal latency bound in {{trust-lifecycle}}; operators
 SHOULD plan incident response around this window.
@@ -2028,12 +2090,15 @@ except for raw JWT-SVIDs accepted under the SPIFFE compatibility
 mode in {{spiffe-client-id-omission}}. After the AS has identified
 the issuer and validated the instance assertion signature, it MUST
 reject a token whose (`iss`, `jti`) pair has already been seen
-within the token's validity window. An AS MAY skip this check for
-assertions whose `cnf` claim has been verified at presentation per
-{{sender-constrained}}, since cnf-bound proof of possession already
-restricts replay to a holder of the private key.
-The MUST applies unconditionally to assertions without a verified
-`cnf` (including raw JWT-SVIDs accepted under
+within the token's validity window. ASes SHOULD enforce this replay
+check for all Client Instance Assertions. An AS MAY skip this check
+for assertions whose `cnf` claim has been verified at presentation
+per {{sender-constrained}} only when the deployment explicitly treats
+cnf-bound assertions as reusable proof-of-possession credentials
+within their `exp` window, documents that behavior, and applies
+rate limits, monitoring, and audit logging for assertion use. The
+MUST applies unconditionally to assertions without a verified `cnf`
+(including raw JWT-SVIDs accepted under
 {{spiffe-client-id-omission}} when `jti` is present). When the AS
 applies the replay check, it MUST retain replay-cache entries at
 least until the token's `exp` time, plus any allowed clock skew. For
@@ -2046,13 +2111,13 @@ lifetimes of seconds to minutes.
 
 Replay-cache cardinality at fleet scale is bounded by the rate of
 distinct (`iss`, `jti`) tuples persisted during the retention
-window. ASes that take the cnf-bound exemption above persist cache
-entries only for cnf-less paths; cnf-bound assertions impose no
-cache cost. ASes that retain the strict (unconditional) check across
-all paths should expect roughly N × (`exp` / T) active entries,
-where N is the count of concurrent instances minting assertions and
-T is the inter-mint interval; with T close to `exp`, this approaches
-N entries.
+window. ASes enforcing the replay check across all paths should
+expect roughly N × (`exp` / T) active entries, where N is the count
+of concurrent instances minting assertions and T is the inter-mint
+interval; with T close to `exp`, this approaches N entries. ASes
+that use the documented reusable-assertion mode for cnf-bound
+assertions persist replay-cache entries only for paths where the
+strict check still applies.
 
 Distributed AS deployments (multi-replica or geographically
 distributed) MUST share the replay cache or coordinate to prevent
@@ -2061,9 +2126,9 @@ per-replica in-memory caches do not protect against an attacker
 presenting the same (`iss`, `jti`) to multiple replicas in
 succession. A shared key-value store with TTL eviction (eviction
 time = `exp` plus permitted clock skew) is a natural fit. The
-shared-cache requirement does not apply on the cnf-bound path when
-the AS takes the exemption, since cnf+PoP verification is itself
-correctness-preserving across replicas.
+shared-cache requirement does not apply on cnf-bound paths that are
+operated in the documented reusable-assertion mode, since cnf+PoP
+verification is itself correctness-preserving across replicas.
 
 Replay-cache flooding is a denial-of-service surface: an attacker
 holding a compromised instance issuer's signing key can mint
@@ -2084,7 +2149,8 @@ instance assertion is non-bearer at presentation and an attacker with
 only the JWT cannot use it without also possessing the `cnf` private
 key. The only profile-defined case where `cnf` can be absent is raw
 JWT-SVID compatibility; in that case the AS MUST establish an
-instance-specific binding by other means per {{sender-constrained}}.
+instance-specific, policy-backed, auditable binding by other means
+per {{sender-constrained}}.
 If a raw JWT-SVID without `jti` is accepted, the replay cache cannot
 provide single-use detection and the deployment relies on sender-
 constraint and short SVID lifetimes. For the instance-assertion auth
@@ -2134,9 +2200,11 @@ rather than relying on nominal two-key authentication that does not
 actually separate custody.
 
 When `client_instance_jwt` is used, clients SHOULD constrain
-each instance issuer's authority through `trust_domain` and
-`signing_alg_values_supported`, and SHOULD list only the minimum
-set of `instance_issuers` necessary.
+each instance issuer's authority through `spiffe_id`, `trust_domain`,
+and `signing_alg_values_supported`, and SHOULD list only the minimum
+set of `instance_issuers` necessary. Clients using SPIFFE SHOULD use
+`spiffe_id`; omitting it delegates the whole SPIFFE trust domain and
+SHOULD be done only when whole-domain delegation is intentional.
 
 Trust withdrawal under this auth method has immediate consequences
 for client authentication: removing an instance issuer from
@@ -2226,8 +2294,12 @@ sensitivity guidance above:
   correlation);
 * the `cnf` value or its thumbprint (binding the issued token to a
   specific key);
+* for raw JWT-SVIDs without `cnf`, the policy-backed binding
+  mechanism used to attribute the presented DPoP key or mTLS
+  certificate to the validated `sub`;
 * the descriptor scope under which validation succeeded (in
-  particular `trust_domain` and any matched `spiffe_id`); and
+  particular any matched `spiffe_id`, or `trust_domain` when the
+  whole SPIFFE trust domain was delegated); and
 * the classification of the request (delegation or self-acting).
 
 These fields together let operators answer "which instance, attested
@@ -2543,57 +2615,6 @@ combining {{SPIFFE-CLIENT-AUTH}} for client authentication and this
 profile for instance identity, using the same JWT-SVID for both. The
 recipe is non-normative.
 
-The full sequence:
-
-~~~ ascii-art
-Workload      SPIFFE           AS              RS
-              Workload API
-   |              |              |               |
-   | FetchJWTSVID |              |               |
-   |   aud=AS     |              |               |
-   |------------->|              |               |
-   |              |              |               |
-   |   JWT-SVID   |              |               |
-   |<-------------|              |               |
-   |                             |               |
-   |   POST /token                               |
-   |   grant_type=client_credentials             |
-   |   client_id=<class CIMD URL>                |
-   |   client_assertion=<SVID>                   |
-   |   actor_token=<SVID>   (same JWT bytes)     |
-   |   DPoP: <proof>                             |
-   |---------------------------->|               |
-   |                             |               |
-   |        [resolves CIMD for class]            |
-   |        [fetches SPIFFE trust bundle]        |
-   |        [validates SVID signature]           |
-   |        [SPIFFE-CLIENT-AUTH: sub matches     |
-   |         top-level spiffe_id /*]             |
-   |        [this profile: sub matches           |
-   |         descriptor's spiffe_id /*; no       |
-   |         client_id claim required]           |
-   |        [validates DPoP proof key]           |
-   |        [issues sender-constrained access    |
-   |         token]                              |
-   |                             |               |
-   |   access_token (DPoP-bound, sub = SPIFFE ID)|
-   |<----------------------------|               |
-   |                                             |
-   |   GET /resource                             |
-   |   Authorization: DPoP <access_token>        |
-   |   DPoP: <proof>                             |
-   |-------------------------------------------->|
-   |                                             |
-   |              [validates token signature]    |
-   |              [validates DPoP against cnf]   |
-   |              [enforces sub/act per          |
-   |               ACTOR-PROFILE and             |
-   |               this profile §RS]             |
-   |                                             |
-   |              200 OK                         |
-   |<--------------------------------------------|
-~~~
-
 The same JWT-SVID flows from the SPIFFE Workload API through the AS
 to the resource server: no re-minting, no OAuth-aware adapter, one
 artifact serving both client authentication and instance identity.
@@ -2685,9 +2706,10 @@ compatibility ({{spiffe-client-id-omission}}) handles the binding
 structurally via the descriptor's `spiffe_id`. This example uses a
 separate workload-held DPoP key for sender-constraint; the AS accepts
 that key only because deployment-specific policy binds it to the same
-runtime named by the JWT-SVID's `sub`. Deployments that require the
-instance issuer itself to assert the binding key can instead re-mint
-the SVID into a Client Instance Assertion containing `cnf`.
+runtime named by the JWT-SVID's `sub`, and the AS logs that binding
+basis. Deployments that require the instance issuer itself to assert
+the binding key can instead re-mint the SVID into a Client Instance
+Assertion containing `cnf`.
 
 ## AS Processing {#appendix-spiffe-as}
 {:numbered="false"}
@@ -2709,9 +2731,9 @@ The AS:
 5. Issues a sender-constrained access token. The `cnf` is established
    per the deployment's binding mechanism. In this example, the AS
    accepts the DPoP proof key because local policy or attestation
-   binds that key to the workload named by the JWT-SVID. With mTLS,
-   a per-instance X.509-SVID certificate can serve as the binding
-   key.
+   binds that key to the workload named by the JWT-SVID, and records
+   the binding mechanism in audit logs. With mTLS, a per-instance
+   X.509-SVID certificate can serve as the binding key.
 
 ## Issued Access Token {#appendix-spiffe-access-token}
 {:numbered="false"}
@@ -2741,7 +2763,9 @@ point in the workload's flow.
 This appendix gives end-to-end worked examples for each grant type
 that interacts with this profile. Examples are non-normative and
 omit unrelated headers or grant-specific details that do not affect
-actor processing.
+actor processing. Timestamps and lifetimes in these examples are
+illustrative and do not override the lifetime guidance in
+{{trust-lifecycle}} and {{security-replay}}.
 
 The examples use a CIMD-style `client_id` for clarity; the same
 flows apply identically to static-registration deployments
