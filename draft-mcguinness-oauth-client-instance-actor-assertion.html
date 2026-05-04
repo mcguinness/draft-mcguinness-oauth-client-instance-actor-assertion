@@ -2328,7 +2328,10 @@ descriptor with <code>invalid_grant</code>.<a href="#section-6.1.1-5.10.1" class
             <dd style="margin-left: 1.5em" id="section-6.1.1-5.12">
               <p id="section-6.1.1-5.12.1">When <code>subject_syntax</code> is "spiffe", a SPIFFE trust domain that the
 <code>sub</code> claim <span class="bcp14">MUST</span> belong to. The AS <span class="bcp14">MUST</span> reject any instance assertion
-whose <code>sub</code> does not lie within this trust domain. A descriptor's
+whose <code>sub</code> does not lie within this trust domain. <code>trust_domain</code>
+is meaningful only when <code>subject_syntax</code> is "spiffe"; an AS <span class="bcp14">MUST</span>
+reject a descriptor that includes <code>trust_domain</code> with any other
+<code>subject_syntax</code> as invalid client metadata. A descriptor's
 <code>trust_domain</code> is independent of any SPIFFE trust domain associated
 with the client itself under <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>; the two
 <span class="bcp14">MAY</span> differ.<a href="#section-6.1.1-5.12.1" class="pilcrow">¶</a></p>
@@ -2613,19 +2616,24 @@ this time.<a href="#section-7.2-2.20.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-7.2-3">A client instance assertion <span class="bcp14">MUST NOT</span> contain an <code>act</code> claim. The
+<p id="section-7.2-3">When validating <code>exp</code>, <code>nbf</code>, and <code>iat</code>, ASes <span class="bcp14">SHOULD</span> permit a small
+clock skew tolerance, typically no more than 60 seconds, applied
+symmetrically. This bound is consistent with the short-lifetime
+recommendation in <a href="#security-replay" class="auto internal xref">Section 12.3</a> and prevents brittle
+inter-clock failures across deployments.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
+<p id="section-7.2-4">A client instance assertion <span class="bcp14">MUST NOT</span> contain an <code>act</code> claim. The
 instance assertion is a direct identity assertion of a single party (the
 instance); per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, an <code>actor_token</code> that carries an
 <code>act</code> claim represents a delegation chain rather than a direct
 identity, and the AS <span class="bcp14">MUST</span> reject such a token with <code>invalid_grant</code>
-(<a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>, <a href="#errors" class="auto internal xref">Section 8.9</a>).<a href="#section-7.2-3" class="pilcrow">¶</a></p>
-<p id="section-7.2-4">Additional claims <span class="bcp14">MAY</span> be present and <span class="bcp14">MUST</span> be ignored if not
+(<a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>, <a href="#errors" class="auto internal xref">Section 8.9</a>).<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+<p id="section-7.2-5">Additional claims <span class="bcp14">MAY</span> be present and <span class="bcp14">MUST</span> be ignored if not
 understood, except where this document or <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> specifies
 processing rules. Future profiles requiring AS understanding of a
 new claim <span class="bcp14">SHOULD</span> use the JWS <code>crit</code> header parameter (<span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>
 Section 4.1.11) to mark it must-understand; ASes <span class="bcp14">MUST</span> reject
 assertions whose <code>crit</code> header is malformed or includes claims they
-do not implement, per <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> Section 4.1.11.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+do not implement, per <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> Section 4.1.11.<a href="#section-7.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="signing">
@@ -2832,8 +2840,7 @@ raw JWT-SVID exceptions in <a href="#spiffe-client-id-omission" class="auto inte
 <code>subject_syntax</code> is "spiffe" and <code>spiffe_id</code> is absent, require
 <code>trust_domain</code> and treat the descriptor as delegating the whole
 trust domain. Validate the JWS <code>typ</code> per <a href="#signing" class="auto internal xref">Section 7.3</a> and reject
-unrecognized <code>crit</code> header parameters per <a href="#claims" class="auto internal xref">Section 7.2</a>. Apply the
-<code>(iss, jti)</code> replay check per <a href="#security-replay" class="auto internal xref">Section 12.3</a>.<a href="#section-8.2-4.6.1" class="pilcrow">¶</a></p>
+unrecognized <code>crit</code> header parameters per <a href="#claims" class="auto internal xref">Section 7.2</a>.<a href="#section-8.2-4.6.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-4.7">
             <p id="section-8.2-4.7.1"><strong>Verify <code>client_id</code> binding.</strong> If the instance assertion contains a
@@ -2845,7 +2852,12 @@ matched descriptor satisfies the SPIFFE compatibility conditions
 <code>invalid_grant</code>. When the descriptor satisfies those conditions,
 the AS <span class="bcp14">MUST</span> verify that the <code>actor_token</code>'s <code>sub</code> falls under the
 descriptor's <code>spiffe_id</code> (with wildcard expansion if any); if not,
-reject with <code>invalid_grant</code>.<a href="#section-8.2-4.7.1" class="pilcrow">¶</a></p>
+reject with <code>invalid_grant</code>. After <code>client_id</code> binding succeeds,
+apply the <code>(iss, jti)</code> replay check per <a href="#security-replay" class="auto internal xref">Section 12.3</a>;
+reject with <code>invalid_grant</code> if a previously seen tuple is found.
+The replay check follows <code>client_id</code> binding so that an attacker
+cannot burn a legitimate client's <code>jti</code> by presenting the assertion
+under a mismatched <code>client_id</code>.<a href="#section-8.2-4.7.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-4.8">
             <p id="section-8.2-4.8.1"><strong>Enforce delegation policy.</strong> Apply the AS's local maximum
@@ -3952,8 +3964,13 @@ that do not use it: token requests are dispatched on
 triggering this profile's processing
 (<a href="#as-processing" class="auto internal xref">Section 8.2</a>) and other (or absent) values processed under
 their own specifications. ASes <span class="bcp14">SHOULD</span> advertise support via
-<code>actor_token_types_supported</code> (<a href="#as-metadata" class="auto internal xref">Section 6.2</a>). A client <span class="bcp14">MAY</span>
-add <code>instance_issuers</code> at any time; a client that wants to mandate
+<code>actor_token_types_supported</code> (<a href="#as-metadata" class="auto internal xref">Section 6.2</a>). Clients <span class="bcp14">SHOULD</span>
+verify that <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>
+is present in the AS's <code>actor_token_types_supported</code> before
+sending an <code>actor_token</code> on a token request, since RFC 6749 permits
+ASes that do not implement this extension to silently ignore
+unrecognized parameters and issue an unbound access token. A client
+<span class="bcp14">MAY</span> add <code>instance_issuers</code> at any time; a client that wants to mandate
 instance assertions for every issued access token can register
 <code>token_endpoint_auth_method = client_instance_jwt</code>
 (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>), which intrinsically requires the
@@ -4997,9 +5014,13 @@ assertion's issuer, while keeping <code>client_assertion</code> and
 <p id="appendix-B-1">This appendix gives end-to-end worked examples for each grant type
 that interacts with this profile. Examples are non-normative and
 omit unrelated headers or grant-specific details that do not affect
-actor processing. Timestamps and lifetimes in these examples are
-illustrative and do not override the lifetime guidance in
-<a href="#trust-lifecycle" class="auto internal xref">Section 5.3.3</a> and <a href="#security-replay" class="auto internal xref">Section 12.3</a>.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+actor processing. Decoded <code>actor_token</code> blocks show only the JWT
+payload; re-minted Client Instance Assertions also carry a JWS
+protected header with <code>typ</code> set to <code>client-instance+jwt</code> per
+<a href="#signing" class="auto internal xref">Section 7.3</a> (see the full example in <a href="#example-assertion" class="auto internal xref">Section 7.4</a>).
+Timestamps and lifetimes in these examples are illustrative and do
+not override the lifetime guidance in <a href="#trust-lifecycle" class="auto internal xref">Section 5.3.3</a> and
+<a href="#security-replay" class="auto internal xref">Section 12.3</a>.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
 <p id="appendix-B-2">The examples use a CIMD-style <code>client_id</code> for clarity; the same
 flows apply identically to static-registration deployments
 (<a href="#registration-models" class="auto internal xref">Section 5.2</a>), where the <code>client_id</code> is opaque or
