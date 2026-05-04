@@ -59,7 +59,6 @@ informative:
   SPIFFE-CLIENT-AUTH: I-D.ietf-oauth-spiffe-client-auth
   WIMSE-ARCH: I-D.ietf-wimse-arch
   WIMSE-CREDS: I-D.ietf-wimse-workload-creds
-  WIMSE-WPT: I-D.ietf-wimse-wpt
   SPIFFE:
     title: "SPIFFE: Secure Production Identity Framework For Everyone"
     target: https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/
@@ -148,7 +147,7 @@ the actor token grant extension, this document:
   assertion's `cnf` claim drives that binding in the interoperable
   reminted assertion format.
 * Registers `client_instance_jwt` as a `token_endpoint_auth_method`
-  value, allowing deployments without an online class-controlled
+  value, allowing deployments without an online client-controlled
   credential to authenticate the client via the instance assertion
   alone.
 * Defines first-class support for SPIFFE workload identity, including
@@ -1205,12 +1204,12 @@ example, agentic services, autoscaled microservices, or ephemeral
 functions) where there is no human user authorizing operations and
 the team operating the runtime is also the natural owner of the
 workload identity provider. For these deployments, requiring a
-separate class-level credential typically means provisioning a
+separate client-level credential typically means provisioning a
 private key into every pod alongside the instance-attested
 `actor_token`, which (per {{security-instance-assertion-auth}}) does
 not meaningfully improve defense against runtime compromise. The
 mode is also appropriate where the client identifier is a logical
-CIMD URL with class-key custody centralized away from the runtime,
+CIMD URL with client-key custody centralized away from the runtime,
 or where the workload identity provider trusted to attest instances
 is the only authority the client wishes to publish.
 
@@ -1404,9 +1403,9 @@ and the `jti` cache.
 
 The binding key MUST be specific to the validated client instance.
 A credential shared by the client as a whole, such as the
-class-level mTLS certificate authenticated under {{RFC8705}}, the
-class's `private_key_jwt` key, or any other class-controlled key not
-provisioned per-instance, is not sufficient.
+client-level mTLS certificate authenticated under {{RFC8705}}, the
+client's `private_key_jwt` key, or any other client-controlled key
+not provisioned per-instance, is not sufficient.
 
 If the actor token is a raw JWT-SVID accepted under
 {{spiffe-client-id-omission}} and does not include a `cnf` claim, the
@@ -1434,7 +1433,7 @@ path only. A reminted Client Instance Assertion MUST contain `cnf` so
 that the binding key is supplied by the same authority that named the
 instance.
 
-Deployments combining class-level Mutual-TLS-bound client
+Deployments combining client-level Mutual-TLS-bound client
 authentication ({{RFC8705}}) with this profile MUST establish
 instance binding through a separate, instance-specific key. The
 typical configuration uses the client's mTLS certificate at the TLS
@@ -1443,7 +1442,7 @@ paired with `DPoP` {{RFC9449}} at the token endpoint for instance
 binding. Per-instance mTLS certificates issued by the instance
 issuer (or otherwise bound to instance attestation) are an
 alternative; in that case the same TLS certificate satisfies both
-class authentication and instance binding only if the AS treats it
+client authentication and instance binding only if the AS treats it
 as belonging to the instance for binding purposes.
 
 ## Access Token Representation {#access-token}
@@ -2107,7 +2106,9 @@ present; when `jti` is absent, deployments rely on sender-constraint,
 short SVID lifetimes, and audience restriction to bound replay.
 Issuers SHOULD use short lifetimes (five minutes or less) both to
 limit replay exposure and because client instances often have
-lifetimes of seconds to minutes.
+lifetimes of seconds to minutes. When refreshing access tokens
+({{refresh}}), AS implementations SHOULD prefer requiring a fresh
+instance assertion rather than perpetuating stale instance identity.
 
 Replay-cache cardinality at fleet scale is bounded by the rate of
 distinct (`iss`, `jti`) tuples persisted during the retention
@@ -2137,26 +2138,17 @@ apply per-issuer rate limits and bounded cache caps; a sustained
 high rate of distinct `jti` values from a single issuer is a signal
 of either a misbehaving runtime or compromise.
 
-When refreshing access tokens ({{refresh}}), AS implementations
-SHOULD prefer requiring a fresh instance assertion rather than perpetuating
-stale instance identity, especially across long refresh windows.
-
-The replay surface depends on whether the instance assertion carries
-`cnf` ({{claims}}) and whether the AS verifies possession at
-presentation ({{sender-constrained}}). For reminted Client Instance
-Assertions, `cnf` is required: when it is present and verified, the
-instance assertion is non-bearer at presentation and an attacker with
-only the JWT cannot use it without also possessing the `cnf` private
-key. The only profile-defined case where `cnf` can be absent is raw
-JWT-SVID compatibility; in that case the AS MUST establish an
-instance-specific, policy-backed, auditable binding by other means
-per {{sender-constrained}}.
-If a raw JWT-SVID without `jti` is accepted, the replay cache cannot
-provide single-use detection and the deployment relies on sender-
-constraint and short SVID lifetimes. For the instance-assertion auth
-mode in particular ({{instance-assertion-auth}}), where the instance
-assertion is the only client credential, ASes MUST reject requests
-whose instance assertion lacks `cnf`.
+The replay surface depends on whether `cnf` is present and verified
+at presentation ({{sender-constrained}}). For reminted Client
+Instance Assertions `cnf` is required, making them non-bearer at
+presentation: an attacker with only the JWT cannot use it without
+also possessing the `cnf` private key. The only profile-defined
+case where `cnf` can be absent is raw JWT-SVID compatibility, where
+the AS MUST establish a policy-backed, auditable instance-specific
+binding per {{sender-constrained}}. For the instance-assertion auth
+mode ({{instance-assertion-auth}}), where the instance assertion is
+the only client credential, ASes MUST reject requests whose
+instance assertion lacks `cnf`.
 
 ## Audience and Confused Deputy {#security-audience}
 
