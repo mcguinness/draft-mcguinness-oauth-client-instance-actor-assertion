@@ -1698,29 +1698,19 @@ operate on different OAuth parameters and trust sources:<a href="#section-2.3-2"
             </tr>
           </tbody>
         </table>
-<p id="section-2.3-4">The two specifications are orthogonal and <span class="bcp14">MAY</span> be combined.
-<span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> answers "may this workload act as this
-client?" (a yes/no prefix match against <code>spiffe_id</code>); this profile
-answers "which specific instance is acting?" (a named, bindable
-identity surfaced in <code>act.sub</code> or <code>sub</code>). A common combined pattern
-uses <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> with a wildcard <code>spiffe_id</code> for client
-authentication and this profile to surface the specific instance
-and bind the access token to it. Where <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>
-alone suffices (no need to name instances downstream), this
-profile is not needed.<a href="#section-2.3-4" class="pilcrow">¶</a></p>
-<p id="section-2.3-5">This document does not require SPIFFE. Instance issuers may issue
-non-SPIFFE JWT instance assertions (any <code>subject_syntax</code> other than
-"spiffe"), and the client itself may authenticate via
-<code>private_key_jwt</code>, <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>, or any other registered
-method.<a href="#section-2.3-5" class="pilcrow">¶</a></p>
-<p id="section-2.3-6">For SPIFFE deployments, this profile defines first-class support for
-SPIFFE subject syntax and trust-bundle resolution, and optional
-compatibility for presenting JWT-SVIDs from the SPIFFE Workload API
-directly as <code>actor_token</code> without re-minting; the descriptor format
-and processing rules are in <a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a> and
-<a href="#spiffe-compatibility" class="auto internal xref">Section 8.8</a>. A deployment combining
-<span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> with this profile <span class="bcp14">MAY</span> present the same SVID
-as both <code>client_assertion</code> and <code>actor_token</code> in a single request.<a href="#section-2.3-6" class="pilcrow">¶</a></p>
+<p id="section-2.3-4">The two specifications are orthogonal and <span class="bcp14">MAY</span> be combined: a typical
+combined deployment uses <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> (with a wildcard
+<code>spiffe_id</code>) to authenticate the OAuth client and this profile to
+surface and bind the specific instance. The same SVID <span class="bcp14">MAY</span> be
+presented as both <code>client_assertion</code> and <code>actor_token</code> in a single
+request. Where naming the instance downstream is not needed,
+<span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> alone suffices and this profile is not
+required.<a href="#section-2.3-4" class="pilcrow">¶</a></p>
+<p id="section-2.3-5">This document does not require SPIFFE. Instance issuers may use any
+<code>subject_syntax</code>, and the client itself may authenticate via any
+registered method. SPIFFE deployments get first-class support
+(<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>, <a href="#spiffe-compatibility" class="auto internal xref">Section 8.8</a>), including optional
+direct presentation of JWT-SVIDs as <code>actor_token</code> without re-minting.<a href="#section-2.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="relationship-wimse">
@@ -1953,20 +1943,13 @@ are the parts a new profile is expected to redefine.<a href="#section-4.2-5" cla
       </h2>
 <p id="section-5-1">This section describes the architecture, registration models, and
 trust delegation that underpin the <code>client-instance-jwt</code> profile.<a href="#section-5-1" class="pilcrow">¶</a></p>
-<p id="section-5-2">OAuth clients in deployed practice routinely abstract over many
-concrete runtimes. A single registered OAuth client commonly ships
-as multiple application forms (e.g., the Slack OAuth client deploys
-as iOS, Android, web, and server-side runtimes; the Microsoft Graph
-OAuth client serves the entire Office suite of applications). The
-relationship between the registered client and its runtimes is
-class-and-instance: the OAuth client is the application class, and
-each runtime is a client instance of that class. This profile
-makes that implicit relationship explicit, so each instance can be
-named, attested, and bound to access tokens individually. The same
-pattern applies to agent platforms: the platform (or harness) is
-the OAuth client, each running agent or session is a client
-instance attested by the platform, and a sub-agent spawned by an
-agent is represented as a nested actor via token-exchange
+<p id="section-5-2">A registered OAuth client commonly abstracts over many concrete
+runtimes (e.g., the Slack OAuth client across iOS, Android, web, and
+server-side; an agent platform across each running agent or session).
+This profile makes that class-and-instance relationship explicit so
+each runtime can be named, attested, and bound to access tokens
+individually. For agent platforms, a sub-agent spawned by an agent
+is represented as a nested actor via token-exchange
 (<a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>).<a href="#section-5-2" class="pilcrow">¶</a></p>
 <div id="architecture">
 <section id="section-5.1">
@@ -2191,29 +2174,17 @@ expected lag between an admin update and AS-side propagation), plus
 the AS's JWKS or SPIFFE-bundle cache TTL for the issuer (since a
 compromised issuer signing key remains usable until the AS re-fetches
 the verification keys).<a href="#section-5.3.3-3" class="pilcrow">¶</a></p>
-<p id="section-5.3.3-4">Recommended defaults that satisfy this bound: instance assertion
-<code>exp</code> of 5 minutes or less (<a href="#security-replay" class="auto internal xref">Section 12.3</a>); access-token TTL
-of 30 minutes or less paired with a metadata refresh interval
-(CIMD cache TTL or static-registration propagation lag) of 30
-minutes or less, giving a trust-withdrawal latency bound of
-approximately 35 minutes.<a href="#section-5.3.3-4" class="pilcrow">¶</a></p>
-<p id="section-5.3.3-5">These defaults balance trust-withdrawal latency against
-token-endpoint and metadata-fetch load. Deployments that prioritize
-faster recovery (for example, 5-minute access tokens with 5-minute
-caches, giving a sub-15-minute bound) and deployments that
-prioritize throughput (for example, 60-minute access tokens with
-1-hour CIMD caches matching HTTP caching norms, giving an
-approximately 2-hour bound) are both common operational choices.
-Looser deployments <span class="bcp14">SHOULD</span> support active access-token revocation
-(<a href="#revocation" class="auto internal xref">Section 10.1</a>) and introspection-based status checks at the
-resource server, so that incident response is not gated solely on
-natural token expiration.<a href="#section-5.3.3-5" class="pilcrow">¶</a></p>
-<p id="section-5.3.3-6">The trust-withdrawal latency bound is the deployment's effective
-incident response window for instance-issuer compromise: a
-compromised issuer's tokens may continue to validate for up to
-this window after the client detaches the issuer or rotates its
-keys. Operators <span class="bcp14">SHOULD</span> treat this bound as a deployment-time SLO
-and choose values that match their incident-response requirements.<a href="#section-5.3.3-6" class="pilcrow">¶</a></p>
+<p id="section-5.3.3-4">Recommended defaults: instance assertion <code>exp</code> of 5 minutes or less
+(<a href="#security-replay" class="auto internal xref">Section 12.3</a>); access-token TTL of 30 minutes or less paired
+with a metadata refresh interval of 30 minutes or less, giving a
+trust-withdrawal latency bound of approximately 35 minutes. Tighter
+deployments (5-minute access tokens with 5-minute caches, sub-15
+minutes) and looser deployments (60-minute tokens with 1-hour caches,
+approximately 2 hours) are both common; looser deployments <span class="bcp14">SHOULD</span>
+support active revocation (<a href="#revocation" class="auto internal xref">Section 10.1</a>) and introspection-based
+status checks at the resource server. Operators <span class="bcp14">SHOULD</span> treat this
+bound as a deployment-time SLO matching their incident-response
+requirements.<a href="#section-5.3.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="cross-org-federation">
@@ -2222,32 +2193,24 @@ and choose values that match their incident-response requirements.<a href="#sect
 <a href="#section-5.3.4" class="section-number selfRef">5.3.4. </a><a href="#name-cross-organization-federati" class="section-name selfRef">Cross-Organization Federation</a>
           </h4>
 <p id="section-5.3.4-1">A client <span class="bcp14">MAY</span> list instance issuers operated by a different
-organization than the client itself, including cases where the
-client's SPIFFE trust domain (if any) differs from the instance's
-trust domain. The per-client minting rule (<a href="#trust-model-delegation" class="auto internal xref">Section 5.3.1</a>)
-applies unchanged: the foreign issuer <span class="bcp14">MUST</span> mint instance assertions
-naming this <code>client_id</code> only for runtimes authorized as instances
-of this client. Beyond the protocol-level descriptor bounds,
-clients <span class="bcp14">SHOULD</span> have an out-of-band trust agreement with foreign
-issuers
-covering authorized workloads, descriptor bounds the issuer agrees
-to honor, and key-rotation and revocation procedures; the AS cannot
-verify such an agreement exists, but its absence amplifies
-cross-organization compromise risk. Omitting <code>spiffe_id</code> from a
-foreign SPIFFE descriptor delegates the whole foreign trust domain
-and <span class="bcp14">SHOULD NOT</span> be used unless the trust agreement explicitly
-authorizes every workload in that trust domain to act as an instance
-of the client.<a href="#section-5.3.4-1" class="pilcrow">¶</a></p>
-<p id="section-5.3.4-2">For SPIFFE deployments where trust domains differ, the trust
-relationship <span class="bcp14">SHOULD</span> be expressed via SPIFFE federation: the AS
-resolves the foreign trust bundle via the descriptor's
-<code>spiffe_bundle_endpoint</code> (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>), which <span class="bcp14">MUST</span> be
-operated by the foreign organization or its delegate. Multi-AS
-federation, where the same workload obtains tokens from multiple
-ASes, is supported structurally: each AS resolves its own client
-metadata independently, and workloads request audience-specific
-JWT-SVIDs per target AS so that <code>aud</code>-based replay protection
-(<a href="#security-replay" class="auto internal xref">Section 12.3</a>) holds across destinations.<a href="#section-5.3.4-2" class="pilcrow">¶</a></p>
+organization, including cases where SPIFFE trust domains differ.
+The per-client minting rule (<a href="#trust-model-delegation" class="auto internal xref">Section 5.3.1</a>) applies
+unchanged: the foreign issuer <span class="bcp14">MUST</span> mint instance assertions naming
+this <code>client_id</code> only for runtimes authorized as instances of this
+client. Clients <span class="bcp14">SHOULD</span> have an out-of-band trust agreement with
+foreign issuers covering authorized workloads, descriptor bounds,
+and key-rotation and revocation procedures; the AS cannot verify
+such an agreement exists, but its absence amplifies compromise risk.
+Omitting <code>spiffe_id</code> from a foreign SPIFFE descriptor delegates the
+whole foreign trust domain and <span class="bcp14">SHOULD NOT</span> be used absent explicit
+trust-agreement authorization for every workload in that domain.<a href="#section-5.3.4-1" class="pilcrow">¶</a></p>
+<p id="section-5.3.4-2">For SPIFFE cross-trust-domain deployments, the AS <span class="bcp14">SHOULD</span> resolve
+the foreign trust bundle via the descriptor's <code>spiffe_bundle_endpoint</code>,
+which <span class="bcp14">MUST</span> be operated by the foreign organization or its delegate.
+Multi-AS federation is supported structurally: each AS resolves its
+own client metadata independently, and workloads request
+audience-specific JWT-SVIDs per target AS so that <code>aud</code>-based replay
+protection (<a href="#security-replay" class="auto internal xref">Section 12.3</a>) holds across destinations.<a href="#section-5.3.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
