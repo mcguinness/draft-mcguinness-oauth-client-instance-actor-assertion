@@ -721,7 +721,10 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
 `trust_domain` (OPTIONAL):
 : When `subject_syntax` is "spiffe", a SPIFFE trust domain that the
   `sub` claim MUST belong to. The AS MUST reject any instance assertion
-  whose `sub` does not lie within this trust domain. A descriptor's
+  whose `sub` does not lie within this trust domain. `trust_domain`
+  is meaningful only when `subject_syntax` is "spiffe"; an AS MUST
+  reject a descriptor that includes `trust_domain` with any other
+  `subject_syntax` as invalid client metadata. A descriptor's
   `trust_domain` is independent of any SPIFFE trust domain associated
   with the client itself under {{SPIFFE-CLIENT-AUTH}}; the two
   MAY differ.
@@ -942,6 +945,12 @@ The following claims are defined for client instance assertions.
 : Not-before time. If present, the AS MUST reject the token before
   this time.
 
+When validating `exp`, `nbf`, and `iat`, ASes SHOULD permit a small
+clock skew tolerance, typically no more than 60 seconds, applied
+symmetrically. This bound is consistent with the short-lifetime
+recommendation in {{security-replay}} and prevents brittle
+inter-clock failures across deployments.
+
 A client instance assertion MUST NOT contain an `act` claim. The
 instance assertion is a direct identity assertion of a single party (the
 instance); per {{ACTOR-PROFILE}}, an `actor_token` that carries an
@@ -1134,8 +1143,7 @@ Before the steps below, the AS MUST reject the request with
    `subject_syntax` is "spiffe" and `spiffe_id` is absent, require
    `trust_domain` and treat the descriptor as delegating the whole
    trust domain. Validate the JWS `typ` per {{signing}} and reject
-   unrecognized `crit` header parameters per {{claims}}. Apply the
-   `(iss, jti)` replay check per {{security-replay}}.
+   unrecognized `crit` header parameters per {{claims}}.
 
 7. **Verify `client_id` binding.** If the instance assertion contains a
    `client_id` claim, it MUST exactly equal the authenticated
@@ -1146,7 +1154,12 @@ Before the steps below, the AS MUST reject the request with
    `invalid_grant`. When the descriptor satisfies those conditions,
    the AS MUST verify that the `actor_token`'s `sub` falls under the
    descriptor's `spiffe_id` (with wildcard expansion if any); if not,
-   reject with `invalid_grant`.
+   reject with `invalid_grant`. After `client_id` binding succeeds,
+   apply the `(iss, jti)` replay check per {{security-replay}};
+   reject with `invalid_grant` if a previously seen tuple is found.
+   The replay check follows `client_id` binding so that an attacker
+   cannot burn a legitimate client's `jti` by presenting the assertion
+   under a mismatched `client_id`.
 
 8. **Enforce delegation policy.** Apply the AS's local maximum
    delegation depth per {{ACTOR-PROFILE}}.
@@ -1928,8 +1941,13 @@ that do not use it: token requests are dispatched on
 triggering this profile's processing
 ({{as-processing}}) and other (or absent) values processed under
 their own specifications. ASes SHOULD advertise support via
-`actor_token_types_supported` ({{as-metadata}}). A client MAY
-add `instance_issuers` at any time; a client that wants to mandate
+`actor_token_types_supported` ({{as-metadata}}). Clients SHOULD
+verify that `urn:ietf:params:oauth:token-type:client-instance-jwt`
+is present in the AS's `actor_token_types_supported` before
+sending an `actor_token` on a token request, since RFC 6749 permits
+ASes that do not implement this extension to silently ignore
+unrecognized parameters and issue an unbound access token. A client
+MAY add `instance_issuers` at any time; a client that wants to mandate
 instance assertions for every issued access token can register
 `token_endpoint_auth_method = client_instance_jwt`
 ({{instance-assertion-auth}}), which intrinsically requires the
@@ -2616,9 +2634,13 @@ assertion's issuer, while keeping `client_assertion` and
 This appendix gives end-to-end worked examples for each grant type
 that interacts with this profile. Examples are non-normative and
 omit unrelated headers or grant-specific details that do not affect
-actor processing. Timestamps and lifetimes in these examples are
-illustrative and do not override the lifetime guidance in
-{{trust-lifecycle}} and {{security-replay}}.
+actor processing. Decoded `actor_token` blocks show only the JWT
+payload; re-minted Client Instance Assertions also carry a JWS
+protected header with `typ` set to `client-instance+jwt` per
+{{signing}} (see the full example in {{example-assertion}}).
+Timestamps and lifetimes in these examples are illustrative and do
+not override the lifetime guidance in {{trust-lifecycle}} and
+{{security-replay}}.
 
 The examples use a CIMD-style `client_id` for clarity; the same
 flows apply identically to static-registration deployments
