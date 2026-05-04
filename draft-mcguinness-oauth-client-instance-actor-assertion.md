@@ -145,7 +145,7 @@ the actor token grant extension, this document:
 * Requires issued access tokens to be sender-constrained to a key
   the instance possesses, and specifies how the instance
   assertion's `cnf` claim drives that binding in the interoperable
-  reminted assertion format.
+  re-minted assertion format.
 * Registers `client_instance_jwt` as a `token_endpoint_auth_method`
   value, allowing deployments without an online client-controlled
   credential to authenticate the client via the instance assertion
@@ -177,7 +177,7 @@ For the `client-instance-jwt` token type, delegation requests
 represent the instance in `act` ({{access-token-delegation}}) and
 self-acting requests (notably `client_credentials`) represent it
 in top-level `sub` ({{access-token-self-acting}}); {{RFC8693}}'s
-"actor" framing strictly addresses only the delegation case but
+"actor" framing strictly addresses only the delegation case, but
 this profile reuses the `actor_token` wire artifact for both, with
 classification determined by the grant rather than the assertion
 (see {{rationale-self-acting}}). Use on a token-exchange request
@@ -244,7 +244,7 @@ as both `client_assertion` and `actor_token` in a single request.
 
 ## Relationship to WIMSE Workload Credentials {#relationship-wimse}
 
-The IETF Workload Identity in Multi System Environments (WIMSE)
+The IETF Workload Identity in Multi-System Environments (WIMSE)
 working group is defining specifications for workload identity,
 including a Workload Identity Token {{WIMSE-CREDS}} (a JWT credential
 asserting a workload's identity) and the broader WIMSE architecture
@@ -294,7 +294,7 @@ Client Instance:
 
 Instance Issuer:
 : An authority trusted by the client to authenticate client
-  instances and issue instance assertions on their behalf. Examples include
+  instances and issue instance assertions for those instances. Examples include
   workload identity providers (e.g., a SPIFFE control plane
   {{SPIFFE}}) and platform-managed identity services.
 
@@ -609,7 +609,10 @@ endorsed by the client. Where the deployment supports it, this
 is naturally enforced by access-token introspection and short
 access-token lifetimes; AS implementations MAY additionally revoke
 such tokens per {{RFC7009}}, including via the per-instance
-mechanism described in {{revocation}}.
+mechanism described in {{revocation}}. ASes MAY apply the same
+policy to changes in a descriptor's `jwks_uri`, `jwks`, or
+`spiffe_bundle_endpoint` keys that {{CIMD}} permits for changes
+in client-level keys.
 
 To bound the compromise recovery window, ASes issuing access tokens
 under this profile SHOULD set the access token TTL no longer than
@@ -946,8 +949,11 @@ The following claims are defined for client instance assertions.
 
 `sub_profile` (RECOMMENDED):
 : One or more OAuth Entity Profile names {{ENTITY-PROFILES}}
-  classifying the actor. Its syntax (a space-delimited string of
-  profile names) is the one defined by {{ACTOR-PROFILE}}. This
+  classifying the actor. {{ENTITY-PROFILES}} defines this claim as
+  OPTIONAL; this profile elevates it to RECOMMENDED so resource
+  servers can apply actor-class-aware policy without bespoke
+  configuration. Its syntax (a space-delimited string of profile
+  names) is the one defined by {{ACTOR-PROFILE}}. This
   document registers the value `client_instance`
   ({{iana-entity-profile}}). Issuers MAY include additional values
   registered with the "Actor Profile" usage location in the OAuth
@@ -1445,7 +1451,7 @@ which mechanism established the binding and which key or certificate
 was bound to the instance. If the AS cannot establish such an
 instance-specific, policy-backed binding, it MUST reject the request
 with `invalid_request` ({{errors}}). This is a SPIFFE compatibility
-path only. A reminted Client Instance Assertion MUST contain `cnf` so
+path only. A re-minted Client Instance Assertion MUST contain `cnf` so
 that the binding key is supplied by the same authority that named the
 instance.
 
@@ -1679,19 +1685,19 @@ OAuth `client_id` claim. To allow such SVIDs to be presented as
 `actor_token` without re-minting, this profile defines an optional
 SPIFFE compatibility mode driven entirely by descriptor
 configuration. An AS is not required to support raw JWT-SVID
-compatibility in order to support reminted Client Instance
+compatibility in order to support re-minted Client Instance
 Assertions with `subject_syntax` = "spiffe".
 
 The AS MUST select the validation path (raw JWT-SVID compatibility or
-reminted Client Instance Assertion) once, from the matched
+re-minted Client Instance Assertion) once, from the matched
 descriptor's configuration, before validating the assertion, and
 MUST apply that path's rules exclusively. A descriptor that satisfies
 the conditions in {{spiffe-client-id-omission}} selects raw JWT-SVID
-compatibility; otherwise the reminted-assertion rules in {{claims}}
+compatibility; otherwise the re-minted assertion rules in {{claims}}
 and {{signing}} apply.
 
 When a raw JWT-SVID is presented under this compatibility mode, it is
-not a reminted Client Instance Assertion and is not required to carry
+not a re-minted Client Instance Assertion and is not required to carry
 the `client-instance+jwt` JWS `typ` value. The AS instead validates the
 JWT-SVID according to the SPIFFE JWT-SVID validation rules and the
 descriptor constraints in this section. The AS MUST accept only
@@ -1740,7 +1746,7 @@ CIMD document or stored at the AS), is itself the per-client binding:
 a workload's SPIFFE ID is bound to a client by the client explicitly
 listing the prefix that contains it, or by omitting `spiffe_id` and
 thereby delegating the whole trust domain. This is the same model
-SPIFFE-CLIENT-AUTH uses for client authentication, applied here to
+{{SPIFFE-CLIENT-AUTH}} uses for client authentication, applied here to
 actor identity. Clients SHOULD include `spiffe_id` unless
 whole-domain delegation is intentional.
 
@@ -1753,8 +1759,8 @@ and applicability to the trust domain in the descriptor's
 `trust_domain` (or the trust domain implied by `spiffe_id`), and MUST
 reject instance assertions whose `iss` does not correspond to a key in the
 bundle for the relevant trust domain. The bundle endpoint format,
-freshness, and rotation rules follow SPIFFE; see
-{{SPIFFE-CLIENT-AUTH}} for the analogous handling in client
+freshness, rotation rules, and TLS authentication (WebPKI) follow
+{{SPIFFE-CLIENT-AUTH}}, the same handling used for client
 authentication.
 
 ## Error Responses {#errors}
@@ -1768,7 +1774,7 @@ defined in {{as-processing}} to error codes:
 | `actor_token` present but `actor_token_type` absent | `invalid_request` |
 | `actor_token_type` present but `actor_token` absent | `invalid_request` |
 | `client-instance-jwt` `actor_token` not a syntactically valid JWT | `invalid_request` |
-| reminted Client Instance Assertion `typ` JOSE header is not `client-instance+jwt` ({{signing}}) | `invalid_request` |
+| re-minted Client Instance Assertion `typ` JOSE header is not `client-instance+jwt` ({{signing}}) | `invalid_request` |
 | `cnf` possession verification fails ({{sender-constrained}}) | `invalid_request` |
 | instance-specific binding key cannot be established ({{sender-constrained}}) | `invalid_request` |
 | `actor_token_type` not understood and required for the grant | `unsupported_token_type` ({{RFC8693}}) |
@@ -1954,9 +1960,10 @@ declare `instance_issuers` continues to work unchanged, and existing
 access tokens in circulation when a client adds `instance_issuers`
 remain valid for their original lifetime.
 An AS MAY implement this profile while continuing to serve clients
-that don't use it: token requests are dispatched on
-`actor_token_type`, with `urn:ietf:params:oauth:token-type:client-
-instance-jwt` triggering this profile's processing
+that do not use it: token requests are dispatched on
+`actor_token_type`, with
+`urn:ietf:params:oauth:token-type:client-instance-jwt`
+triggering this profile's processing
 ({{as-processing}}) and other (or absent) values processed under
 their own specifications. ASes SHOULD advertise support via
 `actor_token_types_supported` ({{as-metadata}}). A client MAY
@@ -1966,9 +1973,9 @@ instance assertions for every issued access token can register
 ({{instance-assertion-auth}}), which intrinsically requires the
 `actor_token`.
 
-### Migration without reminted cnf {#adoption-without-cnf}
+### Migration without re-minted cnf {#adoption-without-cnf}
 
-Reminted Client Instance Assertions require `cnf` ({{claims}}).
+Re-minted Client Instance Assertions require `cnf` ({{claims}}).
 A deployment whose workload identity system does not yet emit
 per-instance keys has three options:
 
@@ -2012,7 +2019,7 @@ Client Instance Assertion AS:
   `urn:ietf:params:oauth:token-type:client-instance-jwt`. Such an AS
   MUST implement {{as-processing}}, {{sender-constrained}},
   {{access-token}}, {{chain-merging}}, and {{errors}}. It MUST also
-  implement {{ACTOR-PROFILE}}. This capability covers reminted
+  implement {{ACTOR-PROFILE}}. This capability covers re-minted
   Client Instance Assertions containing `cnf`; support for raw
   JWT-SVID compatibility is a separate capability.
 
@@ -2181,7 +2188,7 @@ high rate of distinct `jti` values from a single issuer is a signal
 of either a misbehaving runtime or compromise.
 
 The replay surface depends on whether `cnf` is present and verified
-at presentation ({{sender-constrained}}). For reminted Client
+at presentation ({{sender-constrained}}). For re-minted Client
 Instance Assertions `cnf` is required, making them non-bearer at
 presentation: an attacker with only the JWT cannot use it without
 also possessing the `cnf` private key. The only profile-defined
@@ -2504,7 +2511,7 @@ Specification Document(s):
 This appendix records design choices that motivated the normative
 text.
 
-## Why not a client_instance request parameter?
+## Why not a `client_instance` request parameter?
 {:numbered="false"}
 
 A new top-level `client_instance` parameter would have to flow through
@@ -2513,7 +2520,7 @@ access token, and several existing extensions. Each is a separate
 specification touch-point and a deployment cliff. Reusing `actor_token`
 keeps the protocol surface unchanged.
 
-## Why extend actor_token to non-token-exchange grants?
+## Why extend `actor_token` to non-token-exchange grants?
 {:numbered="false"}
 
 {{RFC8693}} already defines request parameters for presenting an
@@ -2570,7 +2577,7 @@ should look up trust via the `instance_issuers` client metadata,
 nor that `client_id` binding applies. A dedicated URN lets ASes route processing unambiguously
 and lets clients advertise support via `actor_token_types_supported`.
 
-## Why reuse actor_token in the self-acting case? {#rationale-self-acting}
+## Why reuse `actor_token` in the self-acting case? {#rationale-self-acting}
 {:numbered="false"}
 
 In the self-acting case ({{access-token-self-acting}}) the issued
@@ -2607,7 +2614,7 @@ specification readers should treat `actor_token` in this profile as
 its placement in the issued access token (`act` vs. `sub`) is governed by
 {{access-token-classification}}.
 
-## Why a token_endpoint_auth_method rather than a client_assertion_type? {#rationale-auth-method}
+## Why a `token_endpoint_auth_method` rather than a `client_assertion_type`? {#rationale-auth-method}
 {:numbered="false"}
 
 {{SPIFFE-CLIENT-AUTH}} models its workload-identity-as-client-auth
