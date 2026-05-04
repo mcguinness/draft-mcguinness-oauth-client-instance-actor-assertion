@@ -1654,8 +1654,8 @@ JWT-SVID or X.509-SVID in place of a client secret. It registers the
           <code>urn:ietf:params:oauth:client-assertion-type:jwt-spiffe</code> and adds CIMD
 metadata (<code>spiffe_id</code>, <code>spiffe_bundle_endpoint</code>) for resolving the
 client's SPIFFE trust bundle. Notably, its <code>spiffe_id</code> field permits a
-trailing /* wildcard, enabling one OAuth client to be authenticated
-by any SPIFFE workload whose ID matches the prefix.<a href="#section-2.3-1" class="pilcrow">¶</a></p>
+trailing "/*" wildcard, enabling one OAuth client to be authenticated
+by any SPIFFE workload whose ID matches the path-segment prefix.<a href="#section-2.3-1" class="pilcrow">¶</a></p>
 <p id="section-2.3-2">This document operates at a different layer. Its scope is <em>actor /
 instance identity</em>, not client authentication. The two specifications
 operate on different OAuth parameters and trust sources:<a href="#section-2.3-2" class="pilcrow">¶</a></p>
@@ -2166,25 +2166,26 @@ mechanism described in <a href="#revocation" class="auto internal xref">Section 
 policy to changes in a descriptor's <code>jwks_uri</code>, <code>jwks</code>, or
 <code>spiffe_bundle_endpoint</code> keys that <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> permits for changes
 in client-level keys.<a href="#section-5.3.3-2" class="pilcrow">¶</a></p>
-<p id="section-5.3.3-3">To bound the compromise recovery window, ASes issuing access tokens
-under this profile <span class="bcp14">SHOULD</span> set the access token TTL no longer than
-the metadata refresh interval plus the instance assertion's <code>exp</code>
-window (for CIMD, the cache TTL; for static registration, the
-expected lag between an admin update and AS-side propagation), plus
-the AS's JWKS or SPIFFE-bundle cache TTL for the issuer (since a
-compromised issuer signing key remains usable until the AS re-fetches
-the verification keys).<a href="#section-5.3.3-3" class="pilcrow">¶</a></p>
+<p id="section-5.3.3-3">The trust-withdrawal latency, that is, the worst-case time from
+metadata change to all derived access tokens having expired, is
+approximately the sum of the metadata refresh interval (for CIMD,
+the cache TTL; for static registration, the expected lag between an
+admin update and AS-side propagation), the instance assertion's
+<code>exp</code> window, the AS's JWKS or SPIFFE-bundle cache TTL for the
+issuer, and the access token TTL. ASes <span class="bcp14">SHOULD</span> size these components
+together so that the resulting latency matches their incident-response
+target.<a href="#section-5.3.3-3" class="pilcrow">¶</a></p>
 <p id="section-5.3.3-4">Recommended defaults: instance assertion <code>exp</code> of 5 minutes or less
 (<a href="#security-replay" class="auto internal xref">Section 12.3</a>); access-token TTL of 30 minutes or less paired
 with a metadata refresh interval of 30 minutes or less, giving a
-trust-withdrawal latency bound of approximately 35 minutes. Tighter
-deployments (5-minute access tokens with 5-minute caches, sub-15
-minutes) and looser deployments (60-minute tokens with 1-hour caches,
-approximately 2 hours) are both common; looser deployments <span class="bcp14">SHOULD</span>
-support active revocation (<a href="#revocation" class="auto internal xref">Section 10.1</a>) and introspection-based
-status checks at the resource server. Operators <span class="bcp14">SHOULD</span> treat this
-bound as a deployment-time SLO matching their incident-response
-requirements.<a href="#section-5.3.3-4" class="pilcrow">¶</a></p>
+trust-withdrawal latency of approximately 65 minutes. Tighter
+deployments (5-minute access tokens with 5-minute caches, approximately
+15 minutes) and looser deployments (60-minute tokens with 1-hour
+caches, approximately 2 hours) are both common; looser deployments
+<span class="bcp14">SHOULD</span> support active revocation (<a href="#revocation" class="auto internal xref">Section 10.1</a>) and
+introspection-based status checks at the resource server. Operators
+<span class="bcp14">SHOULD</span> treat this latency as a deployment-time SLO matching their
+incident-response requirements.<a href="#section-5.3.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="cross-org-federation">
@@ -2591,7 +2592,7 @@ values, per
             <p id="section-7.2-2.18.1">A confirmation claim <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> carrying a key bound to this
 instance. The <code>cnf</code> value <span class="bcp14">MUST</span> contain exactly one of <code>jkt</code> (a JWK
 SHA-256 thumbprint per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> Section 3.1) or <code>x5t#S256</code> (an
-X.509 certificate SHA-256 thumbprint per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span> Section 3);
+X.509 certificate SHA-256 thumbprint per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span> Section 3.1);
 other confirmation methods registered under <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> <span class="bcp14">MAY</span> appear
 in addition but <span class="bcp14">MUST NOT</span> be the only member. The instance issuer
 <span class="bcp14">MUST</span> mint <code>cnf</code> from a key the named runtime instance demonstrably
@@ -2623,8 +2624,8 @@ understood, except where this document or <span>[<a href="#ACTOR-PROFILE" class=
 processing rules. Future profiles requiring AS understanding of a
 new claim <span class="bcp14">SHOULD</span> use the JWS <code>crit</code> header parameter (<span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>
 Section 4.1.11) to mark it must-understand; ASes <span class="bcp14">MUST</span> reject
-assertions whose <code>crit</code> header includes claims they do not implement,
-and <span class="bcp14">MUST</span> reject malformed <code>crit</code> headers per <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> Section 3.10.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+assertions whose <code>crit</code> header is malformed or includes claims they
+do not implement, per <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> Section 4.1.11.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="signing">
@@ -3496,10 +3497,11 @@ a Client Instance Assertion <span class="bcp14">MUST</span> include the claims r
 </li>
             <li class="normal" id="section-8.8.1-2.2">
               <p id="section-8.8.1-2.2.1">either (a) a <code>spiffe_id</code> member is present and the <code>actor_token</code>'s
-<code>sub</code> satisfies the <code>spiffe_id</code> matching rule (exact match or
-prefix match including the "/*" wildcard), or (b) <code>spiffe_id</code> is
-absent, <code>trust_domain</code> is present, and the <code>actor_token</code>'s <code>sub</code>
-falls within that trust domain;<a href="#section-8.8.1-2.2.1" class="pilcrow">¶</a></p>
+<code>sub</code> satisfies the <code>spiffe_id</code> matching rule of <a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>
+(exact match, or with "/*", path-segment prefix match per
+<span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>), or (b) <code>spiffe_id</code> is absent,
+<code>trust_domain</code> is present, and the <code>actor_token</code>'s <code>sub</code> falls
+within that trust domain;<a href="#section-8.8.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 <p id="section-8.8.1-3">the AS <span class="bcp14">MUST</span> treat the descriptor as the per-client binding even if
@@ -4963,8 +4965,8 @@ mechanism as a <code>client_assertion_type</code>. The natural question is why
 presented as a <code>client_assertion</code> under <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> names
 <em>the client</em> (its <code>sub</code> is the <code>spiffe_id</code> of the workload acting
 as the client). The client-metadata listing of <code>spiffe_id</code>,
-including the permitted /* prefix wildcard, turns the SVID into a
-credential for the client. There is no separate notion of
+including the permitted "/*" path-segment wildcard, turns the SVID
+into a credential for the client. There is no separate notion of
 "instance" on the wire.<a href="#appendix-A.6-2" class="pilcrow">¶</a></p>
 <p id="appendix-A.6-3">A client instance assertion under this profile names <em>the
 instance</em>: its <code>sub</code> is the instance identifier and its <code>client_id</code>

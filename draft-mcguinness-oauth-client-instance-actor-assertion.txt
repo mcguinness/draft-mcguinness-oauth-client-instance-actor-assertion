@@ -299,9 +299,9 @@ Table of Contents
    client_assertion_type urn:ietf:params:oauth:client-assertion-
    type:jwt-spiffe and adds CIMD metadata (spiffe_id,
    spiffe_bundle_endpoint) for resolving the client's SPIFFE trust
-   bundle.  Notably, its spiffe_id field permits a trailing /* wildcard,
-   enabling one OAuth client to be authenticated by any SPIFFE workload
-   whose ID matches the prefix.
+   bundle.  Notably, its spiffe_id field permits a trailing "/*"
+   wildcard, enabling one OAuth client to be authenticated by any SPIFFE
+   workload whose ID matches the path-segment prefix.
 
    This document operates at a different layer.  Its scope is _actor /
    instance identity_, not client authentication.  The two
@@ -718,25 +718,25 @@ Table of Contents
    descriptor's jwks_uri, jwks, or spiffe_bundle_endpoint keys that
    [CIMD] permits for changes in client-level keys.
 
-   To bound the compromise recovery window, ASes issuing access tokens
-   under this profile SHOULD set the access token TTL no longer than the
-   metadata refresh interval plus the instance assertion's exp window
-   (for CIMD, the cache TTL; for static registration, the expected lag
-   between an admin update and AS-side propagation), plus the AS's JWKS
-   or SPIFFE-bundle cache TTL for the issuer (since a compromised issuer
-   signing key remains usable until the AS re-fetches the verification
-   keys).
+   The trust-withdrawal latency, that is, the worst-case time from
+   metadata change to all derived access tokens having expired, is
+   approximately the sum of the metadata refresh interval (for CIMD, the
+   cache TTL; for static registration, the expected lag between an admin
+   update and AS-side propagation), the instance assertion's exp window,
+   the AS's JWKS or SPIFFE-bundle cache TTL for the issuer, and the
+   access token TTL.  ASes SHOULD size these components together so that
+   the resulting latency matches their incident-response target.
 
    Recommended defaults: instance assertion exp of 5 minutes or less
    (Section 12.3); access-token TTL of 30 minutes or less paired with a
    metadata refresh interval of 30 minutes or less, giving a trust-
-   withdrawal latency bound of approximately 35 minutes.  Tighter
-   deployments (5-minute access tokens with 5-minute caches, sub-15
+   withdrawal latency of approximately 65 minutes.  Tighter deployments
+   (5-minute access tokens with 5-minute caches, approximately 15
    minutes) and looser deployments (60-minute tokens with 1-hour caches,
    approximately 2 hours) are both common; looser deployments SHOULD
    support active revocation (Section 10.1) and introspection-based
    status checks at the resource server.  Operators SHOULD treat this
-   bound as a deployment-time SLO matching their incident-response
+   latency as a deployment-time SLO matching their incident-response
    requirements.
 
 5.3.4.  Cross-Organization Federation
@@ -1032,16 +1032,16 @@ Table of Contents
    Section 8.8.1):  A confirmation claim [RFC7800] carrying a key bound
       to this instance.  The cnf value MUST contain exactly one of jkt
       (a JWK SHA-256 thumbprint per [RFC9449] Section 3.1) or x5t#S256
-      (an X.509 certificate SHA-256 thumbprint per [RFC8705] Section 3);
-      other confirmation methods registered under [RFC7800] MAY appear
-      in addition but MUST NOT be the only member.  The instance issuer
-      MUST mint cnf from a key the named runtime instance demonstrably
-      possesses (e.g., an instance-attested key, a per-instance workload
-      key, or a DPoP public key presented to the issuer at attestation
-      time).  Binding rules and AS verification are defined in
-      Section 8.5.  Raw JWT-SVID compatibility is the only exception to
-      this claim requirement, because the AS validates the SVID without
-      re-minting; see Section 8.8.1 and Section 8.5.
+      (an X.509 certificate SHA-256 thumbprint per [RFC8705]
+      Section 3.1); other confirmation methods registered under
+      [RFC7800] MAY appear in addition but MUST NOT be the only member.
+      The instance issuer MUST mint cnf from a key the named runtime
+      instance demonstrably possesses (e.g., an instance-attested key, a
+      per-instance workload key, or a DPoP public key presented to the
+      issuer at attestation time).  Binding rules and AS verification
+      are defined in Section 8.5.  Raw JWT-SVID compatibility is the
+      only exception to this claim requirement, because the AS validates
+      the SVID without re-minting; see Section 8.8.1 and Section 8.5.
 
    nbf (OPTIONAL):  Not-before time.  If present, the AS MUST reject the
       token before this time.
@@ -1058,8 +1058,8 @@ Table of Contents
    processing rules.  Future profiles requiring AS understanding of a
    new claim SHOULD use the JWS crit header parameter ([RFC7515]
    Section 4.1.11) to mark it must-understand; ASes MUST reject
-   assertions whose crit header includes claims they do not implement,
-   and MUST reject malformed crit headers per [RFC8725] Section 3.10.
+   assertions whose crit header is malformed or includes claims they do
+   not implement, per [RFC7515] Section 4.1.11.
 
 7.3.  Signing and JOSE Header
 
@@ -1792,10 +1792,10 @@ Table of Contents
    *  subject_syntax is "spiffe";
 
    *  either (a) a spiffe_id member is present and the actor_token's sub
-      satisfies the spiffe_id matching rule (exact match or prefix match
-      including the "/*" wildcard), or (b) spiffe_id is absent,
-      trust_domain is present, and the actor_token's sub falls within
-      that trust domain;
+      satisfies the spiffe_id matching rule of Section 6.1.1 (exact
+      match, or with "/*", path-segment prefix match per
+      [SPIFFE-CLIENT-AUTH]), or (b) spiffe_id is absent, trust_domain is
+      present, and the actor_token's sub falls within that trust domain;
 
    the AS MUST treat the descriptor as the per-client binding even if
    the actor_token has no client_id claim.  In this mode:
@@ -2852,8 +2852,9 @@ Why a token_endpoint_auth_method rather than a client_assertion_type?
    presented as a client_assertion under [SPIFFE-CLIENT-AUTH] names _the
    client_ (its sub is the spiffe_id of the workload acting as the
    client).  The client-metadata listing of spiffe_id, including the
-   permitted /* prefix wildcard, turns the SVID into a credential for
-   the client.  There is no separate notion of "instance" on the wire.
+   permitted "/*" path-segment wildcard, turns the SVID into a
+   credential for the client.  There is no separate notion of "instance"
+   on the wire.
 
    A client instance assertion under this profile names _the instance_:
    its sub is the instance identifier and its client_id claim names the
