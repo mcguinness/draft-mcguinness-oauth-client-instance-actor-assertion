@@ -1589,7 +1589,7 @@ reminted assertion format.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-6.4">
           <p id="section-1-6.4.1">Registers <code>client_instance_jwt</code> as a <code>token_endpoint_auth_method</code>
-value, allowing deployments without an online class-controlled
+value, allowing deployments without an online client-controlled
 credential to authenticate the client via the instance assertion
 alone.<a href="#section-1-6.4.1" class="pilcrow">¶</a></p>
 </li>
@@ -2924,12 +2924,12 @@ example, agentic services, autoscaled microservices, or ephemeral
 functions) where there is no human user authorizing operations and
 the team operating the runtime is also the natural owner of the
 workload identity provider. For these deployments, requiring a
-separate class-level credential typically means provisioning a
+separate client-level credential typically means provisioning a
 private key into every pod alongside the instance-attested
 <code>actor_token</code>, which (per <a href="#security-instance-assertion-auth" class="auto internal xref">Section 12.5</a>) does
 not meaningfully improve defense against runtime compromise. The
 mode is also appropriate where the client identifier is a logical
-CIMD URL with class-key custody centralized away from the runtime,
+CIMD URL with client-key custody centralized away from the runtime,
 or where the workload identity provider trusted to attest instances
 is the only authority the client wishes to publish.<a href="#section-8.3-2" class="pilcrow">¶</a></p>
 <p id="section-8.3-3">The trust chain to the client is preserved: the client's listing of
@@ -3152,9 +3152,9 @@ would be a bearer credential whose replay is bounded only by <code>exp</code>
 and the <code>jti</code> cache.<a href="#section-8.5-5" class="pilcrow">¶</a></p>
 <p id="section-8.5-6">The binding key <span class="bcp14">MUST</span> be specific to the validated client instance.
 A credential shared by the client as a whole, such as the
-class-level mTLS certificate authenticated under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>, the
-class's <code>private_key_jwt</code> key, or any other class-controlled key not
-provisioned per-instance, is not sufficient.<a href="#section-8.5-6" class="pilcrow">¶</a></p>
+client-level mTLS certificate authenticated under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>, the
+client's <code>private_key_jwt</code> key, or any other client-controlled key
+not provisioned per-instance, is not sufficient.<a href="#section-8.5-6" class="pilcrow">¶</a></p>
 <p id="section-8.5-7">If the actor token is a raw JWT-SVID accepted under
 <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a> and does not include a <code>cnf</code> claim, the
 AS <span class="bcp14">MUST</span> establish an instance-specific binding through some other
@@ -3184,7 +3184,7 @@ with <code>invalid_request</code> (<a href="#errors" class="auto internal xref">
 path only. A reminted Client Instance Assertion <span class="bcp14">MUST</span> contain <code>cnf</code> so
 that the binding key is supplied by the same authority that named the
 instance.<a href="#section-8.5-9" class="pilcrow">¶</a></p>
-<p id="section-8.5-10">Deployments combining class-level Mutual-TLS-bound client
+<p id="section-8.5-10">Deployments combining client-level Mutual-TLS-bound client
 authentication (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) with this profile <span class="bcp14">MUST</span> establish
 instance binding through a separate, instance-specific key. The
 typical configuration uses the client's mTLS certificate at the TLS
@@ -3193,7 +3193,7 @@ paired with <code>DPoP</code> <span>[<a href="#RFC9449" class="cite xref">RFC944
 binding. Per-instance mTLS certificates issued by the instance
 issuer (or otherwise bound to instance attestation) are an
 alternative; in that case the same TLS certificate satisfies both
-class authentication and instance binding only if the AS treats it
+client authentication and instance binding only if the AS treats it
 as belonging to the instance for binding purposes.<a href="#section-8.5-10" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -4185,7 +4185,9 @@ present; when <code>jti</code> is absent, deployments rely on sender-constraint,
 short SVID lifetimes, and audience restriction to bound replay.
 Issuers <span class="bcp14">SHOULD</span> use short lifetimes (five minutes or less) both to
 limit replay exposure and because client instances often have
-lifetimes of seconds to minutes.<a href="#section-12.3-1" class="pilcrow">¶</a></p>
+lifetimes of seconds to minutes. When refreshing access tokens
+(<a href="#refresh" class="auto internal xref">Section 8.7</a>), AS implementations <span class="bcp14">SHOULD</span> prefer requiring a fresh
+instance assertion rather than perpetuating stale instance identity.<a href="#section-12.3-1" class="pilcrow">¶</a></p>
 <p id="section-12.3-2">Replay-cache cardinality at fleet scale is bounded by the rate of
 distinct (<code>iss</code>, <code>jti</code>) tuples persisted during the retention
 window. ASes enforcing the replay check across all paths should
@@ -4211,25 +4213,17 @@ validly-signed assertions with arbitrary <code>jti</code> values. ASes <span cla
 apply per-issuer rate limits and bounded cache caps; a sustained
 high rate of distinct <code>jti</code> values from a single issuer is a signal
 of either a misbehaving runtime or compromise.<a href="#section-12.3-4" class="pilcrow">¶</a></p>
-<p id="section-12.3-5">When refreshing access tokens (<a href="#refresh" class="auto internal xref">Section 8.7</a>), AS implementations
-<span class="bcp14">SHOULD</span> prefer requiring a fresh instance assertion rather than perpetuating
-stale instance identity, especially across long refresh windows.<a href="#section-12.3-5" class="pilcrow">¶</a></p>
-<p id="section-12.3-6">The replay surface depends on whether the instance assertion carries
-<code>cnf</code> (<a href="#claims" class="auto internal xref">Section 7.2</a>) and whether the AS verifies possession at
-presentation (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). For reminted Client Instance
-Assertions, <code>cnf</code> is required: when it is present and verified, the
-instance assertion is non-bearer at presentation and an attacker with
-only the JWT cannot use it without also possessing the <code>cnf</code> private
-key. The only profile-defined case where <code>cnf</code> can be absent is raw
-JWT-SVID compatibility; in that case the AS <span class="bcp14">MUST</span> establish an
-instance-specific, policy-backed, auditable binding by other means
-per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>.
-If a raw JWT-SVID without <code>jti</code> is accepted, the replay cache cannot
-provide single-use detection and the deployment relies on sender-
-constraint and short SVID lifetimes. For the instance-assertion auth
-mode in particular (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>), where the instance
-assertion is the only client credential, ASes <span class="bcp14">MUST</span> reject requests
-whose instance assertion lacks <code>cnf</code>.<a href="#section-12.3-6" class="pilcrow">¶</a></p>
+<p id="section-12.3-5">The replay surface depends on whether <code>cnf</code> is present and verified
+at presentation (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). For reminted Client
+Instance Assertions <code>cnf</code> is required, making them non-bearer at
+presentation: an attacker with only the JWT cannot use it without
+also possessing the <code>cnf</code> private key. The only profile-defined
+case where <code>cnf</code> can be absent is raw JWT-SVID compatibility, where
+the AS <span class="bcp14">MUST</span> establish a policy-backed, auditable instance-specific
+binding per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>. For the instance-assertion auth
+mode (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>), where the instance assertion is
+the only client credential, ASes <span class="bcp14">MUST</span> reject requests whose
+instance assertion lacks <code>cnf</code>.<a href="#section-12.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-audience">
@@ -4820,12 +4814,8 @@ registration is contingent on the establishment of that registry.<a href="#secti
 <span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Rosomakho, Y.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"Workload Identity in a Multi System Environment (WIMSE) Architecture"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-arch-07</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-arch-07">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-arch-07</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="WIMSE-CREDS">[WIMSE-CREDS]</dt>
-        <dd>
-<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Sheffer, Y.</span>, and <span class="refAuthor">Y. Rosomakho</span>, <span class="refTitle">"WIMSE Workload Credentials"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-workload-creds-00</span>, <time datetime="2025-11-03" class="refDate">3 November 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-00">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-00</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="WIMSE-WPT">[WIMSE-WPT]</dt>
       <dd>
-<span class="refAuthor">Campbell, B.</span> and <span class="refAuthor">A. Schwenkschuster</span>, <span class="refTitle">"WIMSE Workload Proof Token"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-wpt-01</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-wpt-01">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-wpt-01</a>&gt;</span>. </dd>
+<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Sheffer, Y.</span>, and <span class="refAuthor">Y. Rosomakho</span>, <span class="refTitle">"WIMSE Workload Credentials"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-workload-creds-00</span>, <time datetime="2025-11-03" class="refDate">3 November 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-00">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-00</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

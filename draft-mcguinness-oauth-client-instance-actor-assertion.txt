@@ -245,7 +245,7 @@ Table of Contents
       assertion format.
 
    *  Registers client_instance_jwt as a token_endpoint_auth_method
-      value, allowing deployments without an online class-controlled
+      value, allowing deployments without an online client-controlled
       credential to authenticate the client via the instance assertion
       alone.
 
@@ -1297,11 +1297,11 @@ Table of Contents
    functions) where there is no human user authorizing operations and
    the team operating the runtime is also the natural owner of the
    workload identity provider.  For these deployments, requiring a
-   separate class-level credential typically means provisioning a
+   separate client-level credential typically means provisioning a
    private key into every pod alongside the instance-attested
    actor_token, which (per Section 12.5) does not meaningfully improve
    defense against runtime compromise.  The mode is also appropriate
-   where the client identifier is a logical CIMD URL with class-key
+   where the client identifier is a logical CIMD URL with client-key
    custody centralized away from the runtime, or where the workload
    identity provider trusted to attest instances is the only authority
    the client wishes to publish.
@@ -1499,9 +1499,9 @@ Table of Contents
    by exp and the jti cache.
 
    The binding key MUST be specific to the validated client instance.  A
-   credential shared by the client as a whole, such as the class-level
-   mTLS certificate authenticated under [RFC8705], the class's
-   private_key_jwt key, or any other class-controlled key not
+   credential shared by the client as a whole, such as the client-level
+   mTLS certificate authenticated under [RFC8705], the client's
+   private_key_jwt key, or any other client-controlled key not
    provisioned per-instance, is not sufficient.
 
    If the actor token is a raw JWT-SVID accepted under Section 8.8.1 and
@@ -1532,7 +1532,7 @@ Table of Contents
    that the binding key is supplied by the same authority that named the
    instance.
 
-   Deployments combining class-level Mutual-TLS-bound client
+   Deployments combining client-level Mutual-TLS-bound client
    authentication ([RFC8705]) with this profile MUST establish instance
    binding through a separate, instance-specific key.  The typical
    configuration uses the client's mTLS certificate at the TLS layer for
@@ -1540,8 +1540,8 @@ Table of Contents
    with DPoP [RFC9449] at the token endpoint for instance binding.  Per-
    instance mTLS certificates issued by the instance issuer (or
    otherwise bound to instance attestation) are an alternative; in that
-   case the same TLS certificate satisfies both class authentication and
-   instance binding only if the AS treats it as belonging to the
+   case the same TLS certificate satisfies both client authentication
+   and instance binding only if the AS treats it as belonging to the
    instance for binding purposes.
 
 8.6.  Access Token Representation
@@ -2260,6 +2260,9 @@ Table of Contents
    audience restriction to bound replay.  Issuers SHOULD use short
    lifetimes (five minutes or less) both to limit replay exposure and
    because client instances often have lifetimes of seconds to minutes.
+   When refreshing access tokens (Section 8.7), AS implementations
+   SHOULD prefer requiring a fresh instance assertion rather than
+   perpetuating stale instance identity.
 
    Replay-cache cardinality at fleet scale is bounded by the rate of
    distinct (iss, jti) tuples persisted during the retention window.
@@ -2289,24 +2292,14 @@ Table of Contents
    distinct jti values from a single issuer is a signal of either a
    misbehaving runtime or compromise.
 
-   When refreshing access tokens (Section 8.7), AS implementations
-   SHOULD prefer requiring a fresh instance assertion rather than
-   perpetuating stale instance identity, especially across long refresh
-   windows.
-
-   The replay surface depends on whether the instance assertion carries
-   cnf (Section 7.2) and whether the AS verifies possession at
-   presentation (Section 8.5).  For reminted Client Instance Assertions,
-   cnf is required: when it is present and verified, the instance
-   assertion is non-bearer at presentation and an attacker with only the
-   JWT cannot use it without also possessing the cnf private key.  The
-   only profile-defined case where cnf can be absent is raw JWT-SVID
-   compatibility; in that case the AS MUST establish an instance-
-   specific, policy-backed, auditable binding by other means per
-   Section 8.5.  If a raw JWT-SVID without jti is accepted, the replay
-   cache cannot provide single-use detection and the deployment relies
-   on sender- constraint and short SVID lifetimes.  For the instance-
-   assertion auth mode in particular (Section 8.3), where the instance
+   The replay surface depends on whether cnf is present and verified at
+   presentation (Section 8.5).  For reminted Client Instance Assertions
+   cnf is required, making them non-bearer at presentation: an attacker
+   with only the JWT cannot use it without also possessing the cnf
+   private key.  The only profile-defined case where cnf can be absent
+   is raw JWT-SVID compatibility, where the AS MUST establish a policy-
+   backed, auditable instance-specific binding per Section 8.5.  For the
+   instance-assertion auth mode (Section 8.3), where the instance
    assertion is the only client credential, ASes MUST reject requests
    whose instance assertion lacks cnf.
 
@@ -2737,13 +2730,6 @@ Table of Contents
               ietf-wimse-workload-creds-00, 3 November 2025,
               <https://datatracker.ietf.org/doc/html/draft-ietf-wimse-
               workload-creds-00>.
-
-   [WIMSE-WPT]
-              Campbell, B. and A. Schwenkschuster, "WIMSE Workload Proof
-              Token", Work in Progress, Internet-Draft, draft-ietf-
-              wimse-wpt-01, 2 March 2026,
-              <https://datatracker.ietf.org/doc/html/draft-ietf-wimse-
-              wpt-01>.
 
 Design Rationale
 
