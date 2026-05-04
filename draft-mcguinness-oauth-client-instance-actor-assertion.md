@@ -1,6 +1,6 @@
 ---
-title: "OAuth 2.0 Actor Token Extension and Client Instance Assertion Profile"
-abbrev: "oauth-actor-token-extension"
+title: "OAuth 2.0 Actor Token Grant Extension and Client Instance Assertion Profile"
+abbrev: "oauth-actor-token-grant-extension"
 category: std
 
 docname: draft-mcguinness-oauth-client-instance-actor-assertion-latest
