@@ -39,20 +39,20 @@ normative:
   RFC7519:
   RFC7523:
   RFC7591:
+  RFC7662:
   RFC7800:
   RFC8414:
   RFC8693:
+  RFC8705:
   RFC8725:
   RFC9068:
+  RFC9449:
   CIMD: I-D.ietf-oauth-client-id-metadata-document
   ACTOR-PROFILE: I-D.mcguinness-oauth-actor-profile
   ENTITY-PROFILES: I-D.mora-oauth-entity-profiles
 
 informative:
   RFC7009:
-  RFC7662:
-  RFC8705:
-  RFC9449:
   RFC9101:
   RFC9126:
   RFC8707:
@@ -842,13 +842,13 @@ How the issuer internally authenticates the runtime is out of scope.
 A common deployment pattern wraps an underlying workload identity
 system (Kubernetes projected service-account tokens, AWS IMDS, GCP
 metadata server, Azure managed identity, a SPIFFE control plane,
-etc.) in a thin OAuth-aware adapter that re-mints a client instance
-instance assertion by adding the claims required by this profile and
-signing with a key registered in the issuer's descriptor. From the
-AS's perspective, the adapter is the instance issuer; the adapter
-SHOULD enforce the per-class authorization rule above, since
-underlying workload-identity systems typically do not know about
-OAuth client classes.
+etc.) in a thin OAuth-aware adapter that re-mints a Client Instance
+Assertion by adding the claims required by this profile and signing
+with a key registered in the issuer's descriptor. From the AS's
+perspective, the adapter is the instance issuer; the adapter SHOULD
+enforce the per-class authorization rule above, since underlying
+workload-identity systems typically do not know about OAuth client
+classes.
 
 ## JWT Claims {#claims}
 
