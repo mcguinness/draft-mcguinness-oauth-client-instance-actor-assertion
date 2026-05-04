@@ -49,6 +49,7 @@ normative:
   RFC9449:
   ACTOR-PROFILE: I-D.mcguinness-oauth-actor-profile
   ENTITY-PROFILES: I-D.mora-oauth-entity-profiles
+  SPIFFE-CLIENT-AUTH: I-D.ietf-oauth-spiffe-client-auth
 
 informative:
   RFC7009:
@@ -56,7 +57,6 @@ informative:
   RFC9126:
   RFC8707:
   CIMD: I-D.ietf-oauth-client-id-metadata-document
-  SPIFFE-CLIENT-AUTH: I-D.ietf-oauth-spiffe-client-auth
   WIMSE-ARCH: I-D.ietf-wimse-arch
   WIMSE-CREDS: I-D.ietf-wimse-workload-creds
   SPIFFE:
@@ -240,8 +240,7 @@ directly as `actor_token` without re-minting; the descriptor format
 and processing rules are in {{instance-issuers}} and
 {{spiffe-compatibility}}. A deployment combining
 {{SPIFFE-CLIENT-AUTH}} with this profile MAY present the same SVID
-as both `client_assertion` and `actor_token` in a single request;
-an end-to-end recipe is in {{appendix-spiffe-recipe}}.
+as both `client_assertion` and `actor_token` in a single request.
 
 ## Relationship to WIMSE Workload Credentials {#relationship-wimse}
 
@@ -2591,7 +2590,7 @@ claim names the client. The same JWT is required to do double duty
 only when the client chooses
 `token_endpoint_auth_method` = `client_instance_jwt`; in every
 other auth method, a separate client credential authenticates the
-class and the instance assertion names the instance.
+client and the instance assertion names the instance.
 
 Modeling the dual-use case as a `client_assertion_type` would have
 required either (a) inventing a second token type identical to
@@ -2603,156 +2602,6 @@ actually happening, namely that the AS authenticates the client
 implicitly from its client-metadata endorsement of the instance
 assertion's issuer, while keeping `client_assertion` and
 `actor_token` semantically distinct.
-
-# SPIFFE Deployment Recipe {#appendix-spiffe-recipe}
-{:numbered="false"}
-
-This appendix walks through an end-to-end SPIFFE deployment
-combining {{SPIFFE-CLIENT-AUTH}} for client authentication and this
-profile for instance identity, using the same JWT-SVID for both. The
-recipe is non-normative.
-
-The same JWT-SVID flows from the SPIFFE Workload API through the AS
-to the resource server: no re-minting, no OAuth-aware adapter, one
-artifact serving both client authentication and instance identity.
-
-## Setup {#appendix-spiffe-setup}
-{:numbered="false"}
-
-The OAuth client is identified by a CIMD URL,
-https://app.example.com/agent. The client is deployed across SPIFFE
-workloads under the trust domain example.com, with all instances
-under the path prefix /agent.
-
-The client's CIMD document declares both client authentication
-(SPIFFE-CLIENT-AUTH) and instance trust (this profile). Both point
-at the same SPIFFE bundle endpoint:
-
-~~~ json
-{
-  "client_id": "https://app.example.com/agent",
-  "spiffe_id": "spiffe://example.com/agent/*",
-  "spiffe_bundle_endpoint":
-      "https://spiffe.example.com/bundle",
-  "instance_issuers": [
-    {
-      "issuer": "spiffe://example.com",
-      "spiffe_bundle_endpoint":
-          "https://spiffe.example.com/bundle",
-      "subject_syntax": "spiffe",
-      "trust_domain": "example.com",
-      "spiffe_id": "spiffe://example.com/agent/*"
-    }
-  ]
-}
-~~~
-
-The top-level `spiffe_id` (under SPIFFE-CLIENT-AUTH) and the
-descriptor's `spiffe_id` (under this profile) intentionally match: any
-workload under spiffe://example.com/agent/* counts both as the
-client and as a permitted instance.
-
-## Workload Token Request {#appendix-spiffe-request}
-{:numbered="false"}
-
-A workload spiffe://example.com/agent/inst-01 obtains a JWT-SVID
-from the SPIFFE Workload API with audience set to the AS
-(https://as.example.com), then issues a `client_credentials` request
-that uses the SVID as both `client_assertion` and `actor_token` and
-presents a DPoP proof with a workload-held key:
-
-~~~ http-message
-POST /token HTTP/1.1
-Host: as.example.com
-Content-Type: application/x-www-form-urlencoded
-DPoP: <DPoP proof bound to the workload's key>
-
-grant_type=client_credentials
-&scope=repo.write
-&client_id=https%3A%2F%2Fapp.example.com%2Fagent
-&client_assertion_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-spiffe
-&client_assertion=eyJhbGciOiJFUzI1NiIs...
-&actor_token=eyJhbGciOiJFUzI1NiIs...
-&actor_token_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
-~~~
-
-`client_assertion` and `actor_token` carry the byte-identical JWT-SVID:
-
-~~~ json
-{
-  "alg": "ES256",
-  "kid": "4vC8agycHu6rnkEEJYAH6VuCe4JoSkPV",
-  "typ": "JWT"
-}
-~~~
-
-~~~ json
-{
-  "iss": "spiffe://example.com",
-  "sub": "spiffe://example.com/agent/inst-01",
-  "aud": "https://as.example.com",
-  "iat": 1770000000,
-  "exp": 1770000300
-}
-~~~
-
-The SVID has no `client_id` claim and is not re-minted; SPIFFE
-compatibility ({{spiffe-client-id-omission}}) handles the binding
-structurally via the descriptor's `spiffe_id`. This example uses a
-separate workload-held DPoP key for sender-constraint; the AS accepts
-that key only because deployment-specific policy binds it to the same
-runtime named by the JWT-SVID's `sub`, and the AS logs that binding
-basis. Deployments that require the instance issuer itself to assert
-the binding key can instead re-mint the SVID into a Client Instance
-Assertion containing `cnf`.
-
-## AS Processing {#appendix-spiffe-as}
-{:numbered="false"}
-
-The AS:
-
-1. Resolves the CIMD document at https://app.example.com/agent.
-2. Authenticates the client per {{SPIFFE-CLIENT-AUTH}}: the
-   `client_assertion`'s `sub` (spiffe://example.com/agent/inst-01) is
-   matched against the top-level `spiffe_id` (spiffe://example.com/agent/*),
-   and the SVID signature is verified against the SPIFFE bundle.
-3. Validates the `actor_token` under this profile: matches the
-   descriptor (issuer = spiffe://example.com), verifies the
-   signature against the same SPIFFE bundle, validates JWT claims,
-   confirms the `sub` falls under the descriptor's `spiffe_id`, and
-   accepts the absence of a `client_id` claim per
-   {{spiffe-client-id-omission}}.
-4. Classifies as self-acting (`client_credentials` grant).
-5. Issues a sender-constrained access token. The `cnf` is established
-   per the deployment's binding mechanism. In this example, the AS
-   accepts the DPoP proof key because local policy or attestation
-   binds that key to the workload named by the JWT-SVID, and records
-   the binding mechanism in audit logs. With mTLS, a per-instance
-   X.509-SVID certificate can serve as the binding key.
-
-## Issued Access Token {#appendix-spiffe-access-token}
-{:numbered="false"}
-
-~~~ json
-{
-  "iss": "https://as.example.com",
-  "aud": "https://api.example.com",
-  "sub": "spiffe://example.com/agent/inst-01",
-  "sub_profile": "client_instance",
-  "client_id": "https://app.example.com/agent",
-  "scope": "repo.write",
-  "iat": 1770000005,
-  "exp": 1770000305,
-  "cnf": { "jkt": "0ZcOCORZNYy...iguA4I" }
-}
-~~~
-
-The access token's `client_id` is the client (the CIMD URL),
-`sub` is the SPIFFE ID of the specific instance, and `cnf` binds the
-token to the instance's key. No re-minting was required at any
-point in the workload's flow.
 
 # Worked Examples {#appendix-examples}
 {:numbered="false"}
