@@ -2184,7 +2184,10 @@ mechanism described in <a href="#revocation" class="auto internal xref">Section 
 under this profile <span class="bcp14">SHOULD</span> set the access token TTL no longer than
 the metadata refresh interval plus the instance assertion's <code>exp</code>
 window (for CIMD, the cache TTL; for static registration, the
-expected lag between an admin update and AS-side propagation).<a href="#section-5.3.3-3" class="pilcrow">¶</a></p>
+expected lag between an admin update and AS-side propagation), plus
+the AS's JWKS or SPIFFE-bundle cache TTL for the issuer (since a
+compromised issuer signing key remains usable until the AS re-fetches
+the verification keys).<a href="#section-5.3.3-3" class="pilcrow">¶</a></p>
 <p id="section-5.3.3-4">Recommended defaults that satisfy this bound: instance assertion
 <code>exp</code> of 5 minutes or less (<a href="#security-replay" class="auto internal xref">Section 12.3</a>); access-token TTL
 of 30 minutes or less paired with a metadata refresh interval
@@ -2651,7 +2654,8 @@ understood, except where this document or <span>[<a href="#ACTOR-PROFILE" class=
 processing rules. Future profiles requiring AS understanding of a
 new claim <span class="bcp14">SHOULD</span> use the JWS <code>crit</code> header parameter (<span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>
 Section 4.1.11) to mark it must-understand; ASes <span class="bcp14">MUST</span> reject
-assertions whose <code>crit</code> header includes claims they do not implement.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+assertions whose <code>crit</code> header includes claims they do not implement,
+and <span class="bcp14">MUST</span> reject malformed <code>crit</code> headers per <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> Section 3.10.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="signing">
@@ -3153,7 +3157,12 @@ means whose key is attributable to the validated instance. The AS
 are acceptable for raw JWT-SVIDs, and <span class="bcp14">MUST</span> reject the request unless
 that policy establishes that the presented DPoP key or mTLS
 certificate belongs to the same runtime named by the JWT-SVID's
-<code>sub</code>. Acceptable binding mechanisms include:<a href="#section-8.5-7" class="pilcrow">¶</a></p>
+<code>sub</code>. The binding mechanism <span class="bcp14">MUST</span> establish key custody through a
+channel independent of the JWT-SVID itself (for example,
+issuer-provisioned per-instance credentials or a workload attestation
+channel that names the same <code>sub</code>); accepting a DPoP key solely
+because it accompanied a valid JWT-SVID is not a binding and reduces
+this mode to bearer-with-<code>aud</code>. Acceptable binding mechanisms include:<a href="#section-8.5-7" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.5-8.1">
             <p id="section-8.5-8.1.1">a per-instance mTLS client certificate provisioned by the instance
@@ -3342,19 +3351,22 @@ not represented as a claim in the self-acting access token. Trust
 in the instance issuer is structural: the AS validated the instance
 assertion against the descriptor in <a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a> before
 issuance, and the resource server trusts the AS.<a href="#section-8.6.3-3" class="pilcrow">¶</a></p>
-<p id="section-8.6.3-4">A client that lists multiple instance issuers <span class="bcp14">SHOULD</span> ensure
+<p id="section-8.6.3-4">A client that lists multiple instance issuers <span class="bcp14">MUST</span> ensure
 those issuers' <code>sub</code> spaces do not collide within the client (for
 example, by using disjoint naming conventions, prefixes, or a
-SPIFFE trust-domain split). Single-issuer clients avoid cross-issuer
-collision, but the instance issuer still <span class="bcp14">MUST NOT</span> reassign an active
-or audit-relevant <code>sub</code> value to a different runtime. Issuers <span class="bcp14">SHOULD</span>
-use stable, non-reassigned subjects or include sufficient generation
-or session uniqueness in <code>sub</code> to distinguish runtime incarnations.
-If subject reassignment is unavoidable, the client, issuer, and AS
-audit logs need enough lifecycle metadata to distinguish the old and
-new runtimes. ASes <span class="bcp14">MAY</span> apply additional namespacing (for example,
-prefixing <code>sub</code> with the descriptor's issuer in a deterministic form
-such as <code>&lt;issuer&gt;#&lt;sub&gt;</code>) when they cannot otherwise determine that
+SPIFFE trust-domain split); when the client cannot guarantee
+disjoint spaces, the AS <span class="bcp14">SHOULD</span> apply namespacing (below) to prevent
+a compromised issuer from spoofing another's <code>sub</code>. Single-issuer
+clients avoid cross-issuer collision, but the instance issuer still
+<span class="bcp14">MUST NOT</span> reassign an active or audit-relevant <code>sub</code> value to a
+different runtime. Issuers <span class="bcp14">SHOULD</span> use stable, non-reassigned subjects
+or include sufficient generation or session uniqueness in <code>sub</code> to
+distinguish runtime incarnations. If subject reassignment is
+unavoidable, the client, issuer, and AS audit logs need enough
+lifecycle metadata to distinguish the old and new runtimes. ASes
+<span class="bcp14">MAY</span> apply additional namespacing (for example, prefixing <code>sub</code> with
+the descriptor's issuer in a deterministic form such as
+<code>&lt;issuer&gt;#&lt;sub&gt;</code>) when they cannot otherwise determine that
 asserted <code>sub</code> values are unique within the client; such namespacing
 is a deployment-side choice and does not affect the wire format of
 the <code>actor_token</code>. If the AS applies such namespacing, the resulting
@@ -3426,11 +3438,14 @@ include <code>actor_token</code> and <code>actor_token_type</code> (<a href="#to
 a refresh request to supply a fresh instance assertion (for example,
 to rotate the underlying assertion before its <code>exp</code>); when present,
 the <code>actor_token</code> <span class="bcp14">MUST</span> be bound to the same <code>cnf</code> key as the refresh
-token and <span class="bcp14">MUST</span> pass the token-type check, instance issuer descriptor
-lookup, signature verification, JWT claim validation, and <code>client_id</code>
-binding checks defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a>. The AS <span class="bcp14">MUST</span> reject with
-<code>invalid_grant</code> any refresh request whose presented <code>actor_token</code> is
-not bound to the same <code>cnf</code> key as the refresh token.<a href="#section-8.7-2" class="pilcrow">¶</a></p>
+token, <span class="bcp14">MUST</span> have <code>(iss, sub)</code> matching those recorded at the
+refresh token's original issuance, and <span class="bcp14">MUST</span> pass the token-type
+check, instance issuer descriptor lookup, signature verification,
+JWT claim validation, and <code>client_id</code> binding checks defined in
+<a href="#as-processing" class="auto internal xref">Section 8.2</a>. The AS <span class="bcp14">MUST</span> reject with <code>invalid_grant</code> any
+refresh request whose presented <code>actor_token</code> is not bound to the
+same <code>cnf</code> key, or whose <code>(iss, sub)</code> differ from those recorded at
+issuance.<a href="#section-8.7-2" class="pilcrow">¶</a></p>
 <p id="section-8.7-3">Because the refresh token is bound to the originating instance, it
 is implicitly invalidated when that instance terminates. This keeps
 <code>act.sub</code> (delegation) or <code>sub</code> (self-acting) stable across the
@@ -3476,7 +3491,14 @@ SPIFFE compatibility mode driven entirely by descriptor
 configuration. An AS is not required to support raw JWT-SVID
 compatibility in order to support reminted Client Instance
 Assertions with <code>subject_syntax</code> = "spiffe".<a href="#section-8.8-1" class="pilcrow">¶</a></p>
-<p id="section-8.8-2">When a raw JWT-SVID is presented under this compatibility mode, it is
+<p id="section-8.8-2">The AS <span class="bcp14">MUST</span> select the validation path (raw JWT-SVID compatibility or
+reminted Client Instance Assertion) once, from the matched
+descriptor's configuration, before validating the assertion, and
+<span class="bcp14">MUST</span> apply that path's rules exclusively. A descriptor that satisfies
+the conditions in <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a> selects raw JWT-SVID
+compatibility; otherwise the reminted-assertion rules in <a href="#claims" class="auto internal xref">Section 7.2</a>
+and <a href="#signing" class="auto internal xref">Section 7.3</a> apply.<a href="#section-8.8-2" class="pilcrow">¶</a></p>
+<p id="section-8.8-3">When a raw JWT-SVID is presented under this compatibility mode, it is
 not a reminted Client Instance Assertion and is not required to carry
 the <code>client-instance+jwt</code> JWS <code>typ</code> value. The AS instead validates the
 JWT-SVID according to the SPIFFE JWT-SVID validation rules and the
@@ -3491,7 +3513,7 @@ require <code>jti</code>, an AS that accepts a raw JWT-SVID without <code>jti</c
 protection; if <code>jti</code> is present, the AS <span class="bcp14">MUST</span> apply the replay-cache
 rule in <a href="#security-replay" class="auto internal xref">Section 12.3</a>. A deployment that re-mints the SVID into
 a Client Instance Assertion <span class="bcp14">MUST</span> include the claims required by
-<a href="#claims" class="auto internal xref">Section 7.2</a> and <span class="bcp14">MUST</span> use <code>typ</code> = <code>client-instance+jwt</code> per <a href="#signing" class="auto internal xref">Section 7.3</a>.<a href="#section-8.8-2" class="pilcrow">¶</a></p>
+<a href="#claims" class="auto internal xref">Section 7.2</a> and <span class="bcp14">MUST</span> use <code>typ</code> = <code>client-instance+jwt</code> per <a href="#signing" class="auto internal xref">Section 7.3</a>.<a href="#section-8.8-3" class="pilcrow">¶</a></p>
 <div id="spiffe-client-id-omission">
 <section id="section-8.8.1">
           <h4 id="name-client-id-claim-omission">
@@ -4113,7 +4135,9 @@ modify it can add a new instance issuer under their control.
 Clients publishing CIMD metadata <span class="bcp14">MUST</span> protect the publication
 channel (per <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>'s requirement of HTTPS) and the storage
 backing it; deployments using static registration <span class="bcp14">MUST</span> protect the
-registration store and any administrative API used to update it.<a href="#section-12.1-3" class="pilcrow">¶</a></p>
+registration store and any administrative API used to update it.
+ASes resolving CIMD documents inherit <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>'s security
+considerations covering transport, intermediary caches, and DNS.<a href="#section-12.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-lifecycle">
@@ -4210,13 +4234,20 @@ time = <code>exp</code> plus permitted clock skew) is a natural fit. The
 shared-cache requirement does not apply on cnf-bound paths that are
 operated in the documented reusable-assertion mode, since cnf+PoP
 verification is itself correctness-preserving across replicas.<a href="#section-12.3-3" class="pilcrow">¶</a></p>
-<p id="section-12.3-4">Replay-cache flooding is a denial-of-service surface: an attacker
+<p id="section-12.3-4">Reusable mode shifts the blast radius of <code>cnf</code>-key compromise from
+"one access token per assertion" (bounded by the strict replay cache)
+to "rate-limit ceiling within <code>exp</code>": an attacker who steals the
+<code>cnf</code> private key and the assertion can present it repeatedly until
+expiration. The deployment's per-assertion rate limit is therefore
+the bound on this threat, and ASes operating in reusable mode <span class="bcp14">SHOULD</span>
+size that limit accordingly.<a href="#section-12.3-4" class="pilcrow">¶</a></p>
+<p id="section-12.3-5">Replay-cache flooding is a denial-of-service surface: an attacker
 holding a compromised instance issuer's signing key can mint
 validly-signed assertions with arbitrary <code>jti</code> values. ASes <span class="bcp14">SHOULD</span>
 apply per-issuer rate limits and bounded cache caps; a sustained
 high rate of distinct <code>jti</code> values from a single issuer is a signal
-of either a misbehaving runtime or compromise.<a href="#section-12.3-4" class="pilcrow">¶</a></p>
-<p id="section-12.3-5">The replay surface depends on whether <code>cnf</code> is present and verified
+of either a misbehaving runtime or compromise.<a href="#section-12.3-5" class="pilcrow">¶</a></p>
+<p id="section-12.3-6">The replay surface depends on whether <code>cnf</code> is present and verified
 at presentation (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). For reminted Client
 Instance Assertions <code>cnf</code> is required, making them non-bearer at
 presentation: an attacker with only the JWT cannot use it without
@@ -4226,7 +4257,7 @@ the AS <span class="bcp14">MUST</span> establish a policy-backed, auditable inst
 binding per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>. For the instance-assertion auth
 mode (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>), where the instance assertion is
 the only client credential, ASes <span class="bcp14">MUST</span> reject requests whose
-instance assertion lacks <code>cnf</code>.<a href="#section-12.3-5" class="pilcrow">¶</a></p>
+instance assertion lacks <code>cnf</code>.<a href="#section-12.3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-audience">

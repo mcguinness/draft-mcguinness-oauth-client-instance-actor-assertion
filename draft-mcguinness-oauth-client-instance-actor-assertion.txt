@@ -737,7 +737,10 @@ Table of Contents
    under this profile SHOULD set the access token TTL no longer than the
    metadata refresh interval plus the instance assertion's exp window
    (for CIMD, the cache TTL; for static registration, the expected lag
-   between an admin update and AS-side propagation).
+   between an admin update and AS-side propagation), plus the AS's JWKS
+   or SPIFFE-bundle cache TTL for the issuer (since a compromised issuer
+   signing key remains usable until the AS re-fetches the verification
+   keys).
 
    Recommended defaults that satisfy this bound: instance assertion exp
    of 5 minutes or less (Section 12.3); access-token TTL of 30 minutes
@@ -1086,7 +1089,8 @@ Table of Contents
    processing rules.  Future profiles requiring AS understanding of a
    new claim SHOULD use the JWS crit header parameter ([RFC7515]
    Section 4.1.11) to mark it must-understand; ASes MUST reject
-   assertions whose crit header includes claims they do not implement.
+   assertions whose crit header includes claims they do not implement,
+   and MUST reject malformed crit headers per [RFC8725] Section 3.10.
 
 7.3.  Signing and JOSE Header
 
@@ -1513,8 +1517,13 @@ Table of Contents
    identifying which binding mechanisms are acceptable for raw JWT-
    SVIDs, and MUST reject the request unless that policy establishes
    that the presented DPoP key or mTLS certificate belongs to the same
-   runtime named by the JWT-SVID's sub.  Acceptable binding mechanisms
-   include:
+   runtime named by the JWT-SVID's sub.  The binding mechanism MUST
+   establish key custody through a channel independent of the JWT-SVID
+   itself (for example, issuer-provisioned per-instance credentials or a
+   workload attestation channel that names the same sub); accepting a
+   DPoP key solely because it accompanied a valid JWT-SVID is not a
+   binding and reduces this mode to bearer-with-aud.  Acceptable binding
+   mechanisms include:
 
    *  a per-instance mTLS client certificate provisioned by the instance
       issuer (or otherwise tied to instance attestation) and presented
@@ -1660,16 +1669,18 @@ Table of Contents
    assertion against the descriptor in Section 6.1.1 before issuance,
    and the resource server trusts the AS.
 
-   A client that lists multiple instance issuers SHOULD ensure those
+   A client that lists multiple instance issuers MUST ensure those
    issuers' sub spaces do not collide within the client (for example, by
    using disjoint naming conventions, prefixes, or a SPIFFE trust-domain
-   split).  Single-issuer clients avoid cross-issuer collision, but the
-   instance issuer still MUST NOT reassign an active or audit-relevant
-   sub value to a different runtime.  Issuers SHOULD use stable, non-
-   reassigned subjects or include sufficient generation or session
-   uniqueness in sub to distinguish runtime incarnations.  If subject
-   reassignment is unavoidable, the client, issuer, and AS audit logs
-   need enough lifecycle metadata to distinguish the old and new
+   split); when the client cannot guarantee disjoint spaces, the AS
+   SHOULD apply namespacing (below) to prevent a compromised issuer from
+   spoofing another's sub.  Single-issuer clients avoid cross-issuer
+   collision, but the instance issuer still MUST NOT reassign an active
+   or audit-relevant sub value to a different runtime.  Issuers SHOULD
+   use stable, non-reassigned subjects or include sufficient generation
+   or session uniqueness in sub to distinguish runtime incarnations.  If
+   subject reassignment is unavoidable, the client, issuer, and AS audit
+   logs need enough lifecycle metadata to distinguish the old and new
    runtimes.  ASes MAY apply additional namespacing (for example,
    prefixing sub with the descriptor's issuer in a deterministic form
    such as <issuer>#<sub>) when they cannot otherwise determine that
@@ -1731,12 +1742,14 @@ Table of Contents
    include actor_token and actor_token_type (Section 8.1) on a refresh
    request to supply a fresh instance assertion (for example, to rotate
    the underlying assertion before its exp); when present, the
-   actor_token MUST be bound to the same cnf key as the refresh token
-   and MUST pass the token-type check, instance issuer descriptor
-   lookup, signature verification, JWT claim validation, and client_id
-   binding checks defined in Section 8.2.  The AS MUST reject with
-   invalid_grant any refresh request whose presented actor_token is not
-   bound to the same cnf key as the refresh token.
+   actor_token MUST be bound to the same cnf key as the refresh token,
+   MUST have (iss, sub) matching those recorded at the refresh token's
+   original issuance, and MUST pass the token-type check, instance
+   issuer descriptor lookup, signature verification, JWT claim
+   validation, and client_id binding checks defined in Section 8.2.  The
+   AS MUST reject with invalid_grant any refresh request whose presented
+   actor_token is not bound to the same cnf key, or whose (iss, sub)
+   differ from those recorded at issuance.
 
    Because the refresh token is bound to the originating instance, it is
    implicitly invalidated when that instance terminates.  This keeps
@@ -1776,6 +1789,14 @@ Table of Contents
    AS is not required to support raw JWT-SVID compatibility in order to
    support reminted Client Instance Assertions with subject_syntax =
    "spiffe".
+
+   The AS MUST select the validation path (raw JWT-SVID compatibility or
+   reminted Client Instance Assertion) once, from the matched
+   descriptor's configuration, before validating the assertion, and MUST
+   apply that path's rules exclusively.  A descriptor that satisfies the
+   conditions in Section 8.8.1 selects raw JWT-SVID compatibility;
+   otherwise the reminted-assertion rules in Section 7.2 and Section 7.3
+   apply.
 
    When a raw JWT-SVID is presented under this compatibility mode, it is
    not a reminted Client Instance Assertion and is not required to carry
@@ -2211,7 +2232,9 @@ Table of Contents
    publishing CIMD metadata MUST protect the publication channel (per
    [CIMD]'s requirement of HTTPS) and the storage backing it;
    deployments using static registration MUST protect the registration
-   store and any administrative API used to update it.
+   store and any administrative API used to update it.  ASes resolving
+   CIMD documents inherit [CIMD]'s security considerations covering
+   transport, intermediary caches, and DNS.
 
 12.2.  Instance Lifecycle
 
@@ -2292,6 +2315,14 @@ Table of Contents
    does not apply on cnf-bound paths that are operated in the documented
    reusable-assertion mode, since cnf+PoP verification is itself
    correctness-preserving across replicas.
+
+   Reusable mode shifts the blast radius of cnf-key compromise from "one
+   access token per assertion" (bounded by the strict replay cache) to
+   "rate-limit ceiling within exp": an attacker who steals the cnf
+   private key and the assertion can present it repeatedly until
+   expiration.  The deployment's per-assertion rate limit is therefore
+   the bound on this threat, and ASes operating in reusable mode SHOULD
+   size that limit accordingly.
 
    Replay-cache flooding is a denial-of-service surface: an attacker
    holding a compromised instance issuer's signing key can mint validly-
