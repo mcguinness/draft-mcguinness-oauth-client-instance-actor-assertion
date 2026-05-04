@@ -2436,6 +2436,24 @@ the AS supports at least the default value "uri".<a href="#section-6.2-4.2.1" cl
 <p id="section-6.2-5">In addition, an AS that supports <a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a> <span class="bcp14">MUST</span>
 advertise <code>client_instance_jwt</code> in
 <code>token_endpoint_auth_methods_supported</code> (<span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>).<a href="#section-6.2-5" class="pilcrow">¶</a></p>
+<p id="section-6.2-6">Example AS metadata document (abridged):<a href="#section-6.2-6" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-6.2-7">
+<pre>
+{
+  "issuer": "https://as.example.com",
+  "token_endpoint": "https://as.example.com/token",
+  "token_endpoint_auth_methods_supported": [
+    "private_key_jwt",
+    "client_instance_jwt"
+  ],
+  "actor_token_types_supported": [
+    "urn:ietf:params:oauth:token-type:client-instance-jwt"
+  ],
+  "subject_syntaxes_supported": ["uri", "spiffe"],
+  "dpop_signing_alg_values_supported": ["ES256", "RS256"]
+}
+</pre><a href="#section-6.2-7" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 </section>
@@ -2726,6 +2744,16 @@ defining the validation, authorization-time consistency, sender-
 constraint, representation, refresh, client authentication, SPIFFE
 compatibility, and error rules specific to the <code>client-instance-jwt</code>
 token type.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">This profile applies whether the AS issues JWT access tokens
+(<span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>) or opaque (reference) access tokens. The
+representation rules in <a href="#access-token" class="auto internal xref">Section 8.6</a> describe the <em>claims</em> an
+issued access token carries (<code>act</code>, <code>sub</code>, <code>client_id</code>, <code>cnf</code>,
+<code>sub_profile</code>); for JWT access tokens these appear directly in the
+token payload, while for opaque access tokens they <span class="bcp14">MUST</span> be reflected
+in introspection responses (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>, <a href="#interactions" class="auto internal xref">Section 10.2</a>). The
+sender-constraint binding in <a href="#sender-constrained" class="auto internal xref">Section 8.5</a> applies to both
+formats; the binding key is verified at presentation regardless of
+whether the access token is self-contained or requires introspection.<a href="#section-8-2" class="pilcrow">¶</a></p>
 <div id="token-request">
 <section id="section-8.1">
         <h3 id="name-token-request">
@@ -4175,6 +4203,38 @@ granularity matches the auditing need.<a href="#section-12.9-2.2.1" class="pilcr
 <p id="section-12.9-3">The error response guidance in <a href="#errors" class="auto internal xref">Section 8.9</a> extends to logs and audit
 trails: instance assertion contents <span class="bcp14">SHOULD</span> be logged at a level commensurate
 with the sensitivity of the workload identity they convey.<a href="#section-12.9-3" class="pilcrow">¶</a></p>
+<p id="section-12.9-4">For incident response, per-instance revocation (<a href="#per-instance-revocation" class="auto internal xref">Section 10.1.2</a>),
+and operational audit, ASes issuing access tokens under this profile
+<span class="bcp14">SHOULD</span> log at least the following at issuance time, subject to the
+sensitivity guidance above:<a href="#section-12.9-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-12.9-5.1">
+            <p id="section-12.9-5.1.1">the authenticated <code>client_id</code> (the client class);<a href="#section-12.9-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.9-5.2">
+            <p id="section-12.9-5.2.1">the validated instance assertion's <code>iss</code> (the instance issuer) and <code>sub</code>
+(the instance identifier);<a href="#section-12.9-5.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.9-5.3">
+            <p id="section-12.9-5.3.1">the instance assertion's <code>jti</code> (for replay correlation);<a href="#section-12.9-5.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.9-5.4">
+            <p id="section-12.9-5.4.1">the <code>cnf</code> value or its thumbprint (binding the issued token to a
+specific key);<a href="#section-12.9-5.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.9-5.5">
+            <p id="section-12.9-5.5.1">the descriptor scope under which validation succeeded (in
+particular <code>trust_domain</code> and any matched <code>spiffe_id</code>); and<a href="#section-12.9-5.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.9-5.6">
+            <p id="section-12.9-5.6.1">the classification of the request (delegation or self-acting).<a href="#section-12.9-5.6.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-12.9-6">These fields together let operators answer "which instance, attested
+by which issuer, obtained which token" without re-validating the
+original assertion. They also enable the per-instance revocation
+mechanism in <a href="#per-instance-revocation" class="auto internal xref">Section 10.1.2</a>, which inherently requires
+the AS to know which active access tokens name a given instance.<a href="#section-12.9-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>

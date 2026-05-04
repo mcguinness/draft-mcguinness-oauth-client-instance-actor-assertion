@@ -909,6 +909,22 @@ Table of Contents
    client_instance_jwt in token_endpoint_auth_methods_supported
    ([RFC8414]).
 
+   Example AS metadata document (abridged):
+
+   {
+     "issuer": "https://as.example.com",
+     "token_endpoint": "https://as.example.com/token",
+     "token_endpoint_auth_methods_supported": [
+       "private_key_jwt",
+       "client_instance_jwt"
+     ],
+     "actor_token_types_supported": [
+       "urn:ietf:params:oauth:token-type:client-instance-jwt"
+     ],
+     "subject_syntaxes_supported": ["uri", "spiffe"],
+     "dpop_signing_alg_values_supported": ["ES256", "RS256"]
+   }
+
 7.  Client Instance Assertion Format
 
    This section defines client-instance-jwt — a specific
@@ -1124,6 +1140,17 @@ Table of Contents
    sender- constraint, representation, refresh, client authentication,
    SPIFFE compatibility, and error rules specific to the client-
    instance-jwt token type.
+
+   This profile applies whether the AS issues JWT access tokens
+   ([RFC9068]) or opaque (reference) access tokens.  The representation
+   rules in Section 8.6 describe the _claims_ an issued access token
+   carries (act, sub, client_id, cnf, sub_profile); for JWT access
+   tokens these appear directly in the token payload, while for opaque
+   access tokens they MUST be reflected in introspection responses
+   ([RFC7662], Section 10.2).  The sender-constraint binding in
+   Section 8.5 applies to both formats; the binding key is verified at
+   presentation regardless of whether the access token is self-contained
+   or requires introspection.
 
 8.1.  Token Request
 
@@ -2230,6 +2257,32 @@ Table of Contents
    trails: instance assertion contents SHOULD be logged at a level
    commensurate with the sensitivity of the workload identity they
    convey.
+
+   For incident response, per-instance revocation (Section 10.1.2), and
+   operational audit, ASes issuing access tokens under this profile
+   SHOULD log at least the following at issuance time, subject to the
+   sensitivity guidance above:
+
+   *  the authenticated client_id (the client class);
+
+   *  the validated instance assertion's iss (the instance issuer) and
+      sub (the instance identifier);
+
+   *  the instance assertion's jti (for replay correlation);
+
+   *  the cnf value or its thumbprint (binding the issued token to a
+      specific key);
+
+   *  the descriptor scope under which validation succeeded (in
+      particular trust_domain and any matched spiffe_id); and
+
+   *  the classification of the request (delegation or self-acting).
+
+   These fields together let operators answer "which instance, attested
+   by which issuer, obtained which token" without re-validating the
+   original assertion.  They also enable the per-instance revocation
+   mechanism in Section 10.1.2, which inherently requires the AS to know
+   which active access tokens name a given instance.
 
 13.  IANA Considerations
 
