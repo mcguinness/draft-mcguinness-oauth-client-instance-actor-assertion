@@ -8,7 +8,8 @@ Intended status: Standards Track                              1 May 2026
 Expires: 2 November 2026
 
 
- OAuth 2.0 Actor Token Extension and Client Instance Assertion Profile
+  OAuth 2.0 Actor Token Grant Extension and Client Instance Assertion
+                                Profile
      draft-mcguinness-oauth-client-instance-actor-assertion-latest
 
 Abstract
