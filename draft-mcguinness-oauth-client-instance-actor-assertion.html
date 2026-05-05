@@ -2380,45 +2380,10 @@ An instance issuer <span class="bcp14">MUST</span> refuse to mint an instance as
 authorized, by issuer-side policy, as a member.<a href="#section-7.1-5.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.1-6">How the issuer internally authenticates the runtime is out of scope.
-A common deployment pattern wraps an underlying workload identity
-system (Kubernetes projected service-account tokens, AWS IMDS, GCP
-metadata server, Azure managed identity, a SPIFFE control plane,
-etc.) in an OAuth-aware adapter that re-mints a Client Instance
-Assertion by adding the claims required by this profile and signing
-with a key registered in the issuer's descriptor. From the AS's
-perspective, the adapter is the instance issuer; the adapter <span class="bcp14">SHOULD</span>
-enforce the per-client authorization rule above, since underlying
-workload-identity systems typically do not know about OAuth clients
-or their class-and-instance relationship. Operationally, the
-adapter holds the (<code>spiffe_id</code> or other workload identifier) →
-<code>client_id</code> mapping, the OAuth signing keys (registered in the
-descriptor), and re-issues at the underlying credential's rotation
-cadence; deployments size it accordingly (sidecar, per-cluster
-service, or centralized issuer with HA).<a href="#section-7.1-6" class="pilcrow">¶</a></p>
-<p id="section-7.1-7">For workloads with X.509-SVIDs, the X.509-SVID can serve as the
-binding key in two shapes:<a href="#section-7.1-7" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-7.1-8.1">
-            <p id="section-7.1-8.1.1"><strong>Re-minted with <code>cnf</code></strong>: an adapter mints a Client Instance
-Assertion whose <code>cnf.x5t#S256</code> is the SHA-256 thumbprint of the
-workload's X.509-SVID certificate. The workload presents the
-assertion as <code>actor_token</code> and the same X.509-SVID at TLS under
-<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>; the AS verifies that the TLS certificate thumbprint
-matches <code>cnf.x5t#S256</code>. Use this shape when an OAuth-aware adapter
-is available.<a href="#section-7.1-8.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-7.1-8.2">
-            <p id="section-7.1-8.2.1"><strong>Raw JWT-SVID with X.509 binding</strong> (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>):
-the workload presents its JWT-SVID directly as <code>actor_token</code> (no
-re-mint, no <code>cnf</code>) and its X.509-SVID at TLS; the AS treats the
-X.509-SVID as the sender-constraint binding under
-<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>. Use this shape when the workload runs
-against unmodified SPIFFE infrastructure.<a href="#section-7.1-8.2.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<p id="section-7.1-9">Both ground the binding in the SPIFFE trust domain that issued the
-SVID and avoid a separate DPoP key.<a href="#section-7.1-9" class="pilcrow">¶</a></p>
+<p id="section-7.1-6">How the issuer internally authenticates the runtime is out of
+scope. Common deployment patterns (adapter, raw JWT-SVID
+compatibility, X.509-SVID binding) are described in
+<a href="#adoption-without-cnf" class="auto internal xref">Section 10.1</a>.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="claims">
@@ -3799,19 +3764,52 @@ A deployment whose workload identity system does not yet emit
 per-instance keys has three options:<a href="#section-10.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-10.1-2.1">
-            <p id="section-10.1-2.1.1"><strong>Adapter pattern</strong>: an OAuth-aware adapter re-mints a Client
-Instance Assertion with <code>cnf</code> from the underlying workload
-credential (<a href="#issuer-obligations" class="auto internal xref">Section 7.1</a>). Recommended for non-SPIFFE
-deployments and for SPIFFE deployments that can run an adapter.<a href="#section-10.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-10.1-2.1.1"><strong>Adapter pattern</strong>: an OAuth-aware adapter wraps an existing
+workload identity system (Kubernetes projected service-account
+tokens, AWS IMDS, GCP metadata server, Azure managed identity, a
+SPIFFE control plane, etc.) and re-mints a Client Instance
+Assertion with <code>cnf</code> from the underlying credential, signing with
+a key registered in the issuer's descriptor. From the AS's
+perspective, the adapter is the instance issuer
+(<a href="#issuer-obligations" class="auto internal xref">Section 7.1</a>); the adapter enforces the per-client
+authorization rule, since underlying workload-identity systems
+typically do not know about OAuth clients or their
+class-and-instance relationship. The adapter holds the
+workload-identifier → <code>client_id</code> mapping, the OAuth signing
+keys, and re-issues at the underlying credential's rotation
+cadence. Recommended for non-SPIFFE deployments and for SPIFFE
+deployments that can run an adapter.<a href="#section-10.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-10.1-2.2">
             <p id="section-10.1-2.2.1"><strong>Raw JWT-SVID compatibility</strong>: the SVID is presented as
 <code>actor_token</code> without re-minting and the AS establishes binding
 through a channel independent of the SVID
 (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>, <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). The
-SPIFFE-native path; pairs naturally with an X.509-SVID from the
-same workload at the TLS layer (<a href="#issuer-obligations" class="auto internal xref">Section 7.1</a>; worked
-example in <a href="#appendix-examples-spiffe" class="auto internal xref">Appendix "SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID Binding)"</a>).<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
+SPIFFE-native path. For workloads with X.509-SVIDs, the
+X.509-SVID can serve as the binding key in two shapes:<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.1-2.2.2.1">
+                <p id="section-10.1-2.2.2.1.1"><strong>Re-minted with <code>cnf</code></strong>: an adapter mints a Client Instance
+Assertion whose <code>cnf.x5t#S256</code> is the SHA-256 thumbprint of
+the workload's X.509-SVID certificate. The workload presents
+the assertion as <code>actor_token</code> and the same X.509-SVID at
+TLS under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>; the AS verifies that the TLS
+certificate thumbprint matches <code>cnf.x5t#S256</code>. Use when an
+OAuth-aware adapter is available.<a href="#section-10.1-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-10.1-2.2.2.2">
+                <p id="section-10.1-2.2.2.2.1"><strong>Raw JWT-SVID with X.509 binding</strong>: the workload presents
+its JWT-SVID directly as <code>actor_token</code> (no re-mint, no
+<code>cnf</code>) and its X.509-SVID at TLS; the AS treats the
+X.509-SVID as the sender-constraint binding under
+<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>. Use when the workload runs against
+unmodified SPIFFE infrastructure.<a href="#section-10.1-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+<p id="section-10.1-2.2.3">
+Both ground the binding in the SPIFFE trust domain that issued
+the SVID and avoid a separate DPoP key. Worked example in
+<a href="#appendix-examples-spiffe" class="auto internal xref">Appendix "SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID Binding)"</a>.<a href="#section-10.1-2.2.3" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-10.1-2.3">
             <p id="section-10.1-2.3.1"><strong>Defer adoption</strong> until the workload identity system can emit
