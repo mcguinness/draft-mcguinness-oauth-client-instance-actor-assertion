@@ -2903,10 +2903,12 @@ matched descriptor satisfies the SPIFFE compatibility conditions
 (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>); if not, reject with
 <code>invalid_grant</code>. When the descriptor satisfies those conditions,
 the AS <span class="bcp14">MUST</span> verify that the <code>actor_token</code>'s <code>sub</code> falls under the
-descriptor's <code>spiffe_id</code> (with wildcard expansion if any); if not,
-reject with <code>invalid_grant</code>. After <code>client_id</code> binding succeeds,
-apply the <code>(iss, jti)</code> replay check per <a href="#security-replay" class="auto internal xref">Section 12.3</a>;
-reject with <code>invalid_grant</code> if a previously seen tuple is found.
+descriptor's SPIFFE scope: <code>spiffe_id</code> when present, otherwise the
+descriptor's <code>trust_domain</code>; if not, reject with <code>invalid_grant</code>.
+After <code>client_id</code> binding succeeds, apply replay checking per
+<a href="#security-replay" class="auto internal xref">Section 12.3</a>; reject with <code>invalid_grant</code> if a previously
+seen tuple is found. For raw JWT-SVIDs, this replay check applies
+only when <code>jti</code> is present.
 The replay check follows <code>client_id</code> binding so that an attacker
 cannot burn a legitimate client's <code>jti</code> by presenting the assertion
 under a mismatched <code>client_id</code>.<a href="#section-8.2-4.7.1" class="pilcrow">¶</a></p>
@@ -3607,16 +3609,19 @@ rules and the descriptor's <code>spiffe_bundle_endpoint</code>;<a href="#section
             <p id="section-8.8-6.6.1">validate <code>iat</code> if present;<a href="#section-8.8-6.6.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.8-6.7">
-            <p id="section-8.8-6.7.1">apply the replay-cache rule in <a href="#security-replay" class="auto internal xref">Section 12.3</a> if <code>jti</code> is
-present;<a href="#section-8.8-6.7.1" class="pilcrow">¶</a></p>
+            <p id="section-8.8-6.7.1">validate <code>nbf</code> if present;<a href="#section-8.8-6.7.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.8-6.8">
-            <p id="section-8.8-6.8.1">validate <code>sub</code> as a SPIFFE ID and enforce the descriptor's
-<code>spiffe_id</code>, or <code>trust_domain</code> when <code>spiffe_id</code> is absent; and<a href="#section-8.8-6.8.1" class="pilcrow">¶</a></p>
+            <p id="section-8.8-6.8.1">apply the replay-cache rule in <a href="#security-replay" class="auto internal xref">Section 12.3</a> if <code>jti</code> is
+present;<a href="#section-8.8-6.8.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.8-6.9">
-            <p id="section-8.8-6.9.1">establish an instance-specific sender-constraint binding per
-<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>.<a href="#section-8.8-6.9.1" class="pilcrow">¶</a></p>
+            <p id="section-8.8-6.9.1">validate <code>sub</code> as a SPIFFE ID and enforce the descriptor's
+<code>spiffe_id</code>, or <code>trust_domain</code> when <code>spiffe_id</code> is absent; and<a href="#section-8.8-6.9.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-8.8-6.10">
+            <p id="section-8.8-6.10.1">establish an instance-specific sender-constraint binding per
+   <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>.<a href="#section-8.8-6.10.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="section-8.8-7">In raw JWT-SVID mode, the JWT-SVID's <code>iss</code> claim <span class="bcp14">MUST</span> identify the
@@ -3719,10 +3724,12 @@ whole-domain delegation is intentional.<a href="#section-8.8.1-6" class="pilcrow
 <code>jwks_uri</code> or <code>jwks</code>, the AS resolves verification keys via the SPIFFE
 trust bundle endpoint. The AS <span class="bcp14">MUST</span> validate the bundle's freshness
 and applicability to the trust domain in the descriptor's
-<code>trust_domain</code> (or the trust domain implied by <code>spiffe_id</code>), and <span class="bcp14">MUST</span>
-reject instance assertions whose <code>iss</code> does not correspond to a key in the
-bundle for the relevant trust domain. The bundle endpoint format,
-freshness, rotation rules, and TLS authentication (WebPKI) follow
+<code>trust_domain</code> (or the trust domain implied by <code>spiffe_id</code>). The AS
+<span class="bcp14">MUST</span> verify JWT signatures with JWT authority keys from the bundle
+for the relevant trust domain, and <span class="bcp14">MUST</span> separately require the
+assertion's <code>iss</code> and <code>sub</code> to satisfy the descriptor's issuer and
+SPIFFE scope constraints. The bundle endpoint format, freshness,
+rotation rules, and TLS authentication (WebPKI) follow
 <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>, the same handling used for client
 authentication. When the AS uses an X.509-SVID at the TLS layer for
 sender-constraint binding under raw-JWT-SVID compatibility

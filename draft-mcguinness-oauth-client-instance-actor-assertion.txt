@@ -1290,14 +1290,15 @@ Table of Contents
         matched descriptor satisfies the SPIFFE compatibility conditions
         (Section 8.8.1); if not, reject with invalid_grant.  When the
         descriptor satisfies those conditions, the AS MUST verify that
-        the actor_token's sub falls under the descriptor's spiffe_id
-        (with wildcard expansion if any); if not, reject with
-        invalid_grant.  After client_id binding succeeds, apply the
-        (iss, jti) replay check per Section 12.3; reject with
-        invalid_grant if a previously seen tuple is found.  The replay
-        check follows client_id binding so that an attacker cannot burn
-        a legitimate client's jti by presenting the assertion under a
-        mismatched client_id.
+        the actor_token's sub falls under the descriptor's SPIFFE scope:
+        spiffe_id when present, otherwise the descriptor's trust_domain;
+        if not, reject with invalid_grant.  After client_id binding
+        succeeds, apply replay checking per Section 12.3; reject with
+        invalid_grant if a previously seen tuple is found.  For raw JWT-
+        SVIDs, this replay check applies only when jti is present.  The
+        replay check follows client_id binding so that an attacker
+        cannot burn a legitimate client's jti by presenting the
+        assertion under a mismatched client_id.
 
    8.   *Enforce delegation policy.* Apply the AS's local maximum
         delegation depth per [ACTOR-PROFILE].
@@ -1870,27 +1871,29 @@ Table of Contents
 
    In raw JWT-SVID mode, the AS MUST:
 
-   1.  match the descriptor by exact comparison of the JWT-SVID iss to
-       the descriptor's issuer;
+   1.   match the descriptor by exact comparison of the JWT-SVID iss to
+        the descriptor's issuer;
 
-   2.  require subject_syntax = "spiffe";
+   2.   require subject_syntax = "spiffe";
 
-   3.  validate the token as a JWT-SVID using SPIFFE JWT-SVID validation
-       rules and the descriptor's spiffe_bundle_endpoint;
+   3.   validate the token as a JWT-SVID using SPIFFE JWT-SVID
+        validation rules and the descriptor's spiffe_bundle_endpoint;
 
-   4.  accept only claims that are valid under SPIFFE;
+   4.   accept only claims that are valid under SPIFFE;
 
-   5.  validate aud and exp;
+   5.   validate aud and exp;
 
-   6.  validate iat if present;
+   6.   validate iat if present;
 
-   7.  apply the replay-cache rule in Section 12.3 if jti is present;
+   7.   validate nbf if present;
 
-   8.  validate sub as a SPIFFE ID and enforce the descriptor's
-       spiffe_id, or trust_domain when spiffe_id is absent; and
+   8.   apply the replay-cache rule in Section 12.3 if jti is present;
 
-   9.  establish an instance-specific sender-constraint binding per
-       Section 8.5.
+   9.   validate sub as a SPIFFE ID and enforce the descriptor's
+        spiffe_id, or trust_domain when spiffe_id is absent; and
+
+   10.  establish an instance-specific sender-constraint binding per
+        Section 8.5.
 
    In raw JWT-SVID mode, the JWT-SVID's iss claim MUST identify the
    SPIFFE JWT-SVID issuer for the trust domain and MUST exactly match
@@ -1969,15 +1972,16 @@ Table of Contents
    jwks_uri or jwks, the AS resolves verification keys via the SPIFFE
    trust bundle endpoint.  The AS MUST validate the bundle's freshness
    and applicability to the trust domain in the descriptor's
-   trust_domain (or the trust domain implied by spiffe_id), and MUST
-   reject instance assertions whose iss does not correspond to a key in
-   the bundle for the relevant trust domain.  The bundle endpoint
-   format, freshness, rotation rules, and TLS authentication (WebPKI)
-   follow [SPIFFE-CLIENT-AUTH], the same handling used for client
-   authentication.  When the AS uses an X.509-SVID at the TLS layer for
-   sender-constraint binding under raw-JWT-SVID compatibility
-   (Section 8.5), the X.509-SVID is validated against the X.509 trust
-   anchors served by the same SPIFFE bundle.
+   trust_domain (or the trust domain implied by spiffe_id).  The AS MUST
+   verify JWT signatures with JWT authority keys from the bundle for the
+   relevant trust domain, and MUST separately require the assertion's
+   iss and sub to satisfy the descriptor's issuer and SPIFFE scope
+   constraints.  The bundle endpoint format, freshness, rotation rules,
+   and TLS authentication (WebPKI) follow [SPIFFE-CLIENT-AUTH], the same
+   handling used for client authentication.  When the AS uses an
+   X.509-SVID at the TLS layer for sender-constraint binding under raw-
+   JWT-SVID compatibility (Section 8.5), the X.509-SVID is validated
+   against the X.509 trust anchors served by the same SPIFFE bundle.
 
 8.9.  Error Responses
 
