@@ -157,7 +157,9 @@ the actor token grant extension, this document:
 
 What this document does *not* do:
 
-* It does not introduce a `client_instance` request parameter.
+* It does not introduce a `client_instance` or
+  `client_instance_assertion` request parameter (see
+  {{rationale-no-instance-assertion-param}}).
 * It does not change the syntax or processing of the `act` claim
   beyond what {{ACTOR-PROFILE}} already defines.
 * It does not define authorization endpoint interactions for
@@ -420,9 +422,6 @@ are the parts a new profile is expected to redefine.
 
 # Client Instance Model {#client-instance-model}
 
-This section describes the architecture, registration models, and
-trust delegation that underpin the `client-instance-jwt` profile.
-
 A registered OAuth client commonly abstracts over many concrete
 runtimes (e.g., the Slack OAuth client across iOS, Android, web, and
 server-side; an agent platform across each running agent or session).
@@ -431,6 +430,23 @@ each runtime can be named, attested, and bound to access tokens
 individually. For agent platforms, a sub-agent spawned by an agent
 is represented as a nested actor via token-exchange
 ({{chain-merging}}).
+
+This profile makes two separable design decisions for that model.
+*Request shape*: how a runtime proves its instance identity to the
+AS. This document reuses `actor_token` from {{RFC8693}} (with
+`actor_token_type` =
+`urn:ietf:params:oauth:token-type:client-instance-jwt`), avoiding a
+new request parameter for the same wire role
+({{rationale-no-instance-assertion-param}}). *Token shape*: how the
+AS represents the validated instance in issued tokens. The instance
+appears in `act` (delegation case) or top-level `sub` (self-acting
+case) per {{ACTOR-PROFILE}}, with top-level `cnf` as the binding.
+The two decisions are independent; profiles that prefer a different
+request shape can layer on the same token shape.
+
+The remainder of this section covers the architecture
+({{architecture}}), registration models ({{registration-models}}),
+and trust delegation model ({{trust-model}}).
 
 ## Architecture {#architecture}
 
@@ -2676,6 +2692,27 @@ the authorization request, the token request, introspection, the
 access token, and several existing extensions. Each is a separate
 specification touch-point and a deployment cliff. Reusing `actor_token`
 keeps the protocol surface unchanged.
+
+## Why not a dedicated `client_instance_assertion` request parameter? {#rationale-no-instance-assertion-param}
+{:numbered="false"}
+
+A dedicated `client_instance_assertion` parameter would name what
+this profile carries on the wire more directly than a typed
+`actor_token`. Reusing `actor_token` is preferred for three reasons.
+First, this document also defines the actor token grant extension
+({{grant-extension}}): a wire mechanism for any `actor_token_type`
+to appear on grants beyond token-exchange. A separate
+`client_instance_assertion` parameter would not eliminate
+`actor_token`; it would parallel it for one use case, doubling the
+wire surface. Second, the validated artifact's token-side role is
+already to populate `act` (delegation case) or `sub` (self-acting
+case) per {{ACTOR-PROFILE}}; using `actor_token` on the request side
+aligns request and token semantics. Third, an `actor_token_type` URN
+is a well-known IANA-registered extension point; clients with
+existing `actor_token` plumbing pick up `client-instance-jwt` without
+parser changes. Profiles that prefer a dedicated request parameter
+can be defined later as a wire-syntax sibling without changing the
+token shape defined here.
 
 ## Why extend `actor_token` to non-token-exchange grants?
 {:numbered="false"}
