@@ -391,19 +391,6 @@ individually. For agent platforms, a sub-agent spawned by an agent
 is represented as a nested actor via token-exchange
 ({{chain-merging}}).
 
-This profile makes two separable design decisions for that model.
-*Request shape*: how a runtime proves its instance identity to the
-AS. This document reuses `actor_token` from {{RFC8693}} (with
-`actor_token_type` =
-`urn:ietf:params:oauth:token-type:client-instance-jwt`), avoiding a
-new request parameter for the same wire role
-({{rationale-no-instance-assertion-param}}). *Token shape*: how the
-AS represents the validated instance in issued tokens. The instance
-appears in `act` (delegation case) or top-level `sub` (self-acting
-case) per {{ACTOR-PROFILE}}, with top-level `cnf` as the binding.
-The two decisions are independent; profiles that prefer a different
-request shape can layer on the same token shape.
-
 The remainder of this section covers the architecture
 ({{architecture}}), registration models ({{registration-models}}),
 and trust delegation model ({{trust-model}}).
@@ -511,33 +498,23 @@ in the client's registered metadata.
 By listing an instance issuer in its `instance_issuers` metadata
 ({{instance-issuers}}), a client delegates to that issuer the
 authority to attest that a concrete runtime is an instance of the
-client. This delegation is bounded by the descriptor; the AS
-MUST enforce, and the instance issuer MUST honor, the following
-limits:
+client. The descriptor bounds the delegation: `trust_domain`,
+`subject_syntax`, `spiffe_id`, and `signing_alg_values_supported`
+constrain what the issuer may assert and what the AS will accept
+({{instance-issuers}}). The issuer's per-client minting obligations
+are in {{issuer-obligations}}; client-side guidance on choosing
+issuers is in {{security-trust-model}}.
 
-* The asserted `sub` MUST fall within `trust_domain` when present and
-  MUST conform to `subject_syntax` when present.
-* For SPIFFE descriptors, the asserted `sub` MUST satisfy
-  `spiffe_id` when present; if `spiffe_id` is absent, `trust_domain`
-  MUST be present and the asserted `sub` MUST fall within that trust
-  domain.
-* The signing `alg` MUST be among `signing_alg_values_supported` when
-  present.
-
-A client MUST NOT list instance issuers it does not control or
-trust to enforce these bounds. An instance issuer accepting delegation
-MUST NOT mint instance assertions naming this `client_id` outside the
-delegated scope, and MUST NOT mint instance assertions whose `client_id` names
-a client for which the runtime has not been authorized as a member
-({{issuer-obligations}}). This per-client minting requirement is what prevents
-cross-client instance impersonation when the same instance issuer is
-listed by multiple OAuth clients (for example, in multi-tenant
-SaaS).
+The per-client minting requirement (an issuer mints assertions
+naming a given `client_id` only for runtimes authorized as
+instances of that client) prevents cross-client instance
+impersonation when the same instance issuer is listed by multiple
+OAuth clients.
 
 Because the `instance_issuers` listing endorses the issuer to mint
-tokens naming this `client_id`, an instance assertion signed by such
-an issuer is itself attributable to the client. A client MAY exploit this to use
-the instance assertion as its client credential; see
+tokens naming this `client_id`, an instance assertion signed by
+such an issuer is itself attributable to the client. This makes the
+assertion usable as the client credential under
 {{instance-assertion-auth}}.
 
 ### Authority of the Authorization Server {#trust-model-as}
@@ -557,69 +534,28 @@ mutable. When the client's metadata changes (for example, an
 instance issuer is removed, its `jwks_uri` or `jwks` rotates, its
 `trust_domain` or `spiffe_id` is replaced, or its
 `signing_alg_values_supported` narrows), updates take effect
-according to the registration model:
-for CIMD, the AS applies the same freshness and re-fetch rules it
-applies to other CIMD-published trust material such as `jwks_uri`
-(see {{CIMD}}); for static registration, updates take effect when
-the AS's registration store is updated and re-read.
+according to the registration model: for CIMD, the AS applies the
+same freshness and re-fetch rules it applies to other
+CIMD-published trust material such as `jwks_uri` (see {{CIMD}});
+for static registration, updates take effect when the AS's
+registration store is updated and re-read.
 
-While the AS may continue to honor a stale descriptor (within the
-CIMD cache window, or before a static-registration update has been
-applied), this profile imposes no additional revocation requirement
-on previously issued access tokens. After the AS has adopted the
-updated metadata, the AS SHOULD treat further use of access tokens
-whose validated instance identity is no longer endorsed by the
-client as invalid:
-
-* for delegation tokens, when the `act` claim names a removed
-  instance issuer or falls outside the descriptor's updated scope;
-* for self-acting tokens, when the instance issuer recorded by the
-  AS at issuance time has been removed, or when the access token's
-  `sub` falls outside the descriptor's updated scope.
-
-Where the deployment supports it, this is naturally enforced by
-access-token introspection and short access-token lifetimes; AS
-implementations MAY additionally revoke such tokens per {{RFC7009}},
-including via the per-instance mechanism described in
-{{revocation}}. ASes MAY apply the same policy to changes in a
-descriptor's `jwks_uri`, `jwks`, or `spiffe_bundle_endpoint` keys
-that {{CIMD}} permits for changes in client-level keys.
-
-The trust-withdrawal latency, that is, the worst-case time from
-metadata change to all derived access tokens having expired, is
-approximately the sum of the metadata refresh interval (for CIMD,
-the cache TTL; for static registration, the expected lag between an
-admin update and AS-side propagation), the instance assertion's
-`exp` window, the AS's JWKS or SPIFFE-bundle cache TTL for the
-issuer, and the access token TTL. ASes SHOULD size these components
-together so that the resulting latency matches their incident-response
-target.
-
-Recommended defaults: instance assertion `exp` of 5 minutes or less
-({{security-replay}}); access-token TTL of 30 minutes or less paired
-with a metadata refresh interval of 30 minutes or less, giving a
-trust-withdrawal latency of approximately 65 minutes. Tighter
-deployments (5-minute access tokens with 5-minute caches, approximately
-15 minutes) and looser deployments (60-minute tokens with 1-hour
-caches, approximately 2 hours) are both common; looser deployments
-SHOULD support active revocation ({{revocation}}) and
-introspection-based status checks at the resource server. Operators
-SHOULD treat this latency as a deployment-time SLO matching their
-incident-response requirements.
+While the AS may continue to honor a stale descriptor within the
+propagation window, this profile imposes no additional revocation
+requirement on previously issued access tokens. AS treatment of
+access tokens whose validated instance identity is no longer
+endorsed after the update is governed by {{revocation}}; sizing
+the resulting trust-withdrawal latency is in
+{{security-trust-withdrawal-latency}}.
 
 ### Cross-Organization Federation {#cross-org-federation}
 
 A client MAY list instance issuers operated by a different
 organization, including cases where SPIFFE trust domains differ.
 The per-client minting rule ({{trust-model-delegation}}) applies
-unchanged: the foreign issuer MUST mint instance assertions naming
-this `client_id` only for runtimes authorized as instances of this
-client. For SPIFFE cross-trust-domain deployments, the descriptor's
-`spiffe_bundle_endpoint` MUST be operated by the foreign organization
-or its delegate; omitting `spiffe_id` from a foreign SPIFFE
-descriptor delegates the whole foreign trust domain and SHOULD NOT
-be used absent explicit authorization for every workload in that
-domain.
+unchanged. For SPIFFE cross-trust-domain deployments, the
+descriptor's `spiffe_bundle_endpoint` MUST be operated by the
+foreign organization or its delegate.
 
 # Metadata and Discovery {#metadata}
 
@@ -1974,39 +1910,17 @@ Re-minted Client Instance Assertions require `cnf` ({{claims}}).
 A deployment whose workload identity system does not yet emit
 per-instance keys has three options:
 
-* **Adapter pattern** ({{issuer-obligations}}): an OAuth-aware
-  adapter wraps the existing workload identity system, attests
-  each runtime, resolves or generates a per-instance key, and
-  re-mints a Client Instance Assertion with `cnf`. The adapter is
-  the instance issuer from the AS's perspective; the underlying
-  workload identity system is unchanged. Recommended for
-  non-SPIFFE deployments.
-* **Raw JWT-SVID compatibility** ({{spiffe-client-id-omission}}):
-  the SVID is presented as `actor_token` without re-minting.
-  This is the SPIFFE-native path when the AS can validate the
-  JWT-SVID against the SPIFFE bundle and correlate the sender-
-  constraint key to the same SPIFFE workload identity. The SVID
-  itself carries no `cnf`, so the AS MUST establish instance binding
-  through a channel independent of the SVID ({{sender-constrained}})
-  and record an audit trail for the binding. Two deployment shapes
-  satisfy this:
-
-    - the workload presents a per-instance X.509-SVID at the TLS
-      layer under {{RFC8705}}, and the certificate thumbprint
-      (`x5t#S256`) is the binding; or
-    - the workload's DPoP key is conveyed to the instance issuer
-      at attestation time, and the AS confirms the binding through
-      an out-of-band attestation channel that ties the DPoP key
-      thumbprint to the SVID's `sub`.
-
-  A deployment that uses a JWT-SVID as `actor_token` and an
-  X.509-SVID from the same workload at the TLS layer can satisfy
-  this requirement by verifying that both SVIDs name the same SPIFFE
-  ID and trust domain, then using the X.509-SVID certificate
-  thumbprint as the access-token binding. Deployments using DPoP
-  need an equivalent attestation or registration channel for the
-  DPoP key; default JWT-SVID issuance alone does not provide that
-  key-to-workload correlation.
+* **Adapter pattern**: an OAuth-aware adapter re-mints a Client
+  Instance Assertion with `cnf` from the underlying workload
+  credential ({{issuer-obligations}}). Recommended for non-SPIFFE
+  deployments and for SPIFFE deployments that can run an adapter.
+* **Raw JWT-SVID compatibility**: the SVID is presented as
+  `actor_token` without re-minting and the AS establishes binding
+  through a channel independent of the SVID
+  ({{spiffe-client-id-omission}}, {{sender-constrained}}). The
+  SPIFFE-native path; pairs naturally with an X.509-SVID from the
+  same workload at the TLS layer ({{issuer-obligations}}; worked
+  example in {{appendix-examples-spiffe}}).
 * **Defer adoption** until the workload identity system can emit
   per-instance keys directly.
 
@@ -2058,8 +1972,8 @@ is appropriate only when every workload in that trust domain is
 authorized to act as an instance of the client. After a client
 detaches a compromised issuer, tokens
 minted under the prior trust may continue to validate up to the
-trust-withdrawal latency bound in {{trust-lifecycle}}; operators
-SHOULD plan incident response around this window.
+trust-withdrawal latency bound in {{security-trust-withdrawal-latency}};
+operators SHOULD plan incident response around this window.
 
 Client metadata is itself trust-affecting: an attacker who can
 modify it can add a new instance issuer under their control.
@@ -2074,6 +1988,30 @@ backing it; deployments using static registration MUST protect the
 registration store and any administrative API used to update it.
 ASes resolving CIMD documents inherit {{CIMD}}'s security
 considerations covering transport, intermediary caches, and DNS.
+
+## Trust-Withdrawal Latency {#security-trust-withdrawal-latency}
+
+The trust-withdrawal latency, that is, the worst-case time from a
+client metadata change to all derived access tokens having expired,
+is approximately the sum of the metadata refresh interval (for CIMD,
+the cache TTL; for static registration, the expected lag between an
+admin update and AS-side propagation), the instance assertion's
+`exp` window, the AS's JWKS or SPIFFE-bundle cache TTL for the
+issuer, and the access token TTL. ASes SHOULD size these components
+together so that the resulting latency matches their
+incident-response target.
+
+Recommended defaults: instance assertion `exp` of 5 minutes or less
+({{security-replay}}); access-token TTL of 30 minutes or less paired
+with a metadata refresh interval of 30 minutes or less, giving a
+trust-withdrawal latency of approximately 65 minutes. Tighter
+deployments (5-minute access tokens with 5-minute caches,
+approximately 15 minutes) and looser deployments (60-minute tokens
+with 1-hour caches, approximately 2 hours) are both common; looser
+deployments SHOULD support active revocation ({{revocation}}) and
+introspection-based status checks at the resource server. Operators
+SHOULD treat this latency as a deployment-time SLO matching their
+incident-response requirements.
 
 ## Instance Lifecycle {#security-lifecycle}
 
@@ -2114,6 +2052,26 @@ intervals when instance identity is present.
 This profile supports two complementary revocation models for access
 tokens issued under it. Both build on {{RFC7009}}; deployments MAY
 support either, both, or neither.
+
+After the AS has adopted updated client metadata
+({{trust-lifecycle}}), the AS SHOULD treat further use of access
+tokens whose validated instance identity is no longer endorsed by
+the client as invalid:
+
+* for delegation tokens, when the `act` claim names a removed
+  instance issuer or falls outside the descriptor's updated scope;
+* for self-acting tokens, when the instance issuer recorded by the
+  AS at issuance time has been removed, or when the access token's
+  `sub` falls outside the descriptor's updated scope.
+
+Where the deployment supports it, this is naturally enforced by
+introspection ({{introspection-on-revocation}}) and short
+access-token lifetimes; AS implementations MAY additionally revoke
+such tokens per {{RFC7009}}, including via the per-instance
+mechanism in {{per-instance-revocation}}. ASes MAY apply the same
+policy to changes in a descriptor's `jwks_uri`, `jwks`, or
+`spiffe_bundle_endpoint` keys that {{CIMD}} permits for changes in
+client-level keys.
 
 ### Per-Token Revocation {#per-token-revocation}
 
@@ -2176,71 +2134,38 @@ separate mechanisms described in {{refresh}}.
 ## Replay {#security-replay}
 
 Actor tokens MUST include `jti`, `exp`, and `iat` ({{claims}}),
-except for raw JWT-SVIDs accepted under the SPIFFE compatibility
-mode in {{spiffe-client-id-omission}}.
+except for raw JWT-SVIDs accepted under {{spiffe-client-id-omission}}.
 
-When `jti` is present, after the AS has identified the issuer and
-validated the instance assertion signature, it MUST reject a token
-whose (`iss`, `jti`) pair has already been seen within the token's
-validity window. ASes SHOULD enforce this replay check for all
-Client Instance Assertions. An AS MAY skip this check for
-assertions whose `cnf` claim has been verified at presentation per
-{{sender-constrained}} only when the deployment explicitly treats
-cnf-bound assertions as reusable proof-of-possession credentials
-within their `exp` window, documents that behavior, and applies
-rate limits, monitoring, and audit logging for assertion use. The
-MUST applies unconditionally to assertions without a verified `cnf`
-(including raw JWT-SVIDs accepted under
-{{spiffe-client-id-omission}} when `jti` is present). When the AS
-applies the replay check, it MUST retain replay-cache entries at
-least until the token's `exp` time, plus any allowed clock skew.
-For a raw JWT-SVID, the AS MUST apply the replay check when `jti`
-is present; when `jti` is absent, deployments rely on
-sender-constraint, short SVID lifetimes, and audience restriction
-to bound replay.
+After identifying the issuer and validating the signature, the AS
+MUST reject a token whose (`iss`, `jti`) pair has already been
+seen within the token's validity window, and MUST retain
+replay-cache entries at least until the token's `exp` plus any
+allowed clock skew. For raw JWT-SVIDs, this check applies only
+when `jti` is present; otherwise replay is bounded by
+sender-constraint, short SVID lifetimes, and audience restriction.
 
-Issuers SHOULD use short lifetimes (five minutes or less) both to
-limit replay exposure and because client instances often have
-lifetimes of seconds to minutes. When refreshing access tokens
-({{refresh}}), AS implementations SHOULD prefer requiring a fresh
-instance assertion rather than perpetuating stale instance identity.
+An AS MAY skip the replay check for cnf-bound assertions that have
+been PoP-verified at presentation, treating them as reusable
+within their `exp` window, provided the deployment documents this
+behavior and applies rate limits, monitoring, and audit logging.
+This shifts the blast radius of `cnf`-key compromise from one
+access token per assertion to the rate-limit ceiling within `exp`;
+the rate limit is therefore the bound on that threat. The MUST
+applies unconditionally to assertions without a verified `cnf`.
 
-Distributed AS deployments (multi-replica or geographically
-distributed) MUST share the replay cache or coordinate to prevent
-cross-replica replay for any path on which the strict check
-applies; per-replica in-memory caches do not protect against an
-attacker presenting the same (`iss`, `jti`) to multiple replicas in
-succession. The shared-cache requirement does not apply on
-cnf-bound paths that are operated in the documented
-reusable-assertion mode, since cnf+PoP verification is itself
-correctness-preserving across replicas.
+Issuers SHOULD use short lifetimes (five minutes or less). On
+refresh ({{refresh}}), AS implementations SHOULD prefer requiring
+a fresh instance assertion. Distributed AS deployments MUST share
+the replay cache or coordinate to prevent cross-replica replay,
+except on cnf-bound paths in reusable mode where cnf+PoP
+verification is correctness-preserving across replicas.
 
-Reusable mode shifts the blast radius of `cnf`-key compromise from
-"one access token per assertion" (bounded by the strict replay cache)
-to "rate-limit ceiling within `exp`": an attacker who steals the
-`cnf` private key and the assertion can present it repeatedly until
-expiration. The deployment's per-assertion rate limit is therefore
-the bound on this threat, and ASes operating in reusable mode SHOULD
-size that limit accordingly.
-
-Replay-cache flooding is a denial-of-service surface: an attacker
-holding a compromised instance issuer's signing key can mint
-validly-signed assertions with arbitrary `jti` values. ASes SHOULD
-apply per-issuer rate limits and bounded cache caps; a sustained
-high rate of distinct `jti` values from a single issuer is a signal
-of either a misbehaving runtime or compromise.
-
-The replay surface depends on whether `cnf` is present and verified
-at presentation ({{sender-constrained}}). For re-minted Client
-Instance Assertions `cnf` is required, making them non-bearer at
-presentation: an attacker with only the JWT cannot use it without
-also possessing the `cnf` private key. The only profile-defined
-case where `cnf` can be absent is raw JWT-SVID compatibility, where
-the AS MUST establish a policy-backed, auditable instance-specific
-binding per {{sender-constrained}}. For the instance-assertion auth
-mode ({{instance-assertion-auth}}), where the instance assertion is
-the only client credential, ASes MUST reject requests whose
-instance assertion lacks `cnf`.
+A compromised instance-issuer signing key creates a
+denial-of-service surface: an attacker can mint validly-signed
+assertions with arbitrary `jti` values. ASes SHOULD apply
+per-issuer rate limits and bounded cache caps; a sustained high
+rate of distinct `jti` values from a single issuer is a signal of
+compromise.
 
 ## Audience and Confused Deputy {#security-audience}
 
@@ -2684,7 +2609,8 @@ payload; re-minted Client Instance Assertions also carry a JWS
 protected header with `typ` set to `client-instance+jwt` per
 {{signing}} (see the full example in {{example-assertion}}).
 Timestamps and lifetimes in these examples are illustrative and do
-not override the lifetime guidance in {{trust-lifecycle}} and
+not override the lifetime guidance in
+{{security-trust-withdrawal-latency}} and
 {{security-replay}}.
 
 The examples use a CIMD-style `client_id` for clarity; the same
