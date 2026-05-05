@@ -592,10 +592,14 @@ CIMD cache window, or before a static-registration update has been
 applied), this profile imposes no additional revocation requirement
 on previously issued access tokens. After the AS has adopted the
 updated metadata, the AS SHOULD treat further use of access tokens
-whose `act` claim either (a) names a removed instance issuer, or
-(b) falls outside the descriptor's updated scope, as no longer
-endorsed by the client. Where the deployment supports it, this
-is naturally enforced by access-token introspection and short
+whose validated instance identity is no longer endorsed by the
+client as invalid. For delegation tokens, this applies when the
+`act` claim either (a) names a removed instance issuer, or (b) falls
+outside the descriptor's updated scope. For self-acting tokens, this
+applies when the instance issuer recorded by the AS at issuance time
+has been removed, or when the access token's `sub` falls outside
+the descriptor's updated scope. Where the deployment supports it,
+this is naturally enforced by access-token introspection and short
 access-token lifetimes; AS implementations MAY additionally revoke
 such tokens per {{RFC7009}}, including via the per-instance
 mechanism described in {{revocation}}. ASes MAY apply the same
@@ -1161,9 +1165,11 @@ Before the steps below, the AS MUST reject the request with
 
 2. **Match the token type.** If `actor_token_type` is not
    `urn:ietf:params:oauth:token-type:client-instance-jwt`, processing
-   under this document does not apply. Other registered
-   `actor_token_type` values MAY be processed under their own
-   specifications ({{other-actor-token-types}}).
+   under this document does not apply. If the AS does not support the
+   supplied `actor_token_type` for the requested grant, it MUST reject
+   the request with `unsupported_token_type` ({{errors}}). Other
+   registered `actor_token_type` values MAY be processed under their
+   own specifications ({{other-actor-token-types}}).
 
 3. **Resolve client metadata.** Retrieve the client metadata for the
    authenticated `client_id`. For clients identified by {{CIMD}},
@@ -1300,15 +1306,17 @@ client") with the following procedure:
    claim validation rules in {{as-processing}}.
 3. Verify that the `actor_token`'s `client_id` claim exactly equals
    the request's `client_id` parameter.
-4. Verify proof-of-possession of the `actor_token` at presentation per
+4. Apply the replay check in {{security-replay}} after `client_id`
+   binding succeeds.
+5. Verify proof-of-possession of the `actor_token` at presentation per
    {{sender-constrained}}. In this mode the `actor_token` serves as the
    sole client authentication credential, so the bearer-replay
    considerations in {{security-replay}} apply with no fallback
    credential; ASes MUST reject requests in this mode whose
    `actor_token` lacks a `cnf` claim, and MUST verify possession of the
    `cnf` key.
-5. Reject the request with `invalid_client` if any of the above fails.
-6. Treat the client as authenticated. The validated `actor_token` also
+6. Reject the request with `invalid_client` if any of the above fails.
+7. Treat the client as authenticated. The validated `actor_token` also
    satisfies the `actor_token` requirement of this profile and is used
    for instance representation per {{access-token}}.
 
@@ -1372,10 +1380,15 @@ private key can redeem the resulting code, even if the code is
 intercepted or transferred to another runtime under the same
 client.
 
-For Mutual-TLS-bound access tokens ({{RFC8705}}), the equivalent
-continuity is established at the TLS layer: the AS sees the same
-client certificate at both the authorization and token endpoints,
-and the instance assertion's `cnf.x5t#S256` MUST match that certificate.
+For Mutual-TLS-bound access tokens ({{RFC8705}}), authorization-code
+continuity is deployment-specific. If the AS binds the authorization
+request or authorization code to a client certificate seen at the
+authorization endpoint, then at the token endpoint the AS MUST verify
+that the certificate used to redeem the code and the instance
+assertion's `cnf.x5t#S256` match the certificate bound at
+authorization time. Otherwise, mTLS sender-constraint is established
+at the token endpoint and does not by itself provide authorization-
+to-token endpoint continuity.
 
 User consent under this profile applies to the client as a
 whole; consent thereby covers all instances attested by listed
@@ -1886,6 +1899,10 @@ defined in {{as-processing}} to error codes:
 | delegation chain depth exceeds AS local maximum ({{ACTOR-PROFILE}}) | `invalid_request` |
 | `actor_token` carries an `act` claim ({{ACTOR-PROFILE}}) | `invalid_grant` |
 | classification ambiguous ({{access-token-classification}}) | `invalid_grant` |
+
+When `actor_token` is used as the client authentication credential
+under {{instance-assertion-auth}}, validation failures that this table
+maps to `invalid_grant` are returned as `invalid_client`.
 
 The AS MAY return additional information via the error_description
 parameter; deployments MUST NOT include sensitive instance details
