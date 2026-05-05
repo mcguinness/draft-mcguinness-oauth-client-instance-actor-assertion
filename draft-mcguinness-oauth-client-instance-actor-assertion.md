@@ -1493,16 +1493,15 @@ If the actor token is a raw JWT-SVID accepted under
 {{spiffe-client-id-omission}} and does not include a `cnf` claim, the
 AS MUST establish an instance-specific binding through some other
 means whose key is attributable to the validated instance. The AS
-MUST have explicit local policy identifying which binding mechanisms
-are acceptable for raw JWT-SVIDs, and MUST reject the request unless
-that policy establishes that the presented DPoP key or mTLS
-certificate belongs to the same runtime named by the JWT-SVID's
-`sub`. The binding mechanism MUST establish key custody through a
-channel independent of the JWT-SVID itself (for example,
-issuer-provisioned per-instance credentials or a workload attestation
-channel that names the same `sub`); accepting a DPoP key solely
-because it accompanied a valid JWT-SVID is not a binding and reduces
-this mode to bearer-with-`aud`. Acceptable binding mechanisms include:
+MUST reject the request unless the presented DPoP key or mTLS
+certificate is bound, by the AS's local policy, to the same runtime
+named by the JWT-SVID's `sub`. The binding mechanism MUST establish
+key custody through a channel independent of the JWT-SVID itself
+(for example, issuer-provisioned per-instance credentials or a
+workload attestation channel that names the same `sub`); accepting
+a DPoP key solely because it accompanied a valid JWT-SVID is not a
+binding and reduces this mode to bearer-with-`aud`. Acceptable
+binding mechanisms include:
 
 * a per-instance mTLS client certificate provisioned by the instance
   issuer (or otherwise tied to instance attestation) and presented
@@ -1521,14 +1520,15 @@ to a rotating X.509-SVID are usable only while the workload holds
 that specific certificate; deployments SHOULD size access-token
 TTL with the SVID rotation cycle in mind.
 
-The binding policy MUST be auditable: the AS MUST be able to record
-which mechanism established the binding and which key or certificate
-was bound to the instance. If the AS cannot establish such an
-instance-specific, policy-backed binding, it MUST reject the request
-with `invalid_request` ({{errors}}). This is a SPIFFE compatibility
-path only. A re-minted Client Instance Assertion MUST contain `cnf` so
-that the binding key is supplied by the same authority that named the
-instance.
+The AS SHOULD record which mechanism established the binding and
+which key or certificate was bound to the instance, to support
+incident response and per-instance revocation
+({{per-instance-revocation}}). If the AS cannot establish an
+instance-specific binding, it MUST reject the request with
+`invalid_request` ({{errors}}). This is a SPIFFE compatibility path
+only. A re-minted Client Instance Assertion MUST contain `cnf` so
+that the binding key is supplied by the same authority that named
+the instance.
 
 Deployments combining client-level Mutual-TLS-bound client
 authentication ({{RFC8705}}) with this profile MUST establish
@@ -2207,8 +2207,8 @@ SPIFFE Raw JWT-SVID Compatibility AS:
 : An AS that accepts raw JWT-SVIDs as `actor_token` without
   re-minting. Such an AS MUST implement {{spiffe-compatibility}},
   MUST support descriptors using `spiffe_bundle_endpoint`, and MUST
-  establish policy-backed, auditable instance-specific
-  sender-constraint when the raw JWT-SVID lacks `cnf`.
+  establish instance-specific sender-constraint when the raw
+  JWT-SVID lacks `cnf` ({{sender-constrained}}).
 
 Client Instance Assertion Auth Method AS:
 : An AS that supports the `client_instance_jwt`
