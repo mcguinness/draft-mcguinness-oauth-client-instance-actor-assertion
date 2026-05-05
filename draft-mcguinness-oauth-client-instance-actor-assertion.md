@@ -782,42 +782,10 @@ and MUST, before minting an instance assertion under this profile:
   `client_id` claim names a client for which the runtime has not been
   authorized, by issuer-side policy, as a member.
 
-How the issuer internally authenticates the runtime is out of scope.
-A common deployment pattern wraps an underlying workload identity
-system (Kubernetes projected service-account tokens, AWS IMDS, GCP
-metadata server, Azure managed identity, a SPIFFE control plane,
-etc.) in an OAuth-aware adapter that re-mints a Client Instance
-Assertion by adding the claims required by this profile and signing
-with a key registered in the issuer's descriptor. From the AS's
-perspective, the adapter is the instance issuer; the adapter SHOULD
-enforce the per-client authorization rule above, since underlying
-workload-identity systems typically do not know about OAuth clients
-or their class-and-instance relationship. Operationally, the
-adapter holds the (`spiffe_id` or other workload identifier) →
-`client_id` mapping, the OAuth signing keys (registered in the
-descriptor), and re-issues at the underlying credential's rotation
-cadence; deployments size it accordingly (sidecar, per-cluster
-service, or centralized issuer with HA).
-
-For workloads with X.509-SVIDs, the X.509-SVID can serve as the
-binding key in two shapes:
-
-* **Re-minted with `cnf`**: an adapter mints a Client Instance
-  Assertion whose `cnf.x5t#S256` is the SHA-256 thumbprint of the
-  workload's X.509-SVID certificate. The workload presents the
-  assertion as `actor_token` and the same X.509-SVID at TLS under
-  {{RFC8705}}; the AS verifies that the TLS certificate thumbprint
-  matches `cnf.x5t#S256`. Use this shape when an OAuth-aware adapter
-  is available.
-* **Raw JWT-SVID with X.509 binding** ({{spiffe-client-id-omission}}):
-  the workload presents its JWT-SVID directly as `actor_token` (no
-  re-mint, no `cnf`) and its X.509-SVID at TLS; the AS treats the
-  X.509-SVID as the sender-constraint binding under
-  {{sender-constrained}}. Use this shape when the workload runs
-  against unmodified SPIFFE infrastructure.
-
-Both ground the binding in the SPIFFE trust domain that issued the
-SVID and avoid a separate DPoP key.
+How the issuer internally authenticates the runtime is out of
+scope. Common deployment patterns (adapter, raw JWT-SVID
+compatibility, X.509-SVID binding) are described in
+{{adoption-without-cnf}}.
 
 ## JWT Claims {#claims}
 
@@ -1910,17 +1878,47 @@ Re-minted Client Instance Assertions require `cnf` ({{claims}}).
 A deployment whose workload identity system does not yet emit
 per-instance keys has three options:
 
-* **Adapter pattern**: an OAuth-aware adapter re-mints a Client
-  Instance Assertion with `cnf` from the underlying workload
-  credential ({{issuer-obligations}}). Recommended for non-SPIFFE
-  deployments and for SPIFFE deployments that can run an adapter.
+* **Adapter pattern**: an OAuth-aware adapter wraps an existing
+  workload identity system (Kubernetes projected service-account
+  tokens, AWS IMDS, GCP metadata server, Azure managed identity, a
+  SPIFFE control plane, etc.) and re-mints a Client Instance
+  Assertion with `cnf` from the underlying credential, signing with
+  a key registered in the issuer's descriptor. From the AS's
+  perspective, the adapter is the instance issuer
+  ({{issuer-obligations}}); the adapter enforces the per-client
+  authorization rule, since underlying workload-identity systems
+  typically do not know about OAuth clients or their
+  class-and-instance relationship. The adapter holds the
+  workload-identifier → `client_id` mapping, the OAuth signing
+  keys, and re-issues at the underlying credential's rotation
+  cadence. Recommended for non-SPIFFE deployments and for SPIFFE
+  deployments that can run an adapter.
+
 * **Raw JWT-SVID compatibility**: the SVID is presented as
   `actor_token` without re-minting and the AS establishes binding
   through a channel independent of the SVID
   ({{spiffe-client-id-omission}}, {{sender-constrained}}). The
-  SPIFFE-native path; pairs naturally with an X.509-SVID from the
-  same workload at the TLS layer ({{issuer-obligations}}; worked
-  example in {{appendix-examples-spiffe}}).
+  SPIFFE-native path. For workloads with X.509-SVIDs, the
+  X.509-SVID can serve as the binding key in two shapes:
+
+    - **Re-minted with `cnf`**: an adapter mints a Client Instance
+      Assertion whose `cnf.x5t#S256` is the SHA-256 thumbprint of
+      the workload's X.509-SVID certificate. The workload presents
+      the assertion as `actor_token` and the same X.509-SVID at
+      TLS under {{RFC8705}}; the AS verifies that the TLS
+      certificate thumbprint matches `cnf.x5t#S256`. Use when an
+      OAuth-aware adapter is available.
+    - **Raw JWT-SVID with X.509 binding**: the workload presents
+      its JWT-SVID directly as `actor_token` (no re-mint, no
+      `cnf`) and its X.509-SVID at TLS; the AS treats the
+      X.509-SVID as the sender-constraint binding under
+      {{sender-constrained}}. Use when the workload runs against
+      unmodified SPIFFE infrastructure.
+
+  Both ground the binding in the SPIFFE trust domain that issued
+  the SVID and avoid a separate DPoP key. Worked example in
+  {{appendix-examples-spiffe}}.
+
 * **Defer adoption** until the workload identity system can emit
   per-instance keys directly.
 
