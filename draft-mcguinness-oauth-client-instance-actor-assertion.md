@@ -2698,21 +2698,27 @@ keeps the protocol surface unchanged.
 
 A dedicated `client_instance_assertion` parameter would name what
 this profile carries on the wire more directly than a typed
-`actor_token`. Reusing `actor_token` is preferred for three reasons.
+`actor_token`. This document reuses `actor_token` for three reasons.
+
 First, this document also defines the actor token grant extension
 ({{grant-extension}}): a wire mechanism for any `actor_token_type`
 to appear on grants beyond token-exchange. A separate
 `client_instance_assertion` parameter would not eliminate
 `actor_token`; it would parallel it for one use case, doubling the
-wire surface. Second, the validated artifact's token-side role is
-already to populate `act` (delegation case) or `sub` (self-acting
-case) per {{ACTOR-PROFILE}}; using `actor_token` on the request side
-aligns request and token semantics. Third, an `actor_token_type` URN
-is a well-known IANA-registered extension point; clients with
-existing `actor_token` plumbing pick up `client-instance-jwt` without
-parser changes. Profiles that prefer a dedicated request parameter
-can be defined later as a wire-syntax sibling without changing the
-token shape defined here.
+wire surface.
+
+Second, the validated artifact's token-side role is already to
+populate `act` (delegation case) or `sub` (self-acting case) per
+{{ACTOR-PROFILE}}; using `actor_token` on the request side aligns
+request and token semantics.
+
+Third, an `actor_token_type` URN is a well-known IANA-registered
+extension point; clients with existing `actor_token` plumbing pick
+up `client-instance-jwt` without parser changes.
+
+Profiles that prefer a dedicated request parameter can be defined
+later as a wire-syntax sibling without changing the token shape
+defined here.
 
 ## Why extend `actor_token` to non-token-exchange grants?
 {:numbered="false"}
@@ -2780,23 +2786,18 @@ party. RFC 8693's "actor" framing literally describes the actor as
 the party acting on behalf of the subject; with no other subject
 present, the framing is technically a stretch.
 
-Three considerations led to reuse rather than introducing a
-parallel "subject_assertion" parameter:
+Two considerations specific to the self-acting case led to reuse
+rather than introducing a parallel "subject_assertion" parameter
+(the general argument against a new request parameter is in
+{{rationale-no-instance-assertion-param}}):
 
-1. *One artifact, one validator.* The JWT a workload identity
-   provider issues to a runtime is the same JWT regardless of
-   whether the runtime then asks the AS for a user-delegated token
-   or a `client_credentials` token. Validation rules ({{claims}},
-   {{as-processing}}) are also identical. A second parameter would
-   double the wire surface without changing the validation.
-
-2. *Classification belongs to the grant.* Whether the issued access
+1. *Classification belongs to the grant.* Whether the issued access
    token represents delegation or self-acting is determined by the
    grant ({{access-token-classification}}), not by the instance assertion.
    The same instance assertion can correctly produce either shape depending
    on the grant it accompanies.
 
-3. *Deployment fit.* Workload identity systems already issue exactly
+2. *Deployment fit.* Workload identity systems already issue exactly
    this artifact for both purposes. Requiring deployments to re-mint
    the same JWT under a different parameter name to satisfy an
    academic distinction would not improve security.
