@@ -5134,21 +5134,23 @@ keeps the protocol surface unchanged.<a href="#appendix-A.1-1" class="pilcrow">�
         </h3>
 <p id="appendix-A.2-1">A dedicated <code>client_instance_assertion</code> parameter would name what
 this profile carries on the wire more directly than a typed
-<code>actor_token</code>. Reusing <code>actor_token</code> is preferred for three reasons.
-First, this document also defines the actor token grant extension
+<code>actor_token</code>. This document reuses <code>actor_token</code> for three reasons.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-2">First, this document also defines the actor token grant extension
 (<a href="#grant-extension" class="auto internal xref">Section 4</a>): a wire mechanism for any <code>actor_token_type</code>
 to appear on grants beyond token-exchange. A separate
 <code>client_instance_assertion</code> parameter would not eliminate
 <code>actor_token</code>; it would parallel it for one use case, doubling the
-wire surface. Second, the validated artifact's token-side role is
-already to populate <code>act</code> (delegation case) or <code>sub</code> (self-acting
-case) per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>; using <code>actor_token</code> on the request side
-aligns request and token semantics. Third, an <code>actor_token_type</code> URN
-is a well-known IANA-registered extension point; clients with
-existing <code>actor_token</code> plumbing pick up <code>client-instance-jwt</code> without
-parser changes. Profiles that prefer a dedicated request parameter
-can be defined later as a wire-syntax sibling without changing the
-token shape defined here.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+wire surface.<a href="#appendix-A.2-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-3">Second, the validated artifact's token-side role is already to
+populate <code>act</code> (delegation case) or <code>sub</code> (self-acting case) per
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>; using <code>actor_token</code> on the request side aligns
+request and token semantics.<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-4">Third, an <code>actor_token_type</code> URN is a well-known IANA-registered
+extension point; clients with existing <code>actor_token</code> plumbing pick
+up <code>client-instance-jwt</code> without parser changes.<a href="#appendix-A.2-4" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-5">Profiles that prefer a dedicated request parameter can be defined
+later as a wire-syntax sibling without changing the token shape
+defined here.<a href="#appendix-A.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="why-extend-actortoken-to-non-token-exchange-grants">
@@ -5224,29 +5226,23 @@ access token's principal is the instance itself, not a separate
 party. RFC 8693's "actor" framing literally describes the actor as
 the party acting on behalf of the subject; with no other subject
 present, the framing is technically a stretch.<a href="#appendix-A.6-1" class="pilcrow">¶</a></p>
-<p id="appendix-A.6-2">Three considerations led to reuse rather than introducing a
-parallel "subject_assertion" parameter:<a href="#appendix-A.6-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.6-2">Two considerations specific to the self-acting case led to reuse
+rather than introducing a parallel "subject_assertion" parameter
+(the general argument against a new request parameter is in
+<a href="#rationale-no-instance-assertion-param" class="auto internal xref">Appendix "Why not a dedicated client_instance_assertion request parameter?"</a>):<a href="#appendix-A.6-2" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="appendix-A.6-3">
 <li id="appendix-A.6-3.1">
-            <p id="appendix-A.6-3.1.1"><em>One artifact, one validator.</em> The JWT a workload identity
-provider issues to a runtime is the same JWT regardless of
-whether the runtime then asks the AS for a user-delegated token
-or a <code>client_credentials</code> token. Validation rules (<a href="#claims" class="auto internal xref">Section 7.2</a>,
-<a href="#as-processing" class="auto internal xref">Section 8.2</a>) are also identical. A second parameter would
-double the wire surface without changing the validation.<a href="#appendix-A.6-3.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="appendix-A.6-3.2">
-            <p id="appendix-A.6-3.2.1"><em>Classification belongs to the grant.</em> Whether the issued access
+            <p id="appendix-A.6-3.1.1"><em>Classification belongs to the grant.</em> Whether the issued access
 token represents delegation or self-acting is determined by the
 grant (<a href="#access-token-classification" class="auto internal xref">Section 8.6.1</a>), not by the instance assertion.
 The same instance assertion can correctly produce either shape depending
-on the grant it accompanies.<a href="#appendix-A.6-3.2.1" class="pilcrow">¶</a></p>
+on the grant it accompanies.<a href="#appendix-A.6-3.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="appendix-A.6-3.3">
-            <p id="appendix-A.6-3.3.1"><em>Deployment fit.</em> Workload identity systems already issue exactly
+          <li id="appendix-A.6-3.2">
+            <p id="appendix-A.6-3.2.1"><em>Deployment fit.</em> Workload identity systems already issue exactly
 this artifact for both purposes. Requiring deployments to re-mint
 the same JWT under a different parameter name to satisfy an
-academic distinction would not improve security.<a href="#appendix-A.6-3.3.1" class="pilcrow">¶</a></p>
+academic distinction would not improve security.<a href="#appendix-A.6-3.2.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="appendix-A.6-4">The cost is that <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>'s "actor" terminology must be read with
