@@ -2165,10 +2165,14 @@ CIMD cache window, or before a static-registration update has been
 applied), this profile imposes no additional revocation requirement
 on previously issued access tokens. After the AS has adopted the
 updated metadata, the AS <span class="bcp14">SHOULD</span> treat further use of access tokens
-whose <code>act</code> claim either (a) names a removed instance issuer, or
-(b) falls outside the descriptor's updated scope, as no longer
-endorsed by the client. Where the deployment supports it, this
-is naturally enforced by access-token introspection and short
+whose validated instance identity is no longer endorsed by the
+client as invalid. For delegation tokens, this applies when the
+<code>act</code> claim either (a) names a removed instance issuer, or (b) falls
+outside the descriptor's updated scope. For self-acting tokens, this
+applies when the instance issuer recorded by the AS at issuance time
+has been removed, or when the access token's <code>sub</code> falls outside
+the descriptor's updated scope. Where the deployment supports it,
+this is naturally enforced by access-token introspection and short
 access-token lifetimes; AS implementations <span class="bcp14">MAY</span> additionally revoke
 such tokens per <span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>, including via the per-instance
 mechanism described in <a href="#revocation" class="auto internal xref">Section 10.1</a>. ASes <span class="bcp14">MAY</span> apply the same
@@ -2859,9 +2863,11 @@ separate client-controlled credential.<a href="#section-8.2-4.1.1" class="pilcro
           <li id="section-8.2-4.2">
             <p id="section-8.2-4.2.1"><strong>Match the token type.</strong> If <code>actor_token_type</code> is not
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>, processing
-under this document does not apply. Other registered
-<code>actor_token_type</code> values <span class="bcp14">MAY</span> be processed under their own
-specifications (<a href="#other-actor-token-types" class="auto internal xref">Section 4.2</a>).<a href="#section-8.2-4.2.1" class="pilcrow">¶</a></p>
+under this document does not apply. If the AS does not support the
+supplied <code>actor_token_type</code> for the requested grant, it <span class="bcp14">MUST</span> reject
+the request with <code>unsupported_token_type</code> (<a href="#errors" class="auto internal xref">Section 8.9</a>). Other
+registered <code>actor_token_type</code> values <span class="bcp14">MAY</span> be processed under their
+own specifications (<a href="#other-actor-token-types" class="auto internal xref">Section 4.2</a>).<a href="#section-8.2-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-4.3">
             <p id="section-8.2-4.3.1"><strong>Resolve client metadata.</strong> Retrieve the client metadata for the
@@ -3023,21 +3029,25 @@ claim validation rules in <a href="#as-processing" class="auto internal xref">Se
 the request's <code>client_id</code> parameter.<a href="#section-8.3.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-8.3.2-2.4">
-              <p id="section-8.3.2-2.4.1">Verify proof-of-possession of the <code>actor_token</code> at presentation per
+              <p id="section-8.3.2-2.4.1">Apply the replay check in <a href="#security-replay" class="auto internal xref">Section 12.3</a> after <code>client_id</code>
+binding succeeds.<a href="#section-8.3.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-8.3.2-2.5">
+              <p id="section-8.3.2-2.5.1">Verify proof-of-possession of the <code>actor_token</code> at presentation per
 <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>. In this mode the <code>actor_token</code> serves as the
 sole client authentication credential, so the bearer-replay
 considerations in <a href="#security-replay" class="auto internal xref">Section 12.3</a> apply with no fallback
 credential; ASes <span class="bcp14">MUST</span> reject requests in this mode whose
 <code>actor_token</code> lacks a <code>cnf</code> claim, and <span class="bcp14">MUST</span> verify possession of the
-<code>cnf</code> key.<a href="#section-8.3.2-2.4.1" class="pilcrow">¶</a></p>
-</li>
-            <li id="section-8.3.2-2.5">
-              <p id="section-8.3.2-2.5.1">Reject the request with <code>invalid_client</code> if any of the above fails.<a href="#section-8.3.2-2.5.1" class="pilcrow">¶</a></p>
+<code>cnf</code> key.<a href="#section-8.3.2-2.5.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-8.3.2-2.6">
-              <p id="section-8.3.2-2.6.1">Treat the client as authenticated. The validated <code>actor_token</code> also
+              <p id="section-8.3.2-2.6.1">Reject the request with <code>invalid_client</code> if any of the above fails.<a href="#section-8.3.2-2.6.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-8.3.2-2.7">
+              <p id="section-8.3.2-2.7.1">Treat the client as authenticated. The validated <code>actor_token</code> also
 satisfies the <code>actor_token</code> requirement of this profile and is used
-for instance representation per <a href="#access-token" class="auto internal xref">Section 8.6</a>.<a href="#section-8.3.2-2.6.1" class="pilcrow">¶</a></p>
+for instance representation per <a href="#access-token" class="auto internal xref">Section 8.6</a>.<a href="#section-8.3.2-2.7.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
 <p id="section-8.3.2-3">Because the <code>actor_token</code> is the client authentication credential in
@@ -3108,10 +3118,15 @@ specific instance: only the instance that holds the named DPoP
 private key can redeem the resulting code, even if the code is
 intercepted or transferred to another runtime under the same
 client.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
-<p id="section-8.4-4">For Mutual-TLS-bound access tokens (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>), the equivalent
-continuity is established at the TLS layer: the AS sees the same
-client certificate at both the authorization and token endpoints,
-and the instance assertion's <code>cnf.x5t#S256</code> <span class="bcp14">MUST</span> match that certificate.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
+<p id="section-8.4-4">For Mutual-TLS-bound access tokens (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>), authorization-code
+continuity is deployment-specific. If the AS binds the authorization
+request or authorization code to a client certificate seen at the
+authorization endpoint, then at the token endpoint the AS <span class="bcp14">MUST</span> verify
+that the certificate used to redeem the code and the instance
+assertion's <code>cnf.x5t#S256</code> match the certificate bound at
+authorization time. Otherwise, mTLS sender-constraint is established
+at the token endpoint and does not by itself provide authorization-
+to-token endpoint continuity.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
 <p id="section-8.4-5">User consent under this profile applies to the client as a
 whole; consent thereby covers all instances attested by listed
 instance issuers. The key-bound continuity above adds cryptographic
@@ -3921,9 +3936,12 @@ defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> t
             </tr>
           </tbody>
         </table>
-<p id="section-8.9-3">The AS <span class="bcp14">MAY</span> return additional information via the error_description
+<p id="section-8.9-3">When <code>actor_token</code> is used as the client authentication credential
+under <a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>, validation failures that this table
+maps to <code>invalid_grant</code> are returned as <code>invalid_client</code>.<a href="#section-8.9-3" class="pilcrow">¶</a></p>
+<p id="section-8.9-4">The AS <span class="bcp14">MAY</span> return additional information via the error_description
 parameter; deployments <span class="bcp14">MUST NOT</span> include sensitive instance details
-(e.g., raw SPIFFE IDs of unrelated workloads) in error responses.<a href="#section-8.9-3" class="pilcrow">¶</a></p>
+(e.g., raw SPIFFE IDs of unrelated workloads) in error responses.<a href="#section-8.9-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
