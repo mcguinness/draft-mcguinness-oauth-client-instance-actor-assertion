@@ -2184,20 +2184,26 @@ applied), this profile imposes no additional revocation requirement
 on previously issued access tokens. After the AS has adopted the
 updated metadata, the AS <span class="bcp14">SHOULD</span> treat further use of access tokens
 whose validated instance identity is no longer endorsed by the
-client as invalid. For delegation tokens, this applies when the
-<code>act</code> claim either (a) names a removed instance issuer, or (b) falls
-outside the descriptor's updated scope. For self-acting tokens, this
-applies when the instance issuer recorded by the AS at issuance time
-has been removed, or when the access token's <code>sub</code> falls outside
-the descriptor's updated scope. Where the deployment supports it,
-this is naturally enforced by access-token introspection and short
-access-token lifetimes; AS implementations <span class="bcp14">MAY</span> additionally revoke
-such tokens per <span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>, including via the per-instance
-mechanism described in <a href="#revocation" class="auto internal xref">Section 10.1</a>. ASes <span class="bcp14">MAY</span> apply the same
-policy to changes in a descriptor's <code>jwks_uri</code>, <code>jwks</code>, or
-<code>spiffe_bundle_endpoint</code> keys that <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> permits for changes
-in client-level keys.<a href="#section-5.3.3-2" class="pilcrow">¶</a></p>
-<p id="section-5.3.3-3">The trust-withdrawal latency, that is, the worst-case time from
+client as invalid:<a href="#section-5.3.3-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.3.3-3.1">
+              <p id="section-5.3.3-3.1.1">for delegation tokens, when the <code>act</code> claim names a removed
+instance issuer or falls outside the descriptor's updated scope;<a href="#section-5.3.3-3.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-3.2">
+              <p id="section-5.3.3-3.2.1">for self-acting tokens, when the instance issuer recorded by the
+AS at issuance time has been removed, or when the access token's
+<code>sub</code> falls outside the descriptor's updated scope.<a href="#section-5.3.3-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-5.3.3-4">Where the deployment supports it, this is naturally enforced by
+access-token introspection and short access-token lifetimes; AS
+implementations <span class="bcp14">MAY</span> additionally revoke such tokens per <span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>,
+including via the per-instance mechanism described in
+<a href="#revocation" class="auto internal xref">Section 10.1</a>. ASes <span class="bcp14">MAY</span> apply the same policy to changes in a
+descriptor's <code>jwks_uri</code>, <code>jwks</code>, or <code>spiffe_bundle_endpoint</code> keys
+that <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> permits for changes in client-level keys.<a href="#section-5.3.3-4" class="pilcrow">¶</a></p>
+<p id="section-5.3.3-5">The trust-withdrawal latency, that is, the worst-case time from
 metadata change to all derived access tokens having expired, is
 approximately the sum of the metadata refresh interval (for CIMD,
 the cache TTL; for static registration, the expected lag between an
@@ -2205,8 +2211,8 @@ admin update and AS-side propagation), the instance assertion's
 <code>exp</code> window, the AS's JWKS or SPIFFE-bundle cache TTL for the
 issuer, and the access token TTL. ASes <span class="bcp14">SHOULD</span> size these components
 together so that the resulting latency matches their incident-response
-target.<a href="#section-5.3.3-3" class="pilcrow">¶</a></p>
-<p id="section-5.3.3-4">Recommended defaults: instance assertion <code>exp</code> of 5 minutes or less
+target.<a href="#section-5.3.3-5" class="pilcrow">¶</a></p>
+<p id="section-5.3.3-6">Recommended defaults: instance assertion <code>exp</code> of 5 minutes or less
 (<a href="#security-replay" class="auto internal xref">Section 12.3</a>); access-token TTL of 30 minutes or less paired
 with a metadata refresh interval of 30 minutes or less, giving a
 trust-withdrawal latency of approximately 65 minutes. Tighter
@@ -2216,7 +2222,7 @@ caches, approximately 2 hours) are both common; looser deployments
 <span class="bcp14">SHOULD</span> support active revocation (<a href="#revocation" class="auto internal xref">Section 10.1</a>) and
 introspection-based status checks at the resource server. Operators
 <span class="bcp14">SHOULD</span> treat this latency as a deployment-time SLO matching their
-incident-response requirements.<a href="#section-5.3.3-4" class="pilcrow">¶</a></p>
+incident-response requirements.<a href="#section-5.3.3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="cross-org-federation">
@@ -3441,33 +3447,34 @@ issuance, and the resource server trusts the AS.<a href="#section-8.6.3-3" class
 <p id="section-8.6.3-4">For raw JWT-SVIDs that do not carry <code>sub_profile</code>, the AS <span class="bcp14">SHOULD</span> set
 the access token's <code>sub_profile</code> to <code>client_instance</code> after successful
 validation, unless local policy intentionally suppresses that signal.<a href="#section-8.6.3-4" class="pilcrow">¶</a></p>
-<p id="section-8.6.3-5">A client that lists multiple instance issuers <span class="bcp14">MUST</span> ensure
-those issuers' <code>sub</code> spaces do not collide within the client (for
-example, by using disjoint naming conventions, prefixes, or a
-SPIFFE trust-domain split); when the client cannot guarantee
-disjoint spaces, the AS <span class="bcp14">SHOULD</span> apply namespacing (below) to prevent
-a compromised issuer from spoofing another's <code>sub</code>. Single-issuer
-clients avoid cross-issuer collision, but the instance issuer still
-<span class="bcp14">MUST NOT</span> reassign an active or audit-relevant <code>sub</code> value to a
-different runtime. Issuers <span class="bcp14">SHOULD</span> use stable, non-reassigned subjects
-or include sufficient generation or session uniqueness in <code>sub</code> to
-distinguish runtime incarnations. If subject reassignment is
-unavoidable, the client, issuer, and AS audit logs need enough
-lifecycle metadata to distinguish the old and new runtimes. ASes
-<span class="bcp14">MAY</span> apply additional namespacing (for example, prefixing <code>sub</code> with
-the descriptor's issuer in a deterministic form such as
-<code>&lt;issuer&gt;#&lt;sub&gt;</code>) when they cannot otherwise determine that
-asserted <code>sub</code> values are unique within the client; such namespacing
-is a deployment-side choice and does not affect the wire format of
-the <code>actor_token</code>. If the AS applies such namespacing, the resulting
+<p id="section-8.6.3-5">A client that lists multiple instance issuers <span class="bcp14">MUST</span> ensure those
+issuers' <code>sub</code> spaces do not collide within the client (for example,
+by using disjoint naming conventions, prefixes, or a SPIFFE
+trust-domain split); when the client cannot guarantee disjoint
+spaces, the AS <span class="bcp14">SHOULD</span> apply namespacing (below) to prevent a
+compromised issuer from spoofing another's <code>sub</code>.<a href="#section-8.6.3-5" class="pilcrow">¶</a></p>
+<p id="section-8.6.3-6">Single-issuer clients avoid cross-issuer collision, but the instance
+issuer still <span class="bcp14">MUST NOT</span> reassign an active or audit-relevant <code>sub</code>
+value to a different runtime. Issuers <span class="bcp14">SHOULD</span> use stable,
+non-reassigned subjects or include sufficient generation or session
+uniqueness in <code>sub</code> to distinguish runtime incarnations. If subject
+reassignment is unavoidable, the client, issuer, and AS audit logs
+need enough lifecycle metadata to distinguish the old and new
+runtimes.<a href="#section-8.6.3-6" class="pilcrow">¶</a></p>
+<p id="section-8.6.3-7">ASes <span class="bcp14">MAY</span> apply additional namespacing (for example, prefixing <code>sub</code>
+with the descriptor's issuer in a deterministic form such as
+<code>&lt;issuer&gt;#&lt;sub&gt;</code>) when they cannot otherwise determine that asserted
+<code>sub</code> values are unique within the client; such namespacing is a
+deployment-side choice and does not affect the wire format of the
+<code>actor_token</code>. If the AS applies such namespacing, the resulting
 <code>sub</code> is an AS-scoped subject identifier; resource-server policy and
 audit tooling need to treat it as AS-issued rather than
 issuer-native. Deployments that require in-token instance-issuer
 attribution for self-acting tokens may define a separate claim in a
-future profile.<a href="#section-8.6.3-5" class="pilcrow">¶</a></p>
-<p id="section-8.6.3-6">In the issued access token, <code>client_id</code> (the client) and <code>sub</code> (the
+future profile.<a href="#section-8.6.3-7" class="pilcrow">¶</a></p>
+<p id="section-8.6.3-8">In the issued access token, <code>client_id</code> (the client) and <code>sub</code> (the
 instance) are distinct, and <code>act</code> is absent. For a worked example
-see <a href="#appendix-examples-client-credentials" class="auto internal xref">Appendix "Client Credentials (Self-Acting)"</a>.<a href="#section-8.6.3-6" class="pilcrow">¶</a></p>
+see <a href="#appendix-examples-client-credentials" class="auto internal xref">Appendix "Client Credentials (Self-Acting)"</a>.<a href="#section-8.6.3-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="chain-merging">
@@ -3522,57 +3529,67 @@ to the originating instance's <code>cnf</code> key, by the same mechanism used
 to sender-constrain the access token (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). Only
 the originating instance can present the refresh token. A refresh
 request <span class="bcp14">MUST NOT</span> introduce a client instance identity if the refresh
-token was not originally issued under this profile. A client <span class="bcp14">MAY</span>
-include <code>actor_token</code> and <code>actor_token_type</code> (<a href="#token-request" class="auto internal xref">Section 8.1</a>) on
-a refresh request to supply a fresh instance assertion (for example,
-to rotate the underlying assertion before its <code>exp</code>); when present,
-the <code>actor_token</code> <span class="bcp14">MUST</span> be bound to the same <code>cnf</code> key as the refresh
-token, <span class="bcp14">MUST</span> have <code>(iss, sub)</code> matching those recorded at the
-refresh token's original issuance, and <span class="bcp14">MUST</span> pass the token-type
-check, instance issuer descriptor lookup, signature verification,
-JWT claim validation, and <code>client_id</code> binding checks defined in
-<a href="#as-processing" class="auto internal xref">Section 8.2</a>. If the presented <code>actor_token</code> is a raw JWT-SVID
-without <code>cnf</code>, the AS <span class="bcp14">MUST</span> establish the binding key per
-<a href="#sender-constrained" class="auto internal xref">Section 8.5</a> and verify that the established binding key
-matches the refresh token's binding. The AS <span class="bcp14">MUST</span> reject with
-<code>invalid_grant</code> any refresh request whose presented <code>actor_token</code> is
-not bound to the same <code>cnf</code> key, or whose <code>(iss, sub)</code> differ from
-those recorded at issuance.<a href="#section-8.7-2" class="pilcrow">¶</a></p>
-<p id="section-8.7-3">Because the refresh token is bound to the originating instance, it
+token was not originally issued under this profile.<a href="#section-8.7-2" class="pilcrow">¶</a></p>
+<p id="section-8.7-3">A client <span class="bcp14">MAY</span> include <code>actor_token</code> and <code>actor_token_type</code>
+(<a href="#token-request" class="auto internal xref">Section 8.1</a>) on a refresh request to supply a fresh instance
+assertion (for example, to rotate the underlying assertion before
+its <code>exp</code>). When present, the <code>actor_token</code> <span class="bcp14">MUST</span>:<a href="#section-8.7-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8.7-4.1">
+            <p id="section-8.7-4.1.1">be bound to the same <code>cnf</code> key as the refresh token;<a href="#section-8.7-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.7-4.2">
+            <p id="section-8.7-4.2.1">have <code>(iss, sub)</code> matching those recorded at the refresh token's
+original issuance; and<a href="#section-8.7-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.7-4.3">
+            <p id="section-8.7-4.3.1">pass the token-type check, instance issuer descriptor lookup,
+signature verification, JWT claim validation, and <code>client_id</code>
+binding checks defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a>.<a href="#section-8.7-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-8.7-5">If the presented <code>actor_token</code> is a raw JWT-SVID without <code>cnf</code>, the
+AS <span class="bcp14">MUST</span> establish the binding key per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a> and
+verify that the established binding key matches the refresh token's
+binding. The AS <span class="bcp14">MUST</span> reject with <code>invalid_grant</code> any refresh
+request whose presented <code>actor_token</code> is not bound to the same
+<code>cnf</code> key, or whose <code>(iss, sub)</code> differ from those recorded at
+issuance.<a href="#section-8.7-5" class="pilcrow">¶</a></p>
+<p id="section-8.7-6">Because the refresh token is bound to the originating instance, it
 is implicitly invalidated when that instance terminates. This keeps
 <code>act.sub</code> (delegation) or <code>sub</code> (self-acting) stable across the
 refresh chain, matching the expectation of audit pipelines that a
-token's actor identity does not change after issuance.<a href="#section-8.7-3" class="pilcrow">¶</a></p>
-<p id="section-8.7-4">For SPIFFE deployments, the cnf binding key <span class="bcp14">MUST</span> outlive the
+token's actor identity does not change after issuance.<a href="#section-8.7-6" class="pilcrow">¶</a></p>
+<p id="section-8.7-7">For SPIFFE deployments, the cnf binding key <span class="bcp14">MUST</span> outlive the
 JWT-SVID rotation cycle (typically 5-10 minutes in default SPIRE).
 Deployments that bind <code>cnf</code> to a per-instance DPoP or mTLS key
 held by the workload satisfy this naturally; deployments that
 attempt to bind <code>cnf</code> to the SVID's signing key directly will lose
 refresh-token continuity at every rotation and <span class="bcp14">SHOULD NOT</span> use
-that pattern.<a href="#section-8.7-4" class="pilcrow">¶</a></p>
-<p id="section-8.7-5">Deployments requiring cross-instance session continuity (for
+that pattern.<a href="#section-8.7-7" class="pilcrow">¶</a></p>
+<p id="section-8.7-8">Deployments requiring cross-instance session continuity (for
 example, agent platforms whose runtime is recycled but whose session
 should continue) <span class="bcp14">MUST</span> handle this at the deployment layer rather
-than through refresh-token semantics. Suitable mechanisms include:<a href="#section-8.7-5" class="pilcrow">¶</a></p>
+than through refresh-token semantics. Suitable mechanisms include:<a href="#section-8.7-8" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-8.7-6.1">
-            <p id="section-8.7-6.1.1">re-authorizing the client through a fresh authorization
-grant (e.g., a new authorization_code flow with passive sign-in);<a href="#section-8.7-6.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-8.7-9.1">
+            <p id="section-8.7-9.1.1">re-authorizing the client through a fresh authorization
+grant (e.g., a new authorization_code flow with passive sign-in);<a href="#section-8.7-9.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-8.7-6.2">
-            <p id="section-8.7-6.2.1">using token-exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) to mint a new instance-bound
+          <li class="normal" id="section-8.7-9.2">
+            <p id="section-8.7-9.2.1">using token-exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) to mint a new instance-bound
 token chain in the successor instance from a long-lived parent
-token held by the platform; or<a href="#section-8.7-6.2.1" class="pilcrow">¶</a></p>
+token held by the platform; or<a href="#section-8.7-9.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-8.7-6.3">
-            <p id="section-8.7-6.3.1">persisting session state outside the refresh token (e.g., in a
+          <li class="normal" id="section-8.7-9.3">
+            <p id="section-8.7-9.3.1">persisting session state outside the refresh token (e.g., in a
 shared store keyed by the user-and-class) and obtaining new tokens
-through a fresh grant.<a href="#section-8.7-6.3.1" class="pilcrow">¶</a></p>
+through a fresh grant.<a href="#section-8.7-9.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-8.7-7">This profile does not extend refresh-token semantics to
+<p id="section-8.7-10">This profile does not extend refresh-token semantics to
 cross-instance succession; doing so would break the per-instance
-audit-stability invariant the profile is designed to provide.<a href="#section-8.7-7" class="pilcrow">¶</a></p>
+audit-stability invariant the profile is designed to provide.<a href="#section-8.7-10" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="spiffe-compatibility">
@@ -4184,29 +4201,29 @@ alongside the standard <span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]<
 metadata (CIMD documents or static registrations) that does not
 declare <code>instance_issuers</code> continues to work unchanged, and existing
 access tokens in circulation when a client adds <code>instance_issuers</code>
-remain valid for their original lifetime.
-An AS <span class="bcp14">MAY</span> implement this profile while continuing to serve clients
-that do not use it: token requests are dispatched on
+remain valid for their original lifetime.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<p id="section-10.3-2">An AS <span class="bcp14">MAY</span> implement this profile while continuing to serve clients
+that do not use it. Token requests are dispatched on
 <code>actor_token_type</code>, with
-<code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>
-triggering this profile's processing
-(<a href="#as-processing" class="auto internal xref">Section 8.2</a>) and other (or absent) values processed under
-their own specifications. ASes <span class="bcp14">SHOULD</span> advertise support via
-<code>actor_token_types_supported</code> (<a href="#as-metadata" class="auto internal xref">Section 6.2</a>). Clients <span class="bcp14">SHOULD</span>
-verify that <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>
-is present in the AS's <code>actor_token_types_supported</code> before
-sending an <code>actor_token</code> on a token request, since RFC 6749 permits
-ASes that do not implement this extension to silently ignore
-unrecognized parameters and issue an unbound access token. The
+<code>urn:ietf:params:oauth:token-type:client-instance-jwt</code> triggering
+this profile's processing (<a href="#as-processing" class="auto internal xref">Section 8.2</a>) and other (or absent)
+values processed under their own specifications.<a href="#section-10.3-2" class="pilcrow">¶</a></p>
+<p id="section-10.3-3">ASes <span class="bcp14">SHOULD</span> advertise support via <code>actor_token_types_supported</code>
+(<a href="#as-metadata" class="auto internal xref">Section 6.2</a>). Clients <span class="bcp14">SHOULD</span> verify that
+<code>urn:ietf:params:oauth:token-type:client-instance-jwt</code> is present in
+the AS's <code>actor_token_types_supported</code> before sending an
+<code>actor_token</code> on a token request, since RFC 6749 permits ASes that
+do not implement this extension to silently ignore unrecognized
+parameters and issue an unbound access token. The
 <code>actor_token_types_supported</code> value is a coarse capability signal;
-clients may still need registration-time or deployment agreement for
-grant-specific use, raw JWT-SVID compatibility, accepted sender-
-constraint methods, and refresh-token behavior. A client <span class="bcp14">MAY</span> add
-<code>instance_issuers</code> at any time; a client that wants to mandate
-instance assertions for every issued access token can register
-<code>token_endpoint_auth_method = client_instance_jwt</code>
+clients may still need registration-time or deployment agreement
+for grant-specific use, raw JWT-SVID compatibility, accepted
+sender-constraint methods, and refresh-token behavior.<a href="#section-10.3-3" class="pilcrow">¶</a></p>
+<p id="section-10.3-4">A client <span class="bcp14">MAY</span> add <code>instance_issuers</code> at any time. A client that wants
+to mandate instance assertions for every issued access token can
+register <code>token_endpoint_auth_method</code> = <code>client_instance_jwt</code>
 (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>), which intrinsically requires the
-<code>actor_token</code>.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<code>actor_token</code>.<a href="#section-10.3-4" class="pilcrow">¶</a></p>
 <div id="adoption-without-cnf">
 <section id="section-10.3.1">
           <h4 id="name-migration-without-re-minted">
@@ -4443,14 +4460,14 @@ intervals when instance identity is present.<a href="#section-12.2-3" class="pil
         </h3>
 <p id="section-12.3-1">Actor tokens <span class="bcp14">MUST</span> include <code>jti</code>, <code>exp</code>, and <code>iat</code> (<a href="#claims" class="auto internal xref">Section 7.2</a>),
 except for raw JWT-SVIDs accepted under the SPIFFE compatibility
-mode in <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>. When <code>jti</code> is present, after
-the AS has identified the issuer and validated the instance assertion
-signature, it <span class="bcp14">MUST</span> reject a token whose (<code>iss</code>, <code>jti</code>) pair has
-already been seen within the token's validity window. ASes <span class="bcp14">SHOULD</span>
-enforce this replay check for all Client Instance Assertions. An AS
-<span class="bcp14">MAY</span> skip this check
-for assertions whose <code>cnf</code> claim has been verified at presentation
-per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a> only when the deployment explicitly treats
+mode in <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>.<a href="#section-12.3-1" class="pilcrow">¶</a></p>
+<p id="section-12.3-2">When <code>jti</code> is present, after the AS has identified the issuer and
+validated the instance assertion signature, it <span class="bcp14">MUST</span> reject a token
+whose (<code>iss</code>, <code>jti</code>) pair has already been seen within the token's
+validity window. ASes <span class="bcp14">SHOULD</span> enforce this replay check for all
+Client Instance Assertions. An AS <span class="bcp14">MAY</span> skip this check for
+assertions whose <code>cnf</code> claim has been verified at presentation per
+<a href="#sender-constrained" class="auto internal xref">Section 8.5</a> only when the deployment explicitly treats
 cnf-bound assertions as reusable proof-of-possession credentials
 within their <code>exp</code> window, documents that behavior, and applies
 rate limits, monitoring, and audit logging for assertion use. The
@@ -4458,16 +4475,17 @@ rate limits, monitoring, and audit logging for assertion use. The
 (including raw JWT-SVIDs accepted under
 <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a> when <code>jti</code> is present). When the AS
 applies the replay check, it <span class="bcp14">MUST</span> retain replay-cache entries at
-least until the token's <code>exp</code> time, plus any allowed clock skew. For
-a raw JWT-SVID, the AS <span class="bcp14">MUST</span> apply the replay check when <code>jti</code> is
-present; when <code>jti</code> is absent, deployments rely on sender-constraint,
-short SVID lifetimes, and audience restriction to bound replay.
-Issuers <span class="bcp14">SHOULD</span> use short lifetimes (five minutes or less) both to
+least until the token's <code>exp</code> time, plus any allowed clock skew.
+For a raw JWT-SVID, the AS <span class="bcp14">MUST</span> apply the replay check when <code>jti</code>
+is present; when <code>jti</code> is absent, deployments rely on
+sender-constraint, short SVID lifetimes, and audience restriction
+to bound replay.<a href="#section-12.3-2" class="pilcrow">¶</a></p>
+<p id="section-12.3-3">Issuers <span class="bcp14">SHOULD</span> use short lifetimes (five minutes or less) both to
 limit replay exposure and because client instances often have
 lifetimes of seconds to minutes. When refreshing access tokens
 (<a href="#refresh" class="auto internal xref">Section 8.7</a>), AS implementations <span class="bcp14">SHOULD</span> prefer requiring a fresh
-instance assertion rather than perpetuating stale instance identity.<a href="#section-12.3-1" class="pilcrow">¶</a></p>
-<p id="section-12.3-2">Replay-cache cardinality at fleet scale is bounded by the rate of
+instance assertion rather than perpetuating stale instance identity.<a href="#section-12.3-3" class="pilcrow">¶</a></p>
+<p id="section-12.3-4">Replay-cache cardinality at fleet scale is bounded by the rate of
 distinct (<code>iss</code>, <code>jti</code>) tuples persisted during the retention
 window. ASes enforcing the replay check across all paths should
 expect roughly N × (<code>exp</code> / T) active entries, where N is the count
@@ -4475,8 +4493,8 @@ of concurrent instances minting assertions and T is the inter-mint
 interval; with T close to <code>exp</code>, this approaches N entries. ASes
 that use the documented reusable-assertion mode for cnf-bound
 assertions persist replay-cache entries only for paths where the
-strict check still applies.<a href="#section-12.3-2" class="pilcrow">¶</a></p>
-<p id="section-12.3-3">Distributed AS deployments (multi-replica or geographically
+strict check still applies.<a href="#section-12.3-4" class="pilcrow">¶</a></p>
+<p id="section-12.3-5">Distributed AS deployments (multi-replica or geographically
 distributed) <span class="bcp14">MUST</span> share the replay cache or coordinate to prevent
 cross-replica replay for any path on which the strict check applies;
 per-replica in-memory caches do not protect against an attacker
@@ -4485,21 +4503,21 @@ succession. A shared key-value store with TTL eviction (eviction
 time = <code>exp</code> plus permitted clock skew) is a natural fit. The
 shared-cache requirement does not apply on cnf-bound paths that are
 operated in the documented reusable-assertion mode, since cnf+PoP
-verification is itself correctness-preserving across replicas.<a href="#section-12.3-3" class="pilcrow">¶</a></p>
-<p id="section-12.3-4">Reusable mode shifts the blast radius of <code>cnf</code>-key compromise from
+verification is itself correctness-preserving across replicas.<a href="#section-12.3-5" class="pilcrow">¶</a></p>
+<p id="section-12.3-6">Reusable mode shifts the blast radius of <code>cnf</code>-key compromise from
 "one access token per assertion" (bounded by the strict replay cache)
 to "rate-limit ceiling within <code>exp</code>": an attacker who steals the
 <code>cnf</code> private key and the assertion can present it repeatedly until
 expiration. The deployment's per-assertion rate limit is therefore
 the bound on this threat, and ASes operating in reusable mode <span class="bcp14">SHOULD</span>
-size that limit accordingly.<a href="#section-12.3-4" class="pilcrow">¶</a></p>
-<p id="section-12.3-5">Replay-cache flooding is a denial-of-service surface: an attacker
+size that limit accordingly.<a href="#section-12.3-6" class="pilcrow">¶</a></p>
+<p id="section-12.3-7">Replay-cache flooding is a denial-of-service surface: an attacker
 holding a compromised instance issuer's signing key can mint
 validly-signed assertions with arbitrary <code>jti</code> values. ASes <span class="bcp14">SHOULD</span>
 apply per-issuer rate limits and bounded cache caps; a sustained
 high rate of distinct <code>jti</code> values from a single issuer is a signal
-of either a misbehaving runtime or compromise.<a href="#section-12.3-5" class="pilcrow">¶</a></p>
-<p id="section-12.3-6">The replay surface depends on whether <code>cnf</code> is present and verified
+of either a misbehaving runtime or compromise.<a href="#section-12.3-7" class="pilcrow">¶</a></p>
+<p id="section-12.3-8">The replay surface depends on whether <code>cnf</code> is present and verified
 at presentation (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). For re-minted Client
 Instance Assertions <code>cnf</code> is required, making them non-bearer at
 presentation: an attacker with only the JWT cannot use it without
@@ -4509,7 +4527,7 @@ the AS <span class="bcp14">MUST</span> establish a policy-backed, auditable inst
 binding per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>. For the instance-assertion auth
 mode (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>), where the instance assertion is
 the only client credential, ASes <span class="bcp14">MUST</span> reject requests whose
-instance assertion lacks <code>cnf</code>.<a href="#section-12.3-6" class="pilcrow">¶</a></p>
+instance assertion lacks <code>cnf</code>.<a href="#section-12.3-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-audience">
