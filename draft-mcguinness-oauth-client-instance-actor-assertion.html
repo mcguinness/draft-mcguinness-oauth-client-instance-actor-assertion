@@ -1685,8 +1685,9 @@ workload identity model, carrying OAuth-specific bindings
 (<code>client_id</code>, <code>aud</code>) needed at the OAuth token endpoint. Deployments
 holding a WIMSE workload credential, SPIFFE JWT-SVID, Kubernetes
 projected service-account token, or other workload credential
-<span class="bcp14">SHOULD</span> use the OAuth-aware adapter pattern (<a href="#issuer-obligations" class="auto internal xref">Section 7.1</a>)
-to mint a Client Instance Assertion. For sender-constraint, this
+<span class="bcp14">SHOULD</span> use the OAuth-aware adapter pattern
+(<a href="#adopting-existing-workload-identity" class="auto internal xref">Section 10.1</a>) to mint a Client Instance
+Assertion. For sender-constraint, this
 profile pins the binding member of <code>cnf</code> to <code>jkt</code> (<span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>) or
 <code>x5t#S256</code> (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>); WIMSE-defined binding mechanisms (for
 example, a future Workload Proof Token) can be added by a companion
@@ -3323,7 +3324,7 @@ token held by the platform; or<a href="#section-8.7-9.2.1" class="pilcrow">¶</a
 </li>
           <li class="normal" id="section-8.7-9.3">
             <p id="section-8.7-9.3.1">persisting session state outside the refresh token (e.g., in a
-shared store keyed by the user-and-class) and obtaining new tokens
+shared store keyed by the user-and-client pair) and obtaining new tokens
 through a fresh grant.<a href="#section-8.7-9.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>

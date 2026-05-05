@@ -335,7 +335,7 @@ Table of Contents
    needed at the OAuth token endpoint.  Deployments holding a WIMSE
    workload credential, SPIFFE JWT-SVID, Kubernetes projected service-
    account token, or other workload credential SHOULD use the OAuth-
-   aware adapter pattern (Section 7.1) to mint a Client Instance
+   aware adapter pattern (Section 10.1) to mint a Client Instance
    Assertion.  For sender-constraint, this profile pins the binding
    member of cnf to jkt ([RFC9449]) or x5t#S256 ([RFC8705]); WIMSE-
    defined binding mechanisms (for example, a future Workload Proof
@@ -1674,8 +1674,8 @@ Table of Contents
       token held by the platform; or
 
    *  persisting session state outside the refresh token (e.g., in a
-      shared store keyed by the user-and-class) and obtaining new tokens
-      through a fresh grant.
+      shared store keyed by the user-and-client pair) and obtaining new
+      tokens through a fresh grant.
 
    This profile does not extend refresh-token semantics to cross-
    instance succession; doing so would break the per-instance audit-
