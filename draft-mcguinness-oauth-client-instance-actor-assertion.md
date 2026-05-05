@@ -768,8 +768,8 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
   use case folding, Unicode normalization, or percent-decoding to make
   a non-matching trust domain match. `trust_domain`
   is meaningful only when `subject_syntax` is "spiffe"; an AS MUST
-  reject a descriptor that includes `trust_domain` with any other
-  `subject_syntax` as invalid client metadata. A descriptor's
+  ignore `trust_domain` in descriptors whose `subject_syntax` is
+  any other value. A descriptor's
   `trust_domain` is independent of any SPIFFE trust domain associated
   with the client itself under {{SPIFFE-CLIENT-AUTH}}; the two
   MAY differ.
@@ -1050,8 +1050,8 @@ algorithms (`HS256`, `HS384`, `HS512`) MUST NOT be used and ASes
 MUST reject assertions signed with them. The descriptor's
 `signing_alg_values_supported` ({{instance-issuers}}), when present,
 MUST contain only asymmetric algorithm identifiers. Implementations
-MUST follow the guidance in {{RFC8725}}. For interoperability, ASes
-SHOULD support at least `RS256` and `ES256`. Issuers SHOULD include a
+SHOULD follow the JWT BCP guidance in {{RFC8725}}. For
+interoperability, ASes SHOULD support at least `RS256` and `ES256`. Issuers SHOULD include a
 `kid` in the JWS protected header; ASes SHOULD use `kid` for key
 selection.
 
@@ -1744,18 +1744,18 @@ is implicitly invalidated when that instance terminates. This keeps
 refresh chain, matching the expectation of audit pipelines that a
 token's actor identity does not change after issuance.
 
-For SPIFFE deployments, the cnf binding key MUST outlive the
-JWT-SVID rotation cycle (typically 5-10 minutes in default SPIRE).
-Deployments that bind `cnf` to a per-instance DPoP or mTLS key
-held by the workload satisfy this naturally; deployments that
-attempt to bind `cnf` to the SVID's signing key directly will lose
-refresh-token continuity at every rotation and SHOULD NOT use
-that pattern.
+For SPIFFE deployments, the cnf binding key SHOULD outlive the
+JWT-SVID rotation cycle (typically 5-10 minutes in default SPIRE)
+when refresh tokens are issued. Deployments that bind `cnf` to a
+per-instance DPoP or mTLS key held by the workload satisfy this
+naturally; deployments that attempt to bind `cnf` to the SVID's
+signing key directly will lose refresh-token continuity at every
+rotation and SHOULD NOT use that pattern.
 
 Deployments requiring cross-instance session continuity (for
 example, agent platforms whose runtime is recycled but whose session
-should continue) MUST handle this at the deployment layer rather
-than through refresh-token semantics. Suitable mechanisms include:
+should continue) handle this at the deployment layer rather than
+through refresh-token semantics. Suitable mechanisms include:
 
 * re-authorizing the client through a fresh authorization
   grant (e.g., a new authorization_code flow with passive sign-in);
