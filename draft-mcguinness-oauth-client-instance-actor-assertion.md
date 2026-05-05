@@ -168,48 +168,36 @@ What this document does *not* do:
 
 # Relationship to Other Specifications {#relationships}
 
-## Relationship to RFC 8693 {#relationship-rfc8693}
+**RFC 8693 (Token Exchange).** {{RFC8693}} defines `actor_token` and
+`actor_token_type` only on the token-exchange grant. This document
+permits these parameters on additional grant types
+({{grant-extension}}) and registers a new `actor_token_type` for
+asserting client instance identity ({{client-instance-jwt}}); the
+two contributions are separable. For the `client-instance-jwt`
+token type, delegation requests represent the instance in `act`
+({{access-token-delegation}}) and self-acting requests (notably
+`client_credentials`) represent it in top-level `sub`
+({{access-token-self-acting}}); {{RFC8693}}'s "actor" framing
+strictly addresses only the delegation case, but this profile
+reuses the `actor_token` wire artifact for both, with classification
+determined by the grant (see {{rationale-self-acting}}). Use on a
+token-exchange request remains governed by {{RFC8693}}.
 
-{{RFC8693}} defines `actor_token` and `actor_token_type` only on
-the token-exchange grant. This document permits these parameters on
-additional grant types ({{grant-extension}}) and registers a new
-`actor_token_type` for asserting client instance identity
-({{client-instance-jwt}}); the two contributions are separable.
-For the `client-instance-jwt` token type, delegation requests
-represent the instance in `act` ({{access-token-delegation}}) and
-self-acting requests (notably `client_credentials`) represent it
-in top-level `sub` ({{access-token-self-acting}}); {{RFC8693}}'s
-"actor" framing strictly addresses only the delegation case, but
-this profile reuses the `actor_token` wire artifact for both, with
-classification determined by the grant rather than the assertion
-(see {{rationale-self-acting}}). Use on a token-exchange request
-remains fully governed by {{RFC8693}}.
+**OAuth Actor Profile.** {{ACTOR-PROFILE}} defines the structure of
+the `act` claim, the `sub_profile` claim, and nested actor
+representation. This document does not redefine those constructs;
+it defines how a client instance proves itself at the token
+endpoint and how the AS represents the validated assertion in
+issued access tokens (`act` for delegation, top-level `sub` for
+self-acting). Implementations of this document MUST also implement
+{{ACTOR-PROFILE}}.
 
-## Relationship to OAuth Actor Profile {#relationship-actor-profile}
-
-{{ACTOR-PROFILE}} defines the structure of the `act` claim, the
-`sub_profile` claim, and nested actor representation. This document does
-not redefine those constructs. It defines (a) how a client instance
-proves itself at the token endpoint and (b) how the AS represents the
-validated assertion in issued access tokens, either in `act`
-(delegation) or top-level `sub` (self-acting). Implementations of this
-document MUST also implement {{ACTOR-PROFILE}}.
-
-## Relationship to SPIFFE Client Authentication {#relationship-spiffe-client-auth}
-
-{{SPIFFE-CLIENT-AUTH}} (an OAuth Working Group document) defines how
-a SPIFFE workload authenticates *as the OAuth client itself*, using a
-JWT-SVID or X.509-SVID in place of a client secret. It registers the
-`client_assertion_type`
-`urn:ietf:params:oauth:client-assertion-type:jwt-spiffe` and adds CIMD
-metadata (`spiffe_id`, `spiffe_bundle_endpoint`) for resolving the
-client's SPIFFE trust bundle. Notably, its `spiffe_id` field permits a
-trailing "/*" wildcard, enabling one OAuth client to be authenticated
-by any SPIFFE workload whose ID matches the path-segment prefix.
-
-This document operates at a different layer. Its scope is *actor /
-instance identity*, not client authentication. The two specifications
-operate on different OAuth parameters and trust sources:
+**SPIFFE Client Authentication.** {{SPIFFE-CLIENT-AUTH}} (an OAuth
+Working Group document) defines how a SPIFFE workload authenticates
+*as the OAuth client itself* using a JWT-SVID or X.509-SVID in
+place of a client secret. This document operates at a different
+layer (actor / instance identity, not client authentication) and
+on different OAuth parameters and trust sources:
 
 | Layer | SPIFFE Client Auth | This document |
 | --- | --- | --- |
@@ -218,58 +206,30 @@ operate on different OAuth parameters and trust sources:
 | Trust source (client metadata) | SPIFFE bundle endpoint and `spiffe_id` | `instance_issuers` |
 | Where the SPIFFE ID surfaces | Validated against `spiffe_id`; not propagated | Surfaced in `act.sub` or top-level `sub` of issued access tokens |
 
-The two specifications are orthogonal and MAY be combined: a typical
-combined deployment uses {{SPIFFE-CLIENT-AUTH}} (with a wildcard
-`spiffe_id`) to authenticate the OAuth client and this profile to
-surface and bind the specific instance. The same SVID MAY be
-presented as both `client_assertion` and `actor_token` in a single
-request. Where naming the instance downstream is not needed,
-{{SPIFFE-CLIENT-AUTH}} alone suffices and this profile is not
-required.
+The two specifications are orthogonal and MAY be combined: a
+typical combined deployment uses {{SPIFFE-CLIENT-AUTH}} (with a
+wildcard `spiffe_id`) to authenticate the OAuth client and this
+profile to surface and bind the specific instance; the same SVID
+MAY be presented as both `client_assertion` and `actor_token` in a
+single request. This document does not require SPIFFE; instance
+issuers may use any `subject_syntax`, and the client may
+authenticate via any registered method. SPIFFE deployments get
+first-class support ({{instance-issuers}}, {{spiffe-compatibility}}).
 
-This document does not require SPIFFE. Instance issuers may use any
-`subject_syntax`, and the client itself may authenticate via any
-registered method. SPIFFE deployments get first-class support
-({{instance-issuers}}, {{spiffe-compatibility}}), including optional
-direct presentation of JWT-SVIDs as `actor_token` without re-minting.
-
-## Relationship to WIMSE Workload Credentials {#relationship-wimse}
-
-The IETF Workload Identity in Multi-System Environments (WIMSE)
-working group is defining specifications for workload identity,
-including a Workload Identity Token {{WIMSE-CREDS}} (a JWT credential
-asserting a workload's identity) and the broader WIMSE architecture
-{{WIMSE-ARCH}}. WIMSE work is in progress; the descriptions below
-reflect drafts current at the time of writing and may shift as that
-work progresses.
-
-This profile and WIMSE address adjacent layers:
-
-* **WIMSE workload identity credential**: a general-purpose
-  workload identity assertion designed for any HTTP endpoint, not
-  specifically for OAuth.
-* **This profile's Client Instance Assertion**: the OAuth-aware
-  projection of the same workload identity model, carrying the
-  OAuth-specific bindings (`client_id` for class membership, `aud`
-  identifying the AS) needed to be presented as `actor_token` at
-  the OAuth token endpoint.
-
-A WIMSE workload identity credential alone cannot be presented as
-`actor_token` under this profile because it lacks the OAuth-specific
-claims. Deployments that already hold one (or a SPIFFE JWT-SVID, a
-Kubernetes projected service-account token, or other workload
-credential) SHOULD use the OAuth-aware adapter pattern
-({{issuer-obligations}}) to mint a Client Instance Assertion carrying
-the underlying credential's identity together with the required
-OAuth claims. From the AS's perspective, the adapter is the
-instance issuer.
-
-For sender-constraint, this profile pins the binding member of `cnf`
-to `jkt` ({{RFC9449}}) or `x5t#S256` ({{RFC8705}}) for stable
-interoperability with deployed OAuth infrastructure. WIMSE-defined
-binding mechanisms (for example, a future Workload Proof Token) can
-be added by a companion profile when those mechanisms reach
-deployment maturity.
+**WIMSE Workload Credentials.** The IETF WIMSE working group is
+defining specifications for workload identity ({{WIMSE-CREDS}},
+{{WIMSE-ARCH}}); WIMSE work is in progress. This profile's Client
+Instance Assertion is the OAuth-aware projection of the same
+workload identity model, carrying OAuth-specific bindings
+(`client_id`, `aud`) needed at the OAuth token endpoint. Deployments
+holding a WIMSE workload credential, SPIFFE JWT-SVID, Kubernetes
+projected service-account token, or other workload credential
+SHOULD use the OAuth-aware adapter pattern ({{issuer-obligations}})
+to mint a Client Instance Assertion. For sender-constraint, this
+profile pins the binding member of `cnf` to `jkt` ({{RFC9449}}) or
+`x5t#S256` ({{RFC8705}}); WIMSE-defined binding mechanisms (for
+example, a future Workload Proof Token) can be added by a companion
+profile when those mechanisms reach deployment maturity.
 
 # Conventions and Definitions
 
@@ -1070,39 +1030,26 @@ Verification keys are obtained from the descriptor's `jwks_uri`,
 
 ## Example Assertion {#example-assertion}
 
-A decoded client instance assertion. The JWS protected header includes
-`"typ": "client-instance+jwt"` per {{signing}}:
+A decoded re-minted Client Instance Assertion (JWS protected header
+and JWT payload):
+
+~~~ json
+{ "alg": "ES256", "kid": "4vC8agycHu6rnkE...", "typ": "client-instance+jwt" }
+~~~
 
 ~~~ json
 {
-  "alg": "ES256",
-  "kid": "4vC8agycHu6rnkEEJYAH6VuCe4JoSkPV",
-  "typ": "client-instance+jwt"
+  "iss":         "https://workload.openai.example.com",
+  "sub":         "spiffe://openai.example.com/codex/session-abc",
+  "aud":         "https://as.example.com",
+  "client_id":   "https://openai.example.com/codex",
+  "sub_profile": "client_instance",
+  "iat":         1770000000,
+  "exp":         1770000300,
+  "jti":         "1a2b3c4d-5e6f",
+  "cnf":         { "jkt": "0ZcOCORZNYy...iguA4I" }
 }
 ~~~
-
-The payload follows:
-
-~~~ json
-{
-  "iss":          "https://workload.openai.example.com",
-  "sub":          "spiffe://openai.example.com/codex/session-abc",
-  "aud":          "https://as.example.com",
-  "client_id":    "https://openai.example.com/codex",
-  "sub_profile":  "client_instance ai_agent",
-  "iat":          1770000000,
-  "nbf":          1770000000,
-  "exp":          1770000300,
-  "jti":          "1a2b3c4d-5e6f",
-  "cnf":          { "jkt": "0ZcOCORZNYy...iguA4I" }
-}
-~~~
-
-The `sub_profile` value "`ai_agent`" is illustrative; only
-"`client_instance`" is registered by this document
-({{iana-entity-profile}}). Other values require their own
-registration in the OAuth Entity Profiles registry
-{{ENTITY-PROFILES}}.
 
 # Token Endpoint Processing {#token-endpoint}
 
@@ -1121,7 +1068,7 @@ representation rules in {{access-token}} describe the *claims* an
 issued access token carries (`act`, `sub`, `client_id`, `cnf`,
 `sub_profile`); for JWT access tokens these appear directly in the
 token payload, while for opaque access tokens they MUST be reflected
-in introspection responses ({{RFC7662}}, {{interactions}}). The
+in introspection responses ({{RFC7662}}, {{introspection-on-revocation}}). The
 sender-constraint binding in {{sender-constrained}} applies to both
 formats; the binding key is verified at presentation regardless of
 whether the access token is self-contained or requires introspection.
@@ -1988,83 +1935,7 @@ instance; when the instance is a SPIFFE workload, the SPIFFE ID is
 conveyed via `act.sub` (delegation) or `sub` (self-acting), never
 via `client_id`.
 
-# Operational Considerations {#operational}
-
-This section covers behavior that affects deployment and operation of
-the protocol after tokens have been issued: revocation, interactions
-with other OAuth extensions, and migration.
-
-## Token Revocation {#revocation}
-
-This profile supports two complementary revocation models for access
-tokens issued under it. Both build on {{RFC7009}}; deployments MAY
-support either, both, or neither, subject to operational constraints.
-
-### Per-Token Revocation {#per-token-revocation}
-
-An AS that supports {{RFC7009}} revocation MAY accept the access
-token (or its associated refresh token) as the token parameter and
-revoke that specific issued token. This works unchanged for tokens
-issued under this profile; no profile-specific extensions to the
-revocation endpoint are required.
-
-### Per-Instance Revocation {#per-instance-revocation}
-
-When an instance is compromised or otherwise needs to be quarantined,
-a deployment may need to invalidate all access tokens whose
-validated instance issuer and instance subject identify that
-instance, without enumerating every issued token. ASes implementing
-this profile SHOULD support a per-instance revocation mode keyed by
-the pair (instance issuer, instance subject):
-
-* for delegation tokens, the key is (`act.iss`, `act.sub`);
-* for self-acting tokens, the key is the instance issuer recorded by
-  the AS at issuance time together with the access token's `sub`;
-* invalidates all currently-active access tokens matching that key,
-  with descriptor scope as an optional additional filter;
-* prevents issuance of new access tokens with that instance
-  issuer-and-subject pair as actor or principal until a follow-up
-  condition is met (for example, expiration of an internal blocklist
-  entry, or removal of the instance from the workload identity
-  system).
-
-The mechanism for triggering per-instance revocation is
-deployment-specific and out of scope for this document.
-
-### Introspection Behavior on Revocation {#introspection-on-revocation}
-
-When an AS supports introspection ({{RFC7662}}), introspection
-responses for access tokens issued under this profile MUST honor
-both per-token revocation and per-instance revocation: an
-introspection response MUST return active = false for any access
-token that has been revoked under either model. Introspection MUST
-also honor the trust update rules in {{trust-lifecycle}}: when the
-AS has adopted updated client metadata that removes an instance
-issuer or narrows a descriptor's scope so that an issued access
-token's `act` (or, for self-acting tokens, `sub`) is no longer
-endorsed, introspection responses for that access token MUST return
-active = false once the AS has applied the update.
-
-### Revocation and Refresh Tokens {#revocation-refresh}
-
-When a refresh token is sender-constrained to the originating
-instance ({{refresh}}), per-instance revocation MUST also revoke
-the refresh token (and prevent any further access tokens it would
-mint). This profile does not define successor-instance refresh;
-deployments that need cross-instance session continuity use the
-separate mechanisms described in {{refresh}}.
-
-## Interactions with Other OAuth Extensions {#interactions}
-
-This profile operates at the token endpoint only; `actor_token` and
-`actor_token_type` are presented at /token regardless of whether the
-authorization step used PAR ({{RFC9126}}) or JAR ({{RFC9101}}), and
-the resource parameter {{RFC8707}} is orthogonal to actor identity.
-For introspection ({{RFC7662}}), the top-level `cnf` SHOULD be
-returned (delegation case follows {{ACTOR-PROFILE}}); in the
-self-acting case, `sub_profile` and `cnf` SHOULD also be returned.
-
-## Adoption and Migration {#adoption}
+# Adoption and Migration {#adoption}
 
 This profile is designed for incremental adoption. Existing client
 metadata (CIMD documents or static registrations) that does not
@@ -2097,7 +1968,7 @@ register `token_endpoint_auth_method` = `client_instance_jwt`
 ({{instance-assertion-auth}}), which intrinsically requires the
 `actor_token`.
 
-### Migration without re-minted cnf {#adoption-without-cnf}
+## Migration without re-minted cnf {#adoption-without-cnf}
 
 Re-minted Client Instance Assertions require `cnf` ({{claims}}).
 A deployment whose workload identity system does not yet emit
@@ -2147,55 +2018,21 @@ bearer at presentation ({{security-instance-assertion-auth}}).
 
 # Conformance {#conformance}
 
-This document defines separable implementation capabilities. A
-deployment or implementation claiming conformance MUST identify which
-of the following capabilities it supports.
-
-Actor Token Grant Extension AS:
-: An AS that supports presentation of `actor_token` and
-  `actor_token_type` on the grant types listed in
-  {{permitted-grants}}. Such an AS MUST dispatch by
-  `actor_token_type` and MUST NOT apply `client-instance-jwt` token
-  validation rules to other actor token types.
-
-Client Instance Assertion AS:
-: An AS that supports
-  `urn:ietf:params:oauth:token-type:client-instance-jwt`. Such an AS
-  MUST implement {{as-processing}}, {{sender-constrained}},
-  {{access-token}}, {{chain-merging}}, and {{errors}}. It MUST also
-  implement {{ACTOR-PROFILE}}. This capability covers re-minted
-  Client Instance Assertions containing `cnf`; support for raw
-  JWT-SVID compatibility is a separate capability.
-
-SPIFFE Raw JWT-SVID Compatibility AS:
-: An AS that accepts raw JWT-SVIDs as `actor_token` without
-  re-minting. Such an AS MUST implement {{spiffe-compatibility}},
-  MUST support descriptors using `spiffe_bundle_endpoint`, and MUST
-  establish instance-specific sender-constraint when the raw
-  JWT-SVID lacks `cnf` ({{sender-constrained}}).
-
-Client Instance Assertion Auth Method AS:
-: An AS that supports the `client_instance_jwt`
-  `token_endpoint_auth_method`. Such an AS MUST implement
-  {{instance-assertion-auth}} in addition to the Client Instance
-  Assertion AS capability.
-
-OAuth Client:
-: A client using this profile MUST publish or register
-  `instance_issuers` metadata as defined in {{instance-issuers}} and
-  MUST ensure that each listed instance issuer is authorized to attest
-  instances of the client.
-
-Instance Issuer:
-: An issuer of Client Instance Assertions MUST mint assertions
-  according to {{claims}}, {{signing}}, and the delegated scope
-  described in {{trust-model-delegation}}.
-
-Resource Server:
-: A resource server that consumes access tokens issued under this
-  profile MUST process delegated tokens according to
-  {{ACTOR-PROFILE}} and MUST apply the self-acting semantics in
-  {{rs-self-acting}} when no `act` claim is present.
+An AS conforms to this document by implementing the actor token
+grant extension ({{grant-extension}}) and processing for
+`urn:ietf:params:oauth:token-type:client-instance-jwt`
+({{token-endpoint}}, {{access-token}}, {{errors}}, plus
+{{ACTOR-PROFILE}}). Raw JWT-SVID compatibility
+({{spiffe-compatibility}}) and the `client_instance_jwt`
+authentication method ({{instance-assertion-auth}}) are optional
+capabilities; an AS that supports either MUST conform to its
+respective section. A client using this profile MUST publish or
+register `instance_issuers` metadata ({{instance-issuers}}) and
+MUST ensure each listed issuer is authorized to attest its
+instances. An instance issuer MUST mint assertions per {{claims}},
+{{signing}}, and {{trust-model-delegation}}. A resource server
+MUST process delegated tokens per {{ACTOR-PROFILE}} and apply the
+self-acting semantics in {{rs-self-acting}} when `act` is absent.
 
 # Security Considerations {#security}
 
@@ -2271,6 +2108,70 @@ without a new instance assertion may carry stale instance identity long after
 the original instance has terminated. ASes SHOULD prefer requiring a
 fresh instance assertion on refresh ({{refresh}}), or set short refresh
 intervals when instance identity is present.
+
+## Token Revocation {#revocation}
+
+This profile supports two complementary revocation models for access
+tokens issued under it. Both build on {{RFC7009}}; deployments MAY
+support either, both, or neither.
+
+### Per-Token Revocation {#per-token-revocation}
+
+An AS that supports {{RFC7009}} revocation MAY accept the access
+token (or its associated refresh token) as the token parameter and
+revoke that specific issued token. This works unchanged for tokens
+issued under this profile; no profile-specific extensions to the
+revocation endpoint are required.
+
+### Per-Instance Revocation {#per-instance-revocation}
+
+When an instance is compromised or otherwise needs to be quarantined,
+a deployment may need to invalidate all access tokens whose
+validated instance issuer and instance subject identify that
+instance, without enumerating every issued token. ASes implementing
+this profile SHOULD support a per-instance revocation mode keyed by
+the pair (instance issuer, instance subject):
+
+* for delegation tokens, the key is (`act.iss`, `act.sub`);
+* for self-acting tokens, the key is the instance issuer recorded by
+  the AS at issuance time together with the access token's `sub`;
+* invalidates all currently-active access tokens matching that key,
+  with descriptor scope as an optional additional filter;
+* prevents issuance of new access tokens with that instance
+  issuer-and-subject pair as actor or principal until a follow-up
+  condition is met (for example, expiration of an internal blocklist
+  entry, or removal of the instance from the workload identity
+  system).
+
+The mechanism for triggering per-instance revocation is
+deployment-specific and out of scope for this document.
+
+### Introspection Behavior on Revocation {#introspection-on-revocation}
+
+When an AS supports introspection ({{RFC7662}}), introspection
+responses for access tokens issued under this profile MUST honor
+both per-token revocation and per-instance revocation: an
+introspection response MUST return active = false for any access
+token that has been revoked under either model. Introspection MUST
+also honor the trust update rules in {{trust-lifecycle}}: when the
+AS has adopted updated client metadata that removes an instance
+issuer or narrows a descriptor's scope so that an issued access
+token's `act` (or, for self-acting tokens, `sub`) is no longer
+endorsed, introspection responses for that access token MUST return
+active = false once the AS has applied the update. Active
+introspection responses SHOULD include the access token's top-level
+`cnf` so that introspection-based PoP has the binding key
+(delegation case follows {{ACTOR-PROFILE}}); for self-acting
+tokens, `sub_profile` and `cnf` SHOULD also be returned.
+
+### Revocation and Refresh Tokens {#revocation-refresh}
+
+When a refresh token is sender-constrained to the originating
+instance ({{refresh}}), per-instance revocation MUST also revoke
+the refresh token (and prevent any further access tokens it would
+mint). This profile does not define successor-instance refresh;
+deployments that need cross-instance session continuity use the
+separate mechanisms described in {{refresh}}.
 
 ## Replay {#security-replay}
 
