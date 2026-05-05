@@ -3,7 +3,7 @@ title: "OAuth 2.0 Client Instance Assertions using Actor Tokens"
 abbrev: "oauth-client-instance-assertion"
 category: std
 
-docname: draft-mcguinness-oauth-client-instance-actor-assertion-latest
+docname: draft-mcguinness-oauth-client-instance-assertion-latest
 submissiontype: IETF
 number:
 date: 2026-05-05
@@ -22,8 +22,8 @@ venue:
   type: "Working Group"
   mail: "oauth@ietf.org"
   arch: "https://mailarchive.ietf.org/arch/browse/oauth/"
-  github: "mcguinness/draft-mcguinness-oauth-client-instance-actor-assertion"
-  latest: "https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/draft-mcguinness-oauth-client-instance-actor-assertion.html"
+  github: "mcguinness/draft-mcguinness-oauth-client-instance-assertion"
+  latest: "https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/draft-mcguinness-oauth-client-instance-assertion.html"
 
 author:
  -
