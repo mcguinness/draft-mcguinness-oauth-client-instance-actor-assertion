@@ -177,9 +177,9 @@ Table of Contents
      Why extend actor_token to non-token-exchange grants?
      Why client metadata as the trust anchor for instance issuers?
      Why a dedicated actor_token_type URN?
-     Why reuse actor_token in the self-acting case?
      Why a token_endpoint_auth_method rather than a
           client_assertion_type?
+     Why reuse actor_token in the self-acting case?
    Worked Examples
      Authorization Code with User Delegation
      Client Credentials (Self-Acting)
@@ -3070,37 +3070,6 @@ Why a dedicated actor_token_type URN?
    processing unambiguously and lets clients advertise support via
    actor_token_types_supported.
 
-Why reuse actor_token in the self-acting case?
-
-   In the self-acting case (Section 8.6.3) the issued access token's
-   principal is the instance itself, not a separate party.  RFC 8693's
-   "actor" framing literally describes the actor as the party acting on
-   behalf of the subject; with no other subject present, the framing is
-   technically a stretch.
-
-   Two considerations specific to the self-acting case led to reuse
-   rather than introducing a parallel "subject_assertion" parameter (the
-   general argument against a new request parameter is in Appendix "Why
-   not a dedicated client_instance_assertion request parameter?"):
-
-   1.  _Classification belongs to the grant._ Whether the issued access
-       token represents delegation or self-acting is determined by the
-       grant (Section 8.6.1), not by the instance assertion.  The same
-       instance assertion can correctly produce either shape depending
-       on the grant it accompanies.
-
-   2.  _Deployment fit._ Workload identity systems already issue exactly
-       this artifact for both purposes.  Requiring deployments to re-
-       mint the same JWT under a different parameter name to satisfy an
-       academic distinction would not improve security.
-
-   The cost is that [RFC8693]'s "actor" terminology must be read with
-   this profile's classification rules in mind.  Implementations and
-   specification readers should treat actor_token in this profile as
-   "validated instance identity assertion," with the understanding that
-   its placement in the issued access token (act vs. sub) is governed by
-   Section 8.6.1.
-
 Why a token_endpoint_auth_method rather than a client_assertion_type?
 
    [SPIFFE-CLIENT-AUTH] models its workload-identity-as-client-auth
@@ -3132,6 +3101,37 @@ Why a token_endpoint_auth_method rather than a client_assertion_type?
    from its client-metadata endorsement of the instance assertion's
    issuer, while keeping client_assertion and actor_token semantically
    distinct.
+
+Why reuse actor_token in the self-acting case?
+
+   In the self-acting case (Section 8.6.3) the issued access token's
+   principal is the instance itself, not a separate party.  RFC 8693's
+   "actor" framing literally describes the actor as the party acting on
+   behalf of the subject; with no other subject present, the framing is
+   technically a stretch.
+
+   Two considerations specific to the self-acting case led to reuse
+   rather than introducing a parallel "subject_assertion" parameter (the
+   general argument against a new request parameter is in Appendix "Why
+   not a dedicated client_instance_assertion request parameter?"):
+
+   1.  _Classification belongs to the grant._ Whether the issued access
+       token represents delegation or self-acting is determined by the
+       grant (Section 8.6.1), not by the instance assertion.  The same
+       instance assertion can correctly produce either shape depending
+       on the grant it accompanies.
+
+   2.  _Deployment fit._ Workload identity systems already issue exactly
+       this artifact for both purposes.  Requiring deployments to re-
+       mint the same JWT under a different parameter name to satisfy an
+       academic distinction would not improve security.
+
+   The cost is that [RFC8693]'s "actor" terminology must be read with
+   this profile's classification rules in mind.  Implementations and
+   specification readers should treat actor_token in this profile as
+   "validated instance identity assertion," with the understanding that
+   its placement in the issued access token (act vs. sub) is governed by
+   Section 8.6.1.
 
 Worked Examples
 

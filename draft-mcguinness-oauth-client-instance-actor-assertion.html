@@ -1486,10 +1486,10 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.15.2.5.1"><a href="#appendix-A.5" class="auto internal xref"></a><a href="#name-why-a-dedicated-actor_token" class="internal xref">Why a dedicated actor_token_type URN?</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.6">
-                <p id="section-toc.1-1.15.2.6.1"><a href="#appendix-A.6" class="auto internal xref"></a><a href="#name-why-reuse-actor_token-in-th" class="internal xref">Why reuse <code>actor_token</code> in the self-acting case?</a></p>
+                <p id="section-toc.1-1.15.2.6.1"><a href="#appendix-A.6" class="auto internal xref"></a><a href="#name-why-a-token_endpoint_auth_m" class="internal xref">Why a <code>token_endpoint_auth_method</code> rather than a <code>client_assertion_type</code>?</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.7">
-                <p id="section-toc.1-1.15.2.7.1"><a href="#appendix-A.7" class="auto internal xref"></a><a href="#name-why-a-token_endpoint_auth_m" class="internal xref">Why a <code>token_endpoint_auth_method</code> rather than a <code>client_assertion_type</code>?</a></p>
+                <p id="section-toc.1-1.15.2.7.1"><a href="#appendix-A.7" class="auto internal xref"></a><a href="#name-why-reuse-actor_token-in-th" class="internal xref">Why reuse <code>actor_token</code> in the self-acting case?</a></p>
 </li>
             </ul>
 </li>
@@ -5216,66 +5216,29 @@ nor that <code>client_id</code> binding applies. A dedicated URN lets ASes route
 and lets clients advertise support via <code>actor_token_types_supported</code>.<a href="#appendix-A.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="rationale-self-acting">
-<section id="appendix-A.6">
-        <h3 id="name-why-reuse-actor_token-in-th">
-<a href="#name-why-reuse-actor_token-in-th" class="section-name selfRef">Why reuse <code>actor_token</code> in the self-acting case?</a>
-        </h3>
-<p id="appendix-A.6-1">In the self-acting case (<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>) the issued
-access token's principal is the instance itself, not a separate
-party. RFC 8693's "actor" framing literally describes the actor as
-the party acting on behalf of the subject; with no other subject
-present, the framing is technically a stretch.<a href="#appendix-A.6-1" class="pilcrow">¶</a></p>
-<p id="appendix-A.6-2">Two considerations specific to the self-acting case led to reuse
-rather than introducing a parallel "subject_assertion" parameter
-(the general argument against a new request parameter is in
-<a href="#rationale-no-instance-assertion-param" class="auto internal xref">Appendix "Why not a dedicated client_instance_assertion request parameter?"</a>):<a href="#appendix-A.6-2" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="appendix-A.6-3">
-<li id="appendix-A.6-3.1">
-            <p id="appendix-A.6-3.1.1"><em>Classification belongs to the grant.</em> Whether the issued access
-token represents delegation or self-acting is determined by the
-grant (<a href="#access-token-classification" class="auto internal xref">Section 8.6.1</a>), not by the instance assertion.
-The same instance assertion can correctly produce either shape depending
-on the grant it accompanies.<a href="#appendix-A.6-3.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="appendix-A.6-3.2">
-            <p id="appendix-A.6-3.2.1"><em>Deployment fit.</em> Workload identity systems already issue exactly
-this artifact for both purposes. Requiring deployments to re-mint
-the same JWT under a different parameter name to satisfy an
-academic distinction would not improve security.<a href="#appendix-A.6-3.2.1" class="pilcrow">¶</a></p>
-</li>
-        </ol>
-<p id="appendix-A.6-4">The cost is that <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>'s "actor" terminology must be read with
-this profile's classification rules in mind. Implementations and
-specification readers should treat <code>actor_token</code> in this profile as
-"validated instance identity assertion," with the understanding that
-its placement in the issued access token (<code>act</code> vs. <code>sub</code>) is governed by
-<a href="#access-token-classification" class="auto internal xref">Section 8.6.1</a>.<a href="#appendix-A.6-4" class="pilcrow">¶</a></p>
-</section>
-</div>
 <div id="rationale-auth-method">
-<section id="appendix-A.7">
+<section id="appendix-A.6">
         <h3 id="name-why-a-token_endpoint_auth_m">
 <a href="#name-why-a-token_endpoint_auth_m" class="section-name selfRef">Why a <code>token_endpoint_auth_method</code> rather than a <code>client_assertion_type</code>?</a>
         </h3>
-<p id="appendix-A.7-1"><span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> models its workload-identity-as-client-auth
+<p id="appendix-A.6-1"><span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> models its workload-identity-as-client-auth
 mechanism as a <code>client_assertion_type</code>. The natural question is why
-<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a> does not.<a href="#appendix-A.7-1" class="pilcrow">¶</a></p>
-<p id="appendix-A.7-2">The two cases differ in what the JWT names. A SPIFFE JWT-SVID
+<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a> does not.<a href="#appendix-A.6-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.6-2">The two cases differ in what the JWT names. A SPIFFE JWT-SVID
 presented as a <code>client_assertion</code> under <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> names
 <em>the client</em> (its <code>sub</code> is the <code>spiffe_id</code> of the workload acting
 as the client). The client-metadata listing of <code>spiffe_id</code>,
 including the permitted "/*" path-segment wildcard, turns the SVID
 into a credential for the client. There is no separate notion of
-"instance" on the wire.<a href="#appendix-A.7-2" class="pilcrow">¶</a></p>
-<p id="appendix-A.7-3">A client instance assertion under this profile names <em>the
+"instance" on the wire.<a href="#appendix-A.6-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.6-3">A client instance assertion under this profile names <em>the
 instance</em>: its <code>sub</code> is the instance identifier and its <code>client_id</code>
 claim names the client. The same JWT is required to do double duty
 only when the client chooses
 <code>token_endpoint_auth_method</code> = <code>client_instance_jwt</code>; in every
 other auth method, a separate client credential authenticates the
-client and the instance assertion names the instance.<a href="#appendix-A.7-3" class="pilcrow">¶</a></p>
-<p id="appendix-A.7-4">Modeling the dual-use case as a <code>client_assertion_type</code> would have
+client and the instance assertion names the instance.<a href="#appendix-A.6-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.6-4">Modeling the dual-use case as a <code>client_assertion_type</code> would have
 required either (a) inventing a second token type identical to
 client-instance-jwt to be the assertion, doubling the wire surface,
 or (b) overloading <code>client_assertion_type</code> with the actor-token
@@ -5284,7 +5247,44 @@ Modeling it as a <code>token_endpoint_auth_method</code> captures what is
 actually happening, namely that the AS authenticates the client
 implicitly from its client-metadata endorsement of the instance
 assertion's issuer, while keeping <code>client_assertion</code> and
-<code>actor_token</code> semantically distinct.<a href="#appendix-A.7-4" class="pilcrow">¶</a></p>
+<code>actor_token</code> semantically distinct.<a href="#appendix-A.6-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="rationale-self-acting">
+<section id="appendix-A.7">
+        <h3 id="name-why-reuse-actor_token-in-th">
+<a href="#name-why-reuse-actor_token-in-th" class="section-name selfRef">Why reuse <code>actor_token</code> in the self-acting case?</a>
+        </h3>
+<p id="appendix-A.7-1">In the self-acting case (<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>) the issued
+access token's principal is the instance itself, not a separate
+party. RFC 8693's "actor" framing literally describes the actor as
+the party acting on behalf of the subject; with no other subject
+present, the framing is technically a stretch.<a href="#appendix-A.7-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.7-2">Two considerations specific to the self-acting case led to reuse
+rather than introducing a parallel "subject_assertion" parameter
+(the general argument against a new request parameter is in
+<a href="#rationale-no-instance-assertion-param" class="auto internal xref">Appendix "Why not a dedicated client_instance_assertion request parameter?"</a>):<a href="#appendix-A.7-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="appendix-A.7-3">
+<li id="appendix-A.7-3.1">
+            <p id="appendix-A.7-3.1.1"><em>Classification belongs to the grant.</em> Whether the issued access
+token represents delegation or self-acting is determined by the
+grant (<a href="#access-token-classification" class="auto internal xref">Section 8.6.1</a>), not by the instance assertion.
+The same instance assertion can correctly produce either shape depending
+on the grant it accompanies.<a href="#appendix-A.7-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="appendix-A.7-3.2">
+            <p id="appendix-A.7-3.2.1"><em>Deployment fit.</em> Workload identity systems already issue exactly
+this artifact for both purposes. Requiring deployments to re-mint
+the same JWT under a different parameter name to satisfy an
+academic distinction would not improve security.<a href="#appendix-A.7-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="appendix-A.7-4">The cost is that <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>'s "actor" terminology must be read with
+this profile's classification rules in mind. Implementations and
+specification readers should treat <code>actor_token</code> in this profile as
+"validated instance identity assertion," with the understanding that
+its placement in the issued access token (<code>act</code> vs. <code>sub</code>) is governed by
+<a href="#access-token-classification" class="auto internal xref">Section 8.6.1</a>.<a href="#appendix-A.7-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
