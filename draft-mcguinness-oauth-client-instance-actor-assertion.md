@@ -1816,7 +1816,7 @@ the following semantics under this profile:
   MUST NOT treat `client_id` as the actor identifier in the self-
   acting case; the actor identifier is `sub`. (When delegation is
   also present, this distinction is moot; `client_id` remains the
-  class and `act.sub` names the actor.)
+  OAuth client identifier and `act.sub` names the actor.)
 * `cnf` binds the token to the instance's key; PoP validation follows
   the access token's binding mechanism (`DPoP` {{RFC9449}} or
   Mutual-TLS-bound {{RFC8705}}).
