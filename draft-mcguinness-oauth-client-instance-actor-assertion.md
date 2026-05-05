@@ -800,7 +800,7 @@ and new runtimes.
 How the issuer internally authenticates the runtime is out of
 scope. Common deployment patterns (adapter, raw JWT-SVID
 compatibility, X.509-SVID binding) are described in
-{{adoption-without-cnf}}.
+{{adopting-existing-workload-identity}}.
 
 ## JWT Claims {#claims}
 
@@ -1862,7 +1862,7 @@ register `token_endpoint_auth_method` = `client_instance_jwt`
 ({{instance-assertion-auth}}), which intrinsically requires the
 `actor_token`.
 
-## Migration without re-minted cnf {#adoption-without-cnf}
+## Adopting with Existing Workload Identity {#adopting-existing-workload-identity}
 
 Re-minted Client Instance Assertions require `cnf` ({{claims}}).
 A deployment whose workload identity system does not yet emit
