@@ -1194,10 +1194,10 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
             <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
-            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-relationship-to-other-speci" class="internal xref">Relationship to Other Specifications</a></p>
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
-            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-relationship-to-other-speci" class="internal xref">Relationship to Other Specifications</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
             <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-actor-token-grant-extension" class="internal xref">Actor Token Grant Extension</a></p>
@@ -1338,19 +1338,9 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
             <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-resource-server-processing" class="internal xref">Resource Server Processing</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
-                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-self-acting-case-2" class="internal xref">Self-Acting Case</a></p>
-</li>
-            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
             <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-adoption-and-migration" class="internal xref">Adoption and Migration</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
-                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-adopting-with-existing-work" class="internal xref">Adopting with Existing Workload Identity</a></p>
-</li>
-            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
             <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-conformance" class="internal xref">Conformance</a></p>
@@ -1391,7 +1381,7 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.12.2.6.1"><a href="#section-12.6" class="auto internal xref">12.6</a>.  <a href="#name-audience-and-confused-deput" class="internal xref">Audience and Confused Deputy</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.7">
-                <p id="section-toc.1-1.12.2.7.1"><a href="#section-12.7" class="auto internal xref">12.7</a>.  <a href="#name-client-instance-assertion-t" class="internal xref">Client Instance Assertion Trust-Root Collapse</a></p>
+                <p id="section-toc.1-1.12.2.7.1"><a href="#section-12.7" class="auto internal xref">12.7</a>.  <a href="#name-trust-root-collapse" class="internal xref">Trust-Root Collapse</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.8">
                 <p id="section-toc.1-1.12.2.8.1"><a href="#section-12.8" class="auto internal xref">12.8</a>.  <a href="#name-mode-switch-between-delegat" class="internal xref">Mode-Switch Between Delegation and Self-Acting</a></p>
@@ -1594,12 +1584,89 @@ future work.<a href="#section-1-8.3.1" class="pilcrow">¶</a></p>
       </ul>
 </section>
 </div>
-<div id="relationships">
+<div id="conventions-and-definitions">
 <section id="section-2">
-      <h2 id="name-relationship-to-other-speci">
-<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-relationship-to-other-speci" class="section-name selfRef">Relationship to Other Specifications</a>
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
       </h2>
-<p id="section-2-1"><strong>RFC 8693 (Token Exchange).</strong> <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines <code>actor_token</code> and
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">This document uses the following terms:<a href="#section-2-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-3">
+        <dt id="section-2-3.1">OAuth Client:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.2">
+          <p id="section-2-3.2.1">As defined in <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>, identified by a <code>client_id</code> (a CIMD
+URL or a registered <code>client_id</code> under <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>; see
+<a href="#registration-models" class="auto internal xref">Section 5.2</a>). In this profile, the OAuth client
+publishes the set of instance issuers permitted to authenticate
+its runtime instances (<a href="#client-instance-model" class="auto internal xref">Section 5</a>).<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.3">Client Instance:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.4">
+          <p id="section-2-3.4.1">A concrete runtime of an OAuth client (for example, a particular
+process, container, function invocation, or session). See
+<a href="#client-instance-model" class="auto internal xref">Section 5</a> for the class-and-instance relationship
+between an OAuth client and its instances.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.5">Instance Issuer:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.6">
+          <p id="section-2-3.6.1">An authority trusted by the client to authenticate client
+instances and issue instance assertions for those instances. Examples include
+workload identity providers (e.g., a SPIFFE control plane
+<span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>) and platform-managed identity services.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.7">Client Instance Assertion:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.8">
+          <p id="section-2-3.8.1">A JWT issued by an instance issuer asserting the identity of a
+client instance, presented as the <code>actor_token</code> in a token request.
+This document distinguishes "<code>actor_token</code>" (the RFC 8693 request
+parameter, always typeset in backticks) from "Client Instance
+Assertion" or "instance assertion" in prose (the JWT artifact
+defined by this profile, which is what the <code>actor_token</code> parameter
+carries when its <code>actor_token_type</code> is
+<code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>).<a href="#section-2-3.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.9">Actor Token Grant Extension:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.10">
+          <p id="section-2-3.10.1">The wire-level extension defined in <a href="#grant-extension" class="auto internal xref">Section 4</a> permitting
+<code>actor_token</code> and <code>actor_token_type</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) on the grant
+types listed in <a href="#permitted-grants" class="auto internal xref">Section 4.1</a>. This document's
+<code>client-instance-jwt</code> actor token type builds on the extension;
+other profiles may define their own actor token types under it.<a href="#section-2-3.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.11">Delegation Case:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.12">
+          <p id="section-2-3.12.1">A token request whose grant produces a principal distinct from the
+instance presenting the <code>actor_token</code> (for example, a user under
+authorization_code or jwt-bearer). The issued access token's <code>sub</code>
+is the principal and the instance appears in <code>act</code> per
+<a href="#access-token-delegation" class="auto internal xref">Section 8.6.2</a>.<a href="#section-2-3.12.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.13">Self-Acting Case:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.14">
+          <p id="section-2-3.14.1">A token request whose grant produces no principal distinct from
+the instance (notably <code>client_credentials</code>). The issued access
+token's <code>sub</code> is the instance and <code>act</code> is omitted per
+<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>.<a href="#section-2-3.14.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="relationships">
+<section id="section-3">
+      <h2 id="name-relationship-to-other-speci">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-relationship-to-other-speci" class="section-name selfRef">Relationship to Other Specifications</a>
+      </h2>
+<p id="section-3-1"><strong>RFC 8693 (Token Exchange).</strong> <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines <code>actor_token</code> and
 <code>actor_token_type</code> only on the token-exchange grant. This document
 permits these parameters on additional grant types
 (<a href="#grant-extension" class="auto internal xref">Section 4</a>) and registers a new <code>actor_token_type</code> for
@@ -1612,21 +1679,21 @@ token type, delegation requests represent the instance in <code>act</code>
 strictly addresses only the delegation case, but this profile
 reuses the <code>actor_token</code> wire artifact for both, with classification
 determined by the grant (see <a href="#rationale-self-acting" class="auto internal xref">Appendix "Why reuse actor_token in the self-acting case?"</a>). Use on a
-token-exchange request remains governed by <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.<a href="#section-2-1" class="pilcrow">¶</a></p>
-<p id="section-2-2"><strong>OAuth Actor Profile.</strong> <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> defines the structure of
+token-exchange request remains governed by <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2"><strong>OAuth Actor Profile.</strong> <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> defines the structure of
 the <code>act</code> claim, the <code>sub_profile</code> claim, and nested actor
 representation. This document does not redefine those constructs;
 it defines how a client instance proves itself at the token
 endpoint and how the AS represents the validated assertion in
 issued access tokens (<code>act</code> for delegation, top-level <code>sub</code> for
 self-acting). Implementations of this document <span class="bcp14">MUST</span> also implement
-<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
-<p id="section-2-3"><strong>SPIFFE Client Authentication.</strong> <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> (an OAuth
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<p id="section-3-3"><strong>SPIFFE Client Authentication.</strong> <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> (an OAuth
 Working Group document) defines how a SPIFFE workload authenticates
 <em>as the OAuth client itself</em> using a JWT-SVID or X.509-SVID in
 place of a client secret. This document operates at a different
 layer (actor / instance identity, not client authentication) and
-on different OAuth parameters and trust sources:<a href="#section-2-3" class="pilcrow">¶</a></p>
+on different OAuth parameters and trust sources:<a href="#section-3-3" class="pilcrow">¶</a></p>
 <table class="center" id="table-1">
         <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
 <thead>
@@ -1666,7 +1733,7 @@ on different OAuth parameters and trust sources:<a href="#section-2-3" class="pi
           </tr>
         </tbody>
       </table>
-<p id="section-2-5">The two specifications are orthogonal and <span class="bcp14">MAY</span> be combined: a
+<p id="section-3-5">The two specifications are orthogonal and <span class="bcp14">MAY</span> be combined: a
 typical combined deployment uses <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> (with a
 wildcard <code>spiffe_id</code>) to authenticate the OAuth client and this
 profile to surface and bind the specific instance. The same SVID
@@ -1676,8 +1743,8 @@ sender-constraint requirements are satisfied. This document does
 not require SPIFFE; instance issuers may use any <code>subject_syntax</code>,
 and the client may authenticate via any registered method. SPIFFE
 deployments get first-class support (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>,
-<a href="#spiffe-compatibility" class="auto internal xref">Section 8.8</a>).<a href="#section-2-5" class="pilcrow">¶</a></p>
-<p id="section-2-6"><strong>WIMSE Workload Credentials.</strong> The IETF WIMSE working group is
+<a href="#spiffe-compatibility" class="auto internal xref">Section 8.8</a>).<a href="#section-3-5" class="pilcrow">¶</a></p>
+<p id="section-3-6"><strong>WIMSE Workload Credentials.</strong> The IETF WIMSE working group is
 defining specifications for workload identity (<span>[<a href="#WIMSE-CREDS" class="cite xref">WIMSE-CREDS</a>]</span>,
 <span>[<a href="#WIMSE-ARCH" class="cite xref">WIMSE-ARCH</a>]</span>); WIMSE work is in progress. This profile's Client
 Instance Assertion is the OAuth-aware projection of the same
@@ -1685,90 +1752,12 @@ workload identity model, carrying OAuth-specific bindings
 (<code>client_id</code>, <code>aud</code>) needed at the OAuth token endpoint. Deployments
 holding a WIMSE workload credential, SPIFFE JWT-SVID, Kubernetes
 projected service-account token, or other workload credential
-<span class="bcp14">SHOULD</span> use the OAuth-aware adapter pattern
-(<a href="#adopting-existing-workload-identity" class="auto internal xref">Section 10.1</a>) to mint a Client Instance
-Assertion. For sender-constraint, this
+<span class="bcp14">SHOULD</span> use the OAuth-aware adapter pattern (<a href="#adoption" class="auto internal xref">Section 10</a>) to mint
+a Client Instance Assertion. For sender-constraint, this
 profile pins the binding member of <code>cnf</code> to <code>jkt</code> (<span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>) or
 <code>x5t#S256</code> (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>); WIMSE-defined binding mechanisms (for
 example, a future Workload Proof Token) can be added by a companion
-profile when those mechanisms reach deployment maturity.<a href="#section-2-6" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="conventions-and-definitions">
-<section id="section-3">
-      <h2 id="name-conventions-and-definitions">
-<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
-      </h2>
-<p id="section-3-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
-"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
-described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
-appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶</a></p>
-<p id="section-3-2">This document uses the following terms:<a href="#section-3-2" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-3-3">
-        <dt id="section-3-3.1">OAuth Client:</dt>
-        <dd style="margin-left: 1.5em" id="section-3-3.2">
-          <p id="section-3-3.2.1">As defined in <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>, identified by a <code>client_id</code> (a CIMD
-URL or a registered <code>client_id</code> under <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>; see
-<a href="#registration-models" class="auto internal xref">Section 5.2</a>). In this profile, the OAuth client
-publishes the set of instance issuers permitted to authenticate
-its runtime instances (<a href="#client-instance-model" class="auto internal xref">Section 5</a>).<a href="#section-3-3.2.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-3-3.3">Client Instance:</dt>
-        <dd style="margin-left: 1.5em" id="section-3-3.4">
-          <p id="section-3-3.4.1">A concrete runtime of an OAuth client (for example, a particular
-process, container, function invocation, or session). See
-<a href="#client-instance-model" class="auto internal xref">Section 5</a> for the class-and-instance relationship
-between an OAuth client and its instances.<a href="#section-3-3.4.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-3-3.5">Instance Issuer:</dt>
-        <dd style="margin-left: 1.5em" id="section-3-3.6">
-          <p id="section-3-3.6.1">An authority trusted by the client to authenticate client
-instances and issue instance assertions for those instances. Examples include
-workload identity providers (e.g., a SPIFFE control plane
-<span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>) and platform-managed identity services.<a href="#section-3-3.6.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-3-3.7">Client Instance Assertion:</dt>
-        <dd style="margin-left: 1.5em" id="section-3-3.8">
-          <p id="section-3-3.8.1">A JWT issued by an instance issuer asserting the identity of a
-client instance, presented as the <code>actor_token</code> in a token request.
-This document distinguishes "<code>actor_token</code>" (the RFC 8693 request
-parameter, always typeset in backticks) from "Client Instance
-Assertion" or "instance assertion" in prose (the JWT artifact
-defined by this profile, which is what the <code>actor_token</code> parameter
-carries when its <code>actor_token_type</code> is
-<code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>).<a href="#section-3-3.8.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-3-3.9">Actor Token Grant Extension:</dt>
-        <dd style="margin-left: 1.5em" id="section-3-3.10">
-          <p id="section-3-3.10.1">The wire-level extension defined in <a href="#grant-extension" class="auto internal xref">Section 4</a> permitting
-<code>actor_token</code> and <code>actor_token_type</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) on the grant
-types listed in <a href="#permitted-grants" class="auto internal xref">Section 4.1</a>. This document's
-<code>client-instance-jwt</code> actor token type builds on the extension;
-other profiles may define their own actor token types under it.<a href="#section-3-3.10.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-3-3.11">Delegation Case:</dt>
-        <dd style="margin-left: 1.5em" id="section-3-3.12">
-          <p id="section-3-3.12.1">A token request whose grant produces a principal distinct from the
-instance presenting the <code>actor_token</code> (for example, a user under
-authorization_code or jwt-bearer). The issued access token's <code>sub</code>
-is the principal and the instance appears in <code>act</code> per
-<a href="#access-token-delegation" class="auto internal xref">Section 8.6.2</a>.<a href="#section-3-3.12.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-3-3.13">Self-Acting Case:</dt>
-        <dd style="margin-left: 1.5em" id="section-3-3.14">
-          <p id="section-3-3.14.1">A token request whose grant produces no principal distinct from
-the instance (notably <code>client_credentials</code>). The issued access
-token's <code>sub</code> is the instance and <code>act</code> is omitted per
-<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>.<a href="#section-3-3.14.1" class="pilcrow">¶</a></p>
-</dd>
-      <dd class="break"></dd>
-</dl>
+profile when those mechanisms reach deployment maturity.<a href="#section-3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="grant-extension">
@@ -2391,8 +2380,7 @@ audit logs need enough lifecycle metadata to distinguish the old
 and new runtimes.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
 <p id="section-7.1-4">How the issuer internally authenticates the runtime is out of
 scope. Common deployment patterns (adapter, raw JWT-SVID
-compatibility, X.509-SVID binding) are described in
-<a href="#adopting-existing-workload-identity" class="auto internal xref">Section 10.1</a>.<a href="#section-7.1-4" class="pilcrow">¶</a></p>
+compatibility, X.509-SVID binding) are described in <a href="#adoption" class="auto internal xref">Section 10</a>.<a href="#section-7.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="claims">
@@ -3672,49 +3660,42 @@ tokens or <code>sub</code> in self-acting tokens), actor/subject profile signals
 such as <code>sub_profile</code>, granted scopes, and issuer context where it is
 available. Policies that authorize solely on <code>client_id</code> lose the
 instance-level distinction this profile is designed to provide.<a href="#section-9-4" class="pilcrow">¶</a></p>
-<div id="rs-self-acting">
-<section id="section-9.1">
-        <h3 id="name-self-acting-case-2">
-<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-self-acting-case-2" class="section-name selfRef">Self-Acting Case</a>
-        </h3>
-<p id="section-9.1-1">In the self-acting case (<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>), the access
+<p id="section-9-5">In the self-acting case (<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>), the access
 token carries no <code>act</code> claim. From the resource server's perspective,
 the access token is a non-delegated token whose top-level claims have
-the following semantics under this profile:<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+the following semantics under this profile:<a href="#section-9-5" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-9.1-2.1">
-            <p id="section-9.1-2.1.1"><code>sub</code> names the <em>client instance</em> (typically a SPIFFE ID or other
-workload identifier), not a human user.<a href="#section-9.1-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-9-6.1">
+          <p id="section-9-6.1.1"><code>sub</code> names the <em>client instance</em> (typically a SPIFFE ID or other
+workload identifier), not a human user.<a href="#section-9-6.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-9.1-2.2">
-            <p id="section-9.1-2.2.1"><code>sub_profile</code> = <code>client_instance</code> signals that the subject is a runtime
+        <li class="normal" id="section-9-6.2">
+          <p id="section-9-6.2.1"><code>sub_profile</code> = <code>client_instance</code> signals that the subject is a runtime
 instance and resource servers <span class="bcp14">SHOULD</span> apply policy appropriate to
 workload identities (for example, scope-restricted machine-to-
-machine policies, rate limits, or workload-specific audit).<a href="#section-9.1-2.2.1" class="pilcrow">¶</a></p>
+machine policies, rate limits, or workload-specific audit).<a href="#section-9-6.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-9.1-2.3">
-            <p id="section-9.1-2.3.1"><code>client_id</code> names the <em>client</em> (the logical OAuth client to
+        <li class="normal" id="section-9-6.3">
+          <p id="section-9-6.3.1"><code>client_id</code> names the <em>client</em> (the logical OAuth client to
 which the instance belongs), not the instance. Resource servers
 <span class="bcp14">MUST NOT</span> treat <code>client_id</code> as the actor identifier in the self-
 acting case; the actor identifier is <code>sub</code>. (When delegation is
 also present, this distinction is moot; <code>client_id</code> remains the
-OAuth client identifier and <code>act.sub</code> names the actor.)<a href="#section-9.1-2.3.1" class="pilcrow">¶</a></p>
+OAuth client identifier and <code>act.sub</code> names the actor.)<a href="#section-9-6.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-9.1-2.4">
-            <p id="section-9.1-2.4.1"><code>cnf</code> binds the token to the instance's key; PoP validation follows
+        <li class="normal" id="section-9-6.4">
+          <p id="section-9-6.4.1"><code>cnf</code> binds the token to the instance's key; PoP validation follows
 the access token's binding mechanism (<code>DPoP</code> <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> or
-Mutual-TLS-bound <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>).<a href="#section-9.1-2.4.1" class="pilcrow">¶</a></p>
+Mutual-TLS-bound <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>).<a href="#section-9-6.4.1" class="pilcrow">¶</a></p>
 </li>
-        </ul>
-<p id="section-9.1-3">Resource servers that distinguish "human-delegated" from "workload-
+      </ul>
+<p id="section-9-7">Resource servers that distinguish "human-delegated" from "workload-
 self-acting" requests <span class="bcp14">SHOULD</span> make the determination based on the
 presence or absence of <code>act</code>, not on the format of <code>sub</code>. In both
 cases the top-level <code>client_id</code> names the client, not the
 instance; when the instance is a SPIFFE workload, the SPIFFE ID is
 conveyed via <code>act.sub</code> (delegation) or <code>sub</code> (self-acting), never
-via <code>client_id</code>.<a href="#section-9.1-3" class="pilcrow">¶</a></p>
-</section>
-</div>
+via <code>client_id</code>.<a href="#section-9-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="adoption">
@@ -3749,17 +3730,12 @@ to mandate instance assertions for every issued access token can
 register <code>token_endpoint_auth_method</code> = <code>client_instance_jwt</code>
 (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>), which intrinsically requires the
 <code>actor_token</code>.<a href="#section-10-4" class="pilcrow">¶</a></p>
-<div id="adopting-existing-workload-identity">
-<section id="section-10.1">
-        <h3 id="name-adopting-with-existing-work">
-<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-adopting-with-existing-work" class="section-name selfRef">Adopting with Existing Workload Identity</a>
-        </h3>
-<p id="section-10.1-1">Re-minted Client Instance Assertions require <code>cnf</code> (<a href="#claims" class="auto internal xref">Section 7.2</a>).
+<p id="section-10-5">Re-minted Client Instance Assertions require <code>cnf</code> (<a href="#claims" class="auto internal xref">Section 7.2</a>).
 A deployment whose workload identity system does not yet emit
-per-instance keys has three options:<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+per-instance keys has three options:<a href="#section-10-5" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-10.1-2.1">
-            <p id="section-10.1-2.1.1"><strong>Adapter pattern</strong>: an OAuth-aware adapter wraps an existing
+<li class="normal" id="section-10-6.1">
+          <p id="section-10-6.1.1"><strong>Adapter pattern</strong>: an OAuth-aware adapter wraps an existing
 workload identity system (Kubernetes projected service-account
 tokens, AWS IMDS, GCP metadata server, Azure managed identity, a
 SPIFFE control plane, etc.) and re-mints a Client Instance
@@ -3773,51 +3749,49 @@ class-and-instance relationship. The adapter holds the
 workload-identifier → <code>client_id</code> mapping, the OAuth signing
 keys, and re-issues at the underlying credential's rotation
 cadence. Recommended for non-SPIFFE deployments and for SPIFFE
-deployments that can run an adapter.<a href="#section-10.1-2.1.1" class="pilcrow">¶</a></p>
+deployments that can run an adapter.<a href="#section-10-6.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-10.1-2.2">
-            <p id="section-10.1-2.2.1"><strong>Raw JWT-SVID compatibility</strong>: the SVID is presented as
+        <li class="normal" id="section-10-6.2">
+          <p id="section-10-6.2.1"><strong>Raw JWT-SVID compatibility</strong>: the SVID is presented as
 <code>actor_token</code> without re-minting and the AS establishes binding
 through a channel independent of the SVID
 (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>, <a href="#spiffe-binding" class="auto internal xref">Section 8.8.3</a>). This is the
 SPIFFE-native path. For workloads with X.509-SVIDs, the
-X.509-SVID can serve as the binding key in two shapes:<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
+X.509-SVID can serve as the binding key in two shapes:<a href="#section-10-6.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-10.1-2.2.2.1">
-                <p id="section-10.1-2.2.2.1.1"><strong>Re-minted with <code>cnf</code></strong>: an adapter mints a Client Instance
+<li class="normal" id="section-10-6.2.2.1">
+              <p id="section-10-6.2.2.1.1"><strong>Re-minted with <code>cnf</code></strong>: an adapter mints a Client Instance
 Assertion whose <code>cnf.x5t#S256</code> is the SHA-256 thumbprint of
 the workload's X.509-SVID certificate. The workload presents
 the assertion as <code>actor_token</code> and the same X.509-SVID at
 TLS under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>; the AS verifies that the TLS
 certificate thumbprint matches <code>cnf.x5t#S256</code>. Use when an
-OAuth-aware adapter is available.<a href="#section-10.1-2.2.2.1.1" class="pilcrow">¶</a></p>
+OAuth-aware adapter is available.<a href="#section-10-6.2.2.1.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-10.1-2.2.2.2">
-                <p id="section-10.1-2.2.2.2.1"><strong>Raw JWT-SVID with X.509 binding</strong>: the workload presents
+            <li class="normal" id="section-10-6.2.2.2">
+              <p id="section-10-6.2.2.2.1"><strong>Raw JWT-SVID with X.509 binding</strong>: the workload presents
 its JWT-SVID directly as <code>actor_token</code> (no re-mint, no
 <code>cnf</code>) and its X.509-SVID at TLS; the AS treats the
 X.509-SVID as the sender-constraint binding under
 <a href="#spiffe-binding" class="auto internal xref">Section 8.8.3</a>. Use when the workload runs against
-unmodified SPIFFE infrastructure.<a href="#section-10.1-2.2.2.2.1" class="pilcrow">¶</a></p>
+unmodified SPIFFE infrastructure.<a href="#section-10-6.2.2.2.1" class="pilcrow">¶</a></p>
 </li>
-            </ul>
-<p id="section-10.1-2.2.3">
+          </ul>
+<p id="section-10-6.2.3">
 Both ground the binding in the SPIFFE trust domain that issued
 the SVID and avoid a separate DPoP key. Worked example in
-<a href="#appendix-examples-spiffe" class="auto internal xref">Appendix "SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID Binding)"</a>.<a href="#section-10.1-2.2.3" class="pilcrow">¶</a></p>
+<a href="#appendix-examples-spiffe" class="auto internal xref">Appendix "SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID Binding)"</a>.<a href="#section-10-6.2.3" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-10.1-2.3">
-            <p id="section-10.1-2.3.1"><strong>Defer adoption</strong> until the workload identity system can emit
-per-instance keys directly.<a href="#section-10.1-2.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-10-6.3">
+          <p id="section-10-6.3.1"><strong>Defer adoption</strong> until the workload identity system can emit
+per-instance keys directly.<a href="#section-10-6.3.1" class="pilcrow">¶</a></p>
 </li>
-        </ul>
-<p id="section-10.1-3">ASes and OAuth client operators <span class="bcp14">SHOULD NOT</span> enable the
+      </ul>
+<p id="section-10-7">ASes and OAuth client operators <span class="bcp14">SHOULD NOT</span> enable the
 <code>client_instance_jwt</code> authentication method
 (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>) without <code>cnf</code>: that mode has no
 fallback client credential, so a <code>cnf</code>-less assertion is fully
-bearer at presentation (<a href="#security-instance-assertion-auth" class="auto internal xref">Section 12.7</a>).<a href="#section-10.1-3" class="pilcrow">¶</a></p>
-</section>
-</div>
+bearer at presentation (<a href="#security-instance-assertion-auth" class="auto internal xref">Section 12.7</a>).<a href="#section-10-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conformance">
@@ -3839,7 +3813,7 @@ register <code>instance_issuers</code> metadata (<a href="#instance-issuers" cla
 instances. An instance issuer <span class="bcp14">MUST</span> mint assertions per <a href="#claims" class="auto internal xref">Section 7.2</a>,
 <a href="#signing" class="auto internal xref">Section 7.3</a>, and <a href="#trust-model-delegation" class="auto internal xref">Section 5.3.1</a>. A resource server
 <span class="bcp14">MUST</span> process delegated tokens per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> and apply the
-self-acting semantics in <a href="#rs-self-acting" class="auto internal xref">Section 9.1</a> when <code>act</code> is absent.<a href="#section-11-1" class="pilcrow">¶</a></p>
+self-acting semantics in <a href="#rs-processing" class="auto internal xref">Section 9</a> when <code>act</code> is absent.<a href="#section-11-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security">
@@ -4124,8 +4098,8 @@ from being presented under a different client's authentication.<a href="#section
 </div>
 <div id="security-instance-assertion-auth">
 <section id="section-12.7">
-        <h3 id="name-client-instance-assertion-t">
-<a href="#section-12.7" class="section-number selfRef">12.7. </a><a href="#name-client-instance-assertion-t" class="section-name selfRef">Client Instance Assertion Trust-Root Collapse</a>
+        <h3 id="name-trust-root-collapse">
+<a href="#section-12.7" class="section-number selfRef">12.7. </a><a href="#name-trust-root-collapse" class="section-name selfRef">Trust-Root Collapse</a>
         </h3>
 <p id="section-12.7-1">The <code>client_instance_jwt</code> authentication method
 (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>) collapses two trust roots (client
@@ -5068,7 +5042,7 @@ principal):<a href="#appendix-B.2-6" class="pilcrow">¶</a></p>
 </pre><a href="#appendix-B.2-7" class="pilcrow">¶</a>
 </div>
 <p id="appendix-B.2-8">The RS treats <code>sub</code> as the workload identity (not a human user) per
-<a href="#rs-self-acting" class="auto internal xref">Section 9.1</a>.<a href="#appendix-B.2-8" class="pilcrow">¶</a></p>
+<a href="#rs-processing" class="auto internal xref">Section 9</a>.<a href="#appendix-B.2-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="appendix-examples-token-exchange">
