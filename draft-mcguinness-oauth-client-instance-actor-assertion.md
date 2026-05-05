@@ -166,6 +166,61 @@ What this document does *not* do:
   conveying actor identity; like {{ACTOR-PROFILE}}, this is left for
   future work.
 
+# Conventions and Definitions
+
+{::boilerplate bcp14-tagged}
+
+This document uses the following terms:
+
+OAuth Client:
+: As defined in {{RFC6749}}, identified by a `client_id` (a CIMD
+  URL or a registered `client_id` under {{RFC7591}}; see
+  {{registration-models}}). In this profile, the OAuth client
+  publishes the set of instance issuers permitted to authenticate
+  its runtime instances ({{client-instance-model}}).
+
+Client Instance:
+: A concrete runtime of an OAuth client (for example, a particular
+  process, container, function invocation, or session). See
+  {{client-instance-model}} for the class-and-instance relationship
+  between an OAuth client and its instances.
+
+Instance Issuer:
+: An authority trusted by the client to authenticate client
+  instances and issue instance assertions for those instances. Examples include
+  workload identity providers (e.g., a SPIFFE control plane
+  {{SPIFFE}}) and platform-managed identity services.
+
+Client Instance Assertion:
+: A JWT issued by an instance issuer asserting the identity of a
+  client instance, presented as the `actor_token` in a token request.
+  This document distinguishes "`actor_token`" (the RFC 8693 request
+  parameter, always typeset in backticks) from "Client Instance
+  Assertion" or "instance assertion" in prose (the JWT artifact
+  defined by this profile, which is what the `actor_token` parameter
+  carries when its `actor_token_type` is
+  `urn:ietf:params:oauth:token-type:client-instance-jwt`).
+
+Actor Token Grant Extension:
+: The wire-level extension defined in {{grant-extension}} permitting
+  `actor_token` and `actor_token_type` ({{RFC8693}}) on the grant
+  types listed in {{permitted-grants}}. This document's
+  `client-instance-jwt` actor token type builds on the extension;
+  other profiles may define their own actor token types under it.
+
+Delegation Case:
+: A token request whose grant produces a principal distinct from the
+  instance presenting the `actor_token` (for example, a user under
+  authorization_code or jwt-bearer). The issued access token's `sub`
+  is the principal and the instance appears in `act` per
+  {{access-token-delegation}}.
+
+Self-Acting Case:
+: A token request whose grant produces no principal distinct from
+  the instance (notably `client_credentials`). The issued access
+  token's `sub` is the instance and `act` is omitted per
+  {{access-token-self-acting}}.
+
 # Relationship to Other Specifications {#relationships}
 
 **RFC 8693 (Token Exchange).** {{RFC8693}} defines `actor_token` and
@@ -226,68 +281,12 @@ workload identity model, carrying OAuth-specific bindings
 (`client_id`, `aud`) needed at the OAuth token endpoint. Deployments
 holding a WIMSE workload credential, SPIFFE JWT-SVID, Kubernetes
 projected service-account token, or other workload credential
-SHOULD use the OAuth-aware adapter pattern
-({{adopting-existing-workload-identity}}) to mint a Client Instance
-Assertion. For sender-constraint, this
+SHOULD use the OAuth-aware adapter pattern ({{adoption}}) to mint
+a Client Instance Assertion. For sender-constraint, this
 profile pins the binding member of `cnf` to `jkt` ({{RFC9449}}) or
 `x5t#S256` ({{RFC8705}}); WIMSE-defined binding mechanisms (for
 example, a future Workload Proof Token) can be added by a companion
 profile when those mechanisms reach deployment maturity.
-
-# Conventions and Definitions
-
-{::boilerplate bcp14-tagged}
-
-This document uses the following terms:
-
-OAuth Client:
-: As defined in {{RFC6749}}, identified by a `client_id` (a CIMD
-  URL or a registered `client_id` under {{RFC7591}}; see
-  {{registration-models}}). In this profile, the OAuth client
-  publishes the set of instance issuers permitted to authenticate
-  its runtime instances ({{client-instance-model}}).
-
-Client Instance:
-: A concrete runtime of an OAuth client (for example, a particular
-  process, container, function invocation, or session). See
-  {{client-instance-model}} for the class-and-instance relationship
-  between an OAuth client and its instances.
-
-Instance Issuer:
-: An authority trusted by the client to authenticate client
-  instances and issue instance assertions for those instances. Examples include
-  workload identity providers (e.g., a SPIFFE control plane
-  {{SPIFFE}}) and platform-managed identity services.
-
-Client Instance Assertion:
-: A JWT issued by an instance issuer asserting the identity of a
-  client instance, presented as the `actor_token` in a token request.
-  This document distinguishes "`actor_token`" (the RFC 8693 request
-  parameter, always typeset in backticks) from "Client Instance
-  Assertion" or "instance assertion" in prose (the JWT artifact
-  defined by this profile, which is what the `actor_token` parameter
-  carries when its `actor_token_type` is
-  `urn:ietf:params:oauth:token-type:client-instance-jwt`).
-
-Actor Token Grant Extension:
-: The wire-level extension defined in {{grant-extension}} permitting
-  `actor_token` and `actor_token_type` ({{RFC8693}}) on the grant
-  types listed in {{permitted-grants}}. This document's
-  `client-instance-jwt` actor token type builds on the extension;
-  other profiles may define their own actor token types under it.
-
-Delegation Case:
-: A token request whose grant produces a principal distinct from the
-  instance presenting the `actor_token` (for example, a user under
-  authorization_code or jwt-bearer). The issued access token's `sub`
-  is the principal and the instance appears in `act` per
-  {{access-token-delegation}}.
-
-Self-Acting Case:
-: A token request whose grant produces no principal distinct from
-  the instance (notably `client_credentials`). The issued access
-  token's `sub` is the instance and `act` is omitted per
-  {{access-token-self-acting}}.
 
 # Actor Token Grant Extension {#grant-extension}
 
@@ -802,8 +801,7 @@ and new runtimes.
 
 How the issuer internally authenticates the runtime is out of
 scope. Common deployment patterns (adapter, raw JWT-SVID
-compatibility, X.509-SVID binding) are described in
-{{adopting-existing-workload-identity}}.
+compatibility, X.509-SVID binding) are described in {{adoption}}.
 
 ## JWT Claims {#claims}
 
@@ -1816,8 +1814,6 @@ such as `sub_profile`, granted scopes, and issuer context where it is
 available. Policies that authorize solely on `client_id` lose the
 instance-level distinction this profile is designed to provide.
 
-## Self-Acting Case {#rs-self-acting}
-
 In the self-acting case ({{access-token-self-acting}}), the access
 token carries no `act` claim. From the resource server's perspective,
 the access token is a non-delegated token whose top-level claims have
@@ -1879,8 +1875,6 @@ to mandate instance assertions for every issued access token can
 register `token_endpoint_auth_method` = `client_instance_jwt`
 ({{instance-assertion-auth}}), which intrinsically requires the
 `actor_token`.
-
-## Adopting with Existing Workload Identity {#adopting-existing-workload-identity}
 
 Re-minted Client Instance Assertions require `cnf` ({{claims}}).
 A deployment whose workload identity system does not yet emit
@@ -1952,7 +1946,7 @@ MUST ensure each listed issuer is authorized to attest its
 instances. An instance issuer MUST mint assertions per {{claims}},
 {{signing}}, and {{trust-model-delegation}}. A resource server
 MUST process delegated tokens per {{ACTOR-PROFILE}} and apply the
-self-acting semantics in {{rs-self-acting}} when `act` is absent.
+self-acting semantics in {{rs-processing}} when `act` is absent.
 
 # Security Considerations {#security}
 
@@ -2181,7 +2175,7 @@ AS from replaying it against another ({{RFC7523}} Section 3). The
 actor identity), prevents an instance assertion issued for one client
 from being presented under a different client's authentication.
 
-## Client Instance Assertion Trust-Root Collapse {#security-instance-assertion-auth}
+## Trust-Root Collapse {#security-instance-assertion-auth}
 
 The `client_instance_jwt` authentication method
 ({{instance-assertion-auth}}) collapses two trust roots (client
@@ -2804,7 +2798,7 @@ principal):
 ~~~
 
 The RS treats `sub` as the workload identity (not a human user) per
-{{rs-self-acting}}.
+{{rs-processing}}.
 
 ## Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent) {#appendix-examples-token-exchange}
 {:numbered="false"}
