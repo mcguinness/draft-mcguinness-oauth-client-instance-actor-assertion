@@ -150,7 +150,7 @@ Table of Contents
        12.4.4.  Revocation and Refresh Tokens
      12.5.  Replay
      12.6.  Audience and Confused Deputy
-     12.7.  Hardening client_instance_jwt Authentication
+     12.7.  Client Instance Assertion Trust-Root Collapse
      12.8.  Mode-Switch Between Delegation and Self-Acting
      12.9.  Sender-Constraint Requirement
      12.10. Delegation Control
@@ -2308,7 +2308,7 @@ Table of Contents
    issued for one client from being presented under a different client's
    authentication.
 
-12.7.  Hardening client_instance_jwt Authentication
+12.7.  Client Instance Assertion Trust-Root Collapse
 
    The client_instance_jwt authentication method (Section 8.3) collapses
    two trust roots (client credential and instance issuer) into one.
