@@ -2330,9 +2330,10 @@ authentication.<a href="#section-6.1.1-5.6.1" class="pilcrow">¶</a></p>
 <dt id="section-6.1.1-5.7">
 <code>signing_alg_values_supported</code> (<span class="bcp14">OPTIONAL</span>):</dt>
             <dd style="margin-left: 1.5em" id="section-6.1.1-5.8">
-              <p id="section-6.1.1-5.8.1">A JSON array of JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> <code>alg</code> values that this issuer uses to
-sign instance assertions. If present, the AS <span class="bcp14">MUST</span> reject instance assertions
-whose <code>alg</code> is not listed.<a href="#section-6.1.1-5.8.1" class="pilcrow">¶</a></p>
+              <p id="section-6.1.1-5.8.1">A JSON array of JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> <code>alg</code> values the AS accepts for
+instance assertions issued by this issuer. If present, the AS <span class="bcp14">MUST</span>
+reject instance assertions whose <code>alg</code> is not listed. Issuers <span class="bcp14">SHOULD</span>
+publish only algorithms they actually use.<a href="#section-6.1.1-5.8.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
 <dt id="section-6.1.1-5.9">
@@ -2427,7 +2428,12 @@ parameter and <span class="bcp14">MUST</span> include
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code> in it. This is
 the only AS-side discovery signal for support of this profile;
 clients use it to decide whether to assemble token requests
-carrying an instance assertion.<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>
+carrying an instance assertion. This signal is intentionally coarse:
+it does not describe grant-specific enablement, raw JWT-SVID support,
+accepted sender-constraint methods, refresh-token behavior, or
+client-specific registration policy. Clients may still need
+registration-time or deployment agreement with the AS for those
+details.<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -2652,9 +2658,9 @@ values, per
             <p id="section-7.2-2.18.1">A confirmation claim <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> carrying a key bound to this
 instance. The <code>cnf</code> value <span class="bcp14">MUST</span> contain exactly one of <code>jkt</code> (a JWK
 SHA-256 thumbprint per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> Section 3.1) or <code>x5t#S256</code> (an
-X.509 certificate SHA-256 thumbprint per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span> Section 3.1);
-other confirmation methods registered under <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> <span class="bcp14">MAY</span> appear
-in addition but <span class="bcp14">MUST NOT</span> be the only member. The instance issuer
+X.509 certificate SHA-256 thumbprint per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span> Section 3.1)
+as the binding member; other confirmation methods registered under
+<span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> <span class="bcp14">MAY</span> appear alongside but are not the binding. The instance issuer
 <span class="bcp14">MUST</span> mint <code>cnf</code> from a key the named runtime instance demonstrably
 possesses (e.g., an instance-attested key, a per-instance workload
 key, or a <code>DPoP</code> public key presented to the issuer at attestation
@@ -3975,6 +3981,12 @@ named in <code>act.sub</code>, is the bearer; sender-constraint validation
 authenticates that instance. This is a deliberate consequence of
 binding the access token to the instance that holds the
 authorization, not to the principal who delegated to it.<a href="#section-9-3" class="pilcrow">¶</a></p>
+<p id="section-9-4">Resource-server authorization policies <span class="bcp14">SHOULD</span> evaluate the logical
+client (<code>client_id</code>), the instance identity (<code>act.sub</code> in delegation
+tokens or <code>sub</code> in self-acting tokens), actor/subject profile signals
+such as <code>sub_profile</code>, granted scopes, and issuer context where it is
+available. Policies that authorize solely on <code>client_id</code> lose the
+instance-level distinction this profile is designed to provide.<a href="#section-9-4" class="pilcrow">¶</a></p>
 <div id="rs-self-acting">
 <section id="section-9.1">
         <h3 id="name-self-acting-case-2">
@@ -4167,8 +4179,12 @@ verify that <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>
 is present in the AS's <code>actor_token_types_supported</code> before
 sending an <code>actor_token</code> on a token request, since RFC 6749 permits
 ASes that do not implement this extension to silently ignore
-unrecognized parameters and issue an unbound access token. A client
-<span class="bcp14">MAY</span> add <code>instance_issuers</code> at any time; a client that wants to mandate
+unrecognized parameters and issue an unbound access token. The
+<code>actor_token_types_supported</code> value is a coarse capability signal;
+clients may still need registration-time or deployment agreement for
+grant-specific use, raw JWT-SVID compatibility, accepted sender-
+constraint methods, and refresh-token behavior. A client <span class="bcp14">MAY</span> add
+<code>instance_issuers</code> at any time; a client that wants to mandate
 instance assertions for every issued access token can register
 <code>token_endpoint_auth_method = client_instance_jwt</code>
 (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>), which intrinsically requires the
@@ -4344,6 +4360,11 @@ trust-withdrawal latency bound in <a href="#trust-lifecycle" class="auto interna
 <span class="bcp14">SHOULD</span> plan incident response around this window.<a href="#section-12.1-2" class="pilcrow">¶</a></p>
 <p id="section-12.1-3">Client metadata is itself trust-affecting: an attacker who can
 modify it can add a new instance issuer under their control.
+Adding an <code>instance_issuers</code> entry, widening a descriptor's
+<code>spiffe_id</code> or <code>trust_domain</code>, changing a descriptor's key source, or
+enabling <code>client_instance_jwt</code> is equivalent to adding or expanding a
+credential issuer for the client and <span class="bcp14">SHOULD</span> require high-assurance
+change control by the client operator and AS.
 Clients publishing CIMD metadata <span class="bcp14">MUST</span> protect the publication
 channel (per <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>'s requirement of HTTPS) and the storage
 backing it; deployments using static registration <span class="bcp14">MUST</span> protect the
@@ -5472,7 +5493,9 @@ principal):<a href="#appendix-B.2-6" class="pilcrow">¶</a></p>
 <p id="appendix-B.3-1">A parent agent's user-delegated access token is exchanged at the AS
 for a sub-agent's downstream-resource-scoped token. The sub-agent
 runtime presents an instance assertion; the inbound <code>subject_token</code>
-already carries an <code>act</code> chain naming the parent agent.<a href="#appendix-B.3-1" class="pilcrow">¶</a></p>
+already carries an <code>act</code> chain naming the parent agent. The
+<code>subject_token</code> was issued by <code>upstream.example.com</code>, which
+<code>as.example.com</code> trusts as a token issuer under local policy.<a href="#appendix-B.3-1" class="pilcrow">¶</a></p>
 <p id="appendix-B.3-2">Inbound <code>subject_token</code> (decoded; issued earlier when a parent agent
 "agent-orchestrator-alpha" obtained access on the user's behalf):<a href="#appendix-B.3-2" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-B.3-3">
