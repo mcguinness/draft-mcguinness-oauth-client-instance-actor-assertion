@@ -53,9 +53,6 @@ normative:
 
 informative:
   RFC7009:
-  RFC9101:
-  RFC9126:
-  RFC8707:
   CIMD: I-D.ietf-oauth-client-id-metadata-document
   WIMSE-ARCH: I-D.ietf-wimse-arch
   WIMSE-CREDS: I-D.ietf-wimse-workload-creds
@@ -713,8 +710,8 @@ This document defines the following AS metadata parameters for
 
 `actor_token_types_supported`:
 : A JSON array of `actor_token_type` values supported by the AS at the
-  token endpoint. An AS implementing this profile SHOULD publish this
-  parameter and MUST include
+  token endpoint. An AS implementing this profile MUST publish this
+  parameter and include
   `urn:ietf:params:oauth:token-type:client-instance-jwt` in it. This is
   the only AS-side discovery signal for support of this profile;
   clients use it to decide whether to assemble token requests
@@ -877,7 +874,8 @@ The following claims are defined for client instance assertions.
   `x5t#S256` (an X.509 certificate SHA-256 thumbprint per
   {{RFC8705}} Section 3.1) as the binding member; other
   confirmation methods registered under {{RFC7800}} MAY appear
-  alongside but are not the binding.
+  alongside but are not the binding and do not change this
+  profile's sender-constraint verification requirement.
 
   The instance issuer MUST mint `cnf` from a key the named runtime
   instance demonstrably possesses (e.g., an instance-attested key,
@@ -1335,12 +1333,13 @@ If the instance assertion includes a `cnf` claim ({{claims}}), the AS MUST:
 * bind the issued access token to the same key by setting the access
   token's top-level `cnf` to the instance assertion's `cnf` value;
 * verify possession of the `cnf` key at the token endpoint, matching
-  the confirmation method used in `cnf` per {{RFC7800}}. For `cnf.jkt`,
+  the binding member used in `cnf` per {{RFC7800}}. For `cnf.jkt`,
   the JWK thumbprint of the `DPoP` proof's public key {{RFC9449}} MUST
   equal `cnf.jkt`. For `cnf.x5t#S256`, the certificate authenticated at
   the TLS layer {{RFC8705}} MUST match `cnf.x5t#S256`. Other
-  confirmation methods MUST be verified per their defining
-  specifications;
+  confirmation methods present in `cnf` are not binding members for
+  this profile and MAY be ignored unless local policy or their defining
+  specifications require additional processing;
 * reject the request with `invalid_request` if verification fails.
 
 This protects the instance assertion from bearer-style replay within its
@@ -1609,11 +1608,13 @@ In raw JWT-SVID mode, the AS MUST:
 5. validate `aud` and `exp`;
 6. validate `iat` if present;
 7. validate `nbf` if present;
-8. apply the replay-cache rule in {{security-replay}} if `jti` is
+8. enforce the descriptor's `signing_alg_values_supported` when
    present;
-9. validate `sub` as a SPIFFE ID and enforce the descriptor's
+9. apply the replay-cache rule in {{security-replay}} if `jti` is
+   present;
+10. validate `sub` as a SPIFFE ID and enforce the descriptor's
    `spiffe_id`, or `trust_domain` when `spiffe_id` is absent; and
-10. establish an instance-specific sender-constraint binding per
+11. establish an instance-specific sender-constraint binding per
    {{spiffe-binding}}.
 
 In raw JWT-SVID mode, the JWT-SVID's `iss` claim MUST identify the
