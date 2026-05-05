@@ -124,8 +124,8 @@ identity at the OAuth 2.0 token endpoint. It:
   or registered via {{RFC7591}}; see {{registration-models}}.
 * Registers a new `actor_token_type`,
   `urn:ietf:params:oauth:token-type:client-instance-jwt`, that
-  carries the instance identity as a JWT {{RFC7519}} signed by an
-  instance issuer published in the client's metadata.
+  carries the instance identity as a JSON Web Token (JWT) {{RFC7519}}
+  signed by an instance issuer published in the client's metadata.
 * Requires issued access tokens to be sender-constrained to a key
   the instance possesses, and specifies how the instance
   assertion's `cnf` claim drives that binding in the interoperable
@@ -234,9 +234,9 @@ token-exchange request remains governed by {{RFC8693}}.
 the `act` claim, the `sub_profile` claim, and nested actor
 representation. This document does not redefine those constructs;
 it defines how a client instance proves itself at the token
-endpoint and how the AS represents the validated assertion in
-issued access tokens (`act` for delegation, top-level `sub` for
-self-acting). Implementations of this document MUST also implement
+endpoint and how the Authorization Server (AS) represents the
+validated assertion in issued access tokens (`act` for delegation,
+top-level `sub` for self-acting). Implementations of this document MUST also implement
 {{ACTOR-PROFILE}}.
 
 **SPIFFE Client Authentication.** {{SPIFFE-CLIENT-AUTH}} (an OAuth
@@ -629,7 +629,7 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
   client authentication.
 
 `signing_alg_values_supported` (OPTIONAL):
-: A JSON array of JWS {{RFC7515}} `alg` values the AS accepts for
+: A JSON array of JSON Web Signature (JWS) {{RFC7515}} `alg` values the AS accepts for
   instance assertions issued by this issuer. If present, the AS MUST
   reject instance assertions whose `alg` is not listed. Issuers SHOULD
   publish only algorithms they actually use.
@@ -879,7 +879,8 @@ The following claims are defined for client instance assertions.
 
   The instance issuer MUST mint `cnf` from a key the named runtime
   instance demonstrably possesses (e.g., an instance-attested key,
-  a per-instance workload key, or a `DPoP` public key presented to
+  a per-instance workload key, or a Demonstration of
+  Proof-of-Possession (DPoP, {{RFC9449}}) public key presented to
   the issuer at attestation time). Binding rules and AS
   verification are defined in {{sender-constrained}}.
 
@@ -2015,7 +2016,7 @@ function invocations, agent sessions). This profile relies on three
 mechanisms to keep actor identity current:
 
 Rotation:
-: Instance issuers MUST mint short-lived instance assertions
+: Instance issuers SHOULD mint short-lived instance assertions
   ({{security-replay}}). New tokens are issued continuously as
   instances start, restart, or rotate keys.
 
