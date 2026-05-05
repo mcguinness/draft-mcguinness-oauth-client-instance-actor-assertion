@@ -654,21 +654,12 @@ organization, including cases where SPIFFE trust domains differ.
 The per-client minting rule ({{trust-model-delegation}}) applies
 unchanged: the foreign issuer MUST mint instance assertions naming
 this `client_id` only for runtimes authorized as instances of this
-client. Clients SHOULD have an out-of-band trust agreement with
-foreign issuers covering authorized workloads, descriptor bounds,
-and key-rotation and revocation procedures; the AS cannot verify
-such an agreement exists, but its absence amplifies compromise risk.
-Omitting `spiffe_id` from a foreign SPIFFE descriptor delegates the
-whole foreign trust domain and SHOULD NOT be used absent explicit
-trust-agreement authorization for every workload in that domain.
-
-For SPIFFE cross-trust-domain deployments, the AS SHOULD resolve
-the foreign trust bundle via the descriptor's `spiffe_bundle_endpoint`,
-which MUST be operated by the foreign organization or its delegate.
-Multi-AS federation is supported structurally: each AS resolves its
-own client metadata independently, and workloads request
-audience-specific JWT-SVIDs per target AS so that `aud`-based replay
-protection ({{security-replay}}) holds across destinations.
+client. For SPIFFE cross-trust-domain deployments, the descriptor's
+`spiffe_bundle_endpoint` MUST be operated by the foreign organization
+or its delegate; omitting `spiffe_id` from a foreign SPIFFE
+descriptor delegates the whole foreign trust domain and SHOULD NOT
+be used absent explicit authorization for every workload in that
+domain.
 
 # Metadata and Discovery {#metadata}
 
@@ -2080,25 +2071,13 @@ separate mechanisms described in {{refresh}}.
 
 ## Interactions with Other OAuth Extensions {#interactions}
 
-This profile conveys actor identity at the token endpoint only and
-does not define authorization-request extensions, so it does not
-interact directly with Pushed Authorization Requests {{RFC9126}} or
-JWT-Secured Authorization Requests {{RFC9101}}; the `actor_token`
-and `actor_token_type` parameters are presented at /token regardless
-of how the authorization step was performed.
-
-The resource parameter {{RFC8707}} is orthogonal to actor identity:
-the AS populates `act` (delegation) or `sub` (self-acting) the same
-way regardless of resource. AS-side per-resource policies that depend
-on the actor MUST be evaluated against the validated instance
-assertion, with inconsistent requests rejected via `invalid_grant`
-({{errors}}).
-
-When an AS supports token introspection {{RFC7662}}, delegated-token
-responses follow {{ACTOR-PROFILE}}; the top-level `cnf`, when present,
-SHOULD be returned so introspection-based PoP has the binding key. In
-the self-acting case, `sub_profile` and `cnf` SHOULD be returned
-alongside the standard {{RFC7662}} response fields.
+This profile operates at the token endpoint only; `actor_token` and
+`actor_token_type` are presented at /token regardless of whether the
+authorization step used PAR ({{RFC9126}}) or JAR ({{RFC9101}}), and
+the resource parameter {{RFC8707}} is orthogonal to actor identity.
+For introspection ({{RFC7662}}), the top-level `cnf` SHOULD be
+returned (delegation case follows {{ACTOR-PROFILE}}); in the
+self-acting case, `sub_profile` and `cnf` SHOULD also be returned.
 
 ## Adoption and Migration {#adoption}
 
@@ -2399,52 +2378,28 @@ from being presented under a different client's authentication.
 ## Hardening client_instance_jwt Authentication {#security-instance-assertion-auth}
 
 The `client_instance_jwt` authentication method
-({{instance-assertion-auth}}) eliminates the requirement for the
-client to control a private key used at the token endpoint. The
-trust chain to the client is preserved (the metadata listing
-endorses the instance issuer), but the AS no longer requires
-possession of two independent keys to issue a token: compromise of
-any listed instance issuer is sufficient to mint tokens that
-authenticate as the client.
+({{instance-assertion-auth}}) collapses two trust roots (client
+credential and instance issuer) into one. Compromise of any listed
+instance issuer is sufficient to mint tokens that authenticate as
+the client. Modes such as `private_key_jwt` require an attacker to
+possess both the instance issuer's signing key and the client's
+private key; that two-key property holds only when the two keys
+live in different security domains (e.g., the client's key in an
+HSM or signing service distinct from the runtime). Where genuine
+separation is not feasible, deployments SHOULD use
+{{instance-assertion-auth}} explicitly rather than rely on nominal
+two-key authentication that does not actually separate custody.
 
-In contrast, modes such as `private_key_jwt` require an attacker to
-possess both an instance issuer's signing key (to mint the
-instance assertion) and the client's private key (to assert the client) before any
-token can be issued. Where the operational model permits, deployments
-SHOULD prefer two-key authentication.
-
-Two-key authentication provides defense in depth only when the keys
-live in different security domains. Loading both into the runtime
-workload (e.g., the client's `private_key_jwt` key mounted as a
-secret alongside an instance-attested `actor_token`) does not
-meaningfully raise the bar against runtime compromise; an attacker
-who compromises the runtime obtains both. Genuine separation
-requires the client's key to live outside the runtime, typically in
-an HSM or signing service that authenticates callers via independent
-workload attestation, so that compromise of the runtime exposes only
-the right to request signatures, not the key itself. Where this
-separation is not operationally feasible, deployments SHOULD use
-{{instance-assertion-auth}} instead, which makes the single-key
-model explicit and applies the hardening guidance in this section
-rather than relying on nominal two-key authentication that does not
-actually separate custody.
-
-When `client_instance_jwt` is used, clients SHOULD constrain
-each instance issuer's authority through `spiffe_id`, `trust_domain`,
-and `signing_alg_values_supported`, and SHOULD list only the minimum
-set of `instance_issuers` necessary. Clients using SPIFFE SHOULD use
-`spiffe_id`; omitting it delegates the whole SPIFFE trust domain and
-SHOULD be done only when whole-domain delegation is intentional.
-
-Trust withdrawal under this auth method has immediate consequences
-for client authentication: removing an instance issuer from
-`instance_issuers` (or narrowing its descriptor scope) invalidates
-client authentications that depended on that issuer's endorsement.
-The AS MUST stop accepting `client_instance_jwt` authentications via
-the removed or narrowed issuer once it has applied the metadata
-update (per {{trust-lifecycle}}: at the end of the CIMD cache window
-under CIMD, or upon AS-side propagation of the registration update
-under static registration).
+When `client_instance_jwt` is used, clients SHOULD constrain each
+instance issuer's authority through `spiffe_id`, `trust_domain`,
+and `signing_alg_values_supported`, and SHOULD list only the
+minimum set of `instance_issuers` necessary. Trust withdrawal under
+this auth method has immediate consequences: removing an instance
+issuer from `instance_issuers` (or narrowing its descriptor scope)
+invalidates client authentications that depended on that issuer's
+endorsement, and the AS MUST stop accepting `client_instance_jwt`
+authentications via the removed or narrowed issuer once it has
+applied the metadata update ({{trust-lifecycle}}).
 
 ## Mode-Switch Between Delegation and Self-Acting {#security-mode-switch}
 
