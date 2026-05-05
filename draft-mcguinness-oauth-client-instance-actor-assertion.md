@@ -2777,38 +2777,6 @@ should look up trust via the `instance_issuers` client metadata,
 nor that `client_id` binding applies. A dedicated URN lets ASes route processing unambiguously
 and lets clients advertise support via `actor_token_types_supported`.
 
-## Why reuse `actor_token` in the self-acting case? {#rationale-self-acting}
-{:numbered="false"}
-
-In the self-acting case ({{access-token-self-acting}}) the issued
-access token's principal is the instance itself, not a separate
-party. RFC 8693's "actor" framing literally describes the actor as
-the party acting on behalf of the subject; with no other subject
-present, the framing is technically a stretch.
-
-Two considerations specific to the self-acting case led to reuse
-rather than introducing a parallel "subject_assertion" parameter
-(the general argument against a new request parameter is in
-{{rationale-no-instance-assertion-param}}):
-
-1. *Classification belongs to the grant.* Whether the issued access
-   token represents delegation or self-acting is determined by the
-   grant ({{access-token-classification}}), not by the instance assertion.
-   The same instance assertion can correctly produce either shape depending
-   on the grant it accompanies.
-
-2. *Deployment fit.* Workload identity systems already issue exactly
-   this artifact for both purposes. Requiring deployments to re-mint
-   the same JWT under a different parameter name to satisfy an
-   academic distinction would not improve security.
-
-The cost is that {{RFC8693}}'s "actor" terminology must be read with
-this profile's classification rules in mind. Implementations and
-specification readers should treat `actor_token` in this profile as
-"validated instance identity assertion," with the understanding that
-its placement in the issued access token (`act` vs. `sub`) is governed by
-{{access-token-classification}}.
-
 ## Why a `token_endpoint_auth_method` rather than a `client_assertion_type`? {#rationale-auth-method}
 {:numbered="false"}
 
@@ -2842,6 +2810,38 @@ actually happening, namely that the AS authenticates the client
 implicitly from its client-metadata endorsement of the instance
 assertion's issuer, while keeping `client_assertion` and
 `actor_token` semantically distinct.
+
+## Why reuse `actor_token` in the self-acting case? {#rationale-self-acting}
+{:numbered="false"}
+
+In the self-acting case ({{access-token-self-acting}}) the issued
+access token's principal is the instance itself, not a separate
+party. RFC 8693's "actor" framing literally describes the actor as
+the party acting on behalf of the subject; with no other subject
+present, the framing is technically a stretch.
+
+Two considerations specific to the self-acting case led to reuse
+rather than introducing a parallel "subject_assertion" parameter
+(the general argument against a new request parameter is in
+{{rationale-no-instance-assertion-param}}):
+
+1. *Classification belongs to the grant.* Whether the issued access
+   token represents delegation or self-acting is determined by the
+   grant ({{access-token-classification}}), not by the instance assertion.
+   The same instance assertion can correctly produce either shape depending
+   on the grant it accompanies.
+
+2. *Deployment fit.* Workload identity systems already issue exactly
+   this artifact for both purposes. Requiring deployments to re-mint
+   the same JWT under a different parameter name to satisfy an
+   academic distinction would not improve security.
+
+The cost is that {{RFC8693}}'s "actor" terminology must be read with
+this profile's classification rules in mind. Implementations and
+specification readers should treat `actor_token` in this profile as
+"validated instance identity assertion," with the understanding that
+its placement in the issued access token (`act` vs. `sub`) is governed by
+{{access-token-classification}}.
 
 # Worked Examples {#appendix-examples}
 {:numbered="false"}
