@@ -884,15 +884,25 @@ descriptor), and re-issues at the underlying credential's rotation
 cadence; deployments size it accordingly (sidecar, per-cluster
 service, or centralized issuer with HA).
 
-For workloads with X.509-SVIDs, the recommended pattern uses the
-X.509-SVID itself as the binding key. The adapter (or a SPIFFE-aware
-instance issuer) mints a Client Instance Assertion whose
-`cnf.x5t#S256` is the SHA-256 thumbprint of the workload's
-X.509-SVID certificate. The workload presents the assertion as
-`actor_token` and the same X.509-SVID at TLS under {{RFC8705}};
-the AS verifies that the TLS certificate thumbprint matches
-`cnf.x5t#S256`. This avoids a separate DPoP key and grounds the
-binding in the SPIFFE trust domain that issued the SVID.
+For workloads with X.509-SVIDs, the X.509-SVID can serve as the
+binding key in two shapes:
+
+* **Re-minted with `cnf`**: an adapter mints a Client Instance
+  Assertion whose `cnf.x5t#S256` is the SHA-256 thumbprint of the
+  workload's X.509-SVID certificate. The workload presents the
+  assertion as `actor_token` and the same X.509-SVID at TLS under
+  {{RFC8705}}; the AS verifies that the TLS certificate thumbprint
+  matches `cnf.x5t#S256`. Use this shape when an OAuth-aware adapter
+  is available.
+* **Raw JWT-SVID with X.509 binding** ({{spiffe-client-id-omission}}):
+  the workload presents its JWT-SVID directly as `actor_token` (no
+  re-mint, no `cnf`) and its X.509-SVID at TLS; the AS treats the
+  X.509-SVID as the sender-constraint binding under
+  {{sender-constrained}}. Use this shape when the workload runs
+  against unmodified SPIFFE infrastructure.
+
+Both ground the binding in the SPIFFE trust domain that issued the
+SVID and avoid a separate DPoP key.
 
 ## JWT Claims {#claims}
 
@@ -1452,10 +1462,20 @@ this mode to bearer-with-`aud`. Acceptable binding mechanisms include:
 
 * a per-instance mTLS client certificate provisioned by the instance
   issuer (or otherwise tied to instance attestation) and presented
-  under {{RFC8705}}; or
+  under {{RFC8705}}; when the certificate is an X.509-SVID, the AS
+  MUST verify that its SAN URI exactly equals the JWT-SVID's `sub`;
+  or
 * a `DPoP` key {{RFC9449}} that the AS confirms, through deployment-
   specific attestation or out-of-band binding to the instance issuer,
   represents the same runtime named by the instance assertion's `sub`.
+
+In raw-JWT-SVID mode, the AS MUST set the issued access token's
+top-level `cnf` to a confirmation member identifying the binding
+key established above (`cnf.x5t#S256` for an X.509-SVID,
+`cnf.jkt` for a DPoP key). Access tokens bound via `cnf.x5t#S256`
+to a rotating X.509-SVID are usable only while the workload holds
+that specific certificate; deployments SHOULD size access-token
+TTL with the SVID rotation cycle in mind.
 
 The binding policy MUST be auditable: the AS MUST be able to record
 which mechanism established the binding and which key or certificate
@@ -1816,7 +1836,10 @@ reject instance assertions whose `iss` does not correspond to a key in the
 bundle for the relevant trust domain. The bundle endpoint format,
 freshness, rotation rules, and TLS authentication (WebPKI) follow
 {{SPIFFE-CLIENT-AUTH}}, the same handling used for client
-authentication.
+authentication. When the AS uses an X.509-SVID at the TLS layer for
+sender-constraint binding under raw-JWT-SVID compatibility
+({{sender-constrained}}), the X.509-SVID is validated against the
+X.509 trust anchors served by the same SPIFFE bundle.
 
 ## Error Responses {#errors}
 
