@@ -3078,9 +3078,11 @@ specific sub-agent that performed it.
 A SPIFFE workload makes a `client_credentials` request. The workload
 holds both a JWT-SVID and an X.509-SVID issued by its SPIFFE trust
 domain. The workload presents the JWT-SVID directly as `actor_token`
-under raw JWT-SVID compatibility and presents the X.509-SVID at TLS,
-so the certificate supplies the sender-constraint binding
-({{RFC8705}}).
+under raw JWT-SVID compatibility ({{spiffe-client-id-omission}})
+and presents the X.509-SVID at TLS, so the certificate supplies the
+sender-constraint binding ({{RFC8705}}). Because the actor_token is
+a raw JWT-SVID, its JOSE header follows SPIFFE conventions and is
+not required to carry `typ`=`client-instance+jwt`.
 
 The descriptor uses `subject_syntax`="spiffe" and the access token
 is mTLS-bound, in place of the preamble's URI-syntax descriptor and
@@ -3128,11 +3130,13 @@ Decoded `actor_token`:
 }
 ~~~
 
-The AS verifies the JWT-SVID signature against the trust bundle, that
-`sub` falls under the descriptor's `spiffe_id` prefix, that the
-X.509-SVID presented at TLS names the same SPIFFE ID and trust domain,
-and that the TLS certificate thumbprint can be used as the
-access-token binding. Issued access token (self-acting):
+The AS verifies the JWT-SVID signature against the trust bundle,
+that `sub` falls under the descriptor's `spiffe_id` prefix, that the
+TLS-presented X.509-SVID has SAN URI exactly equal to the JWT-SVID's
+`sub`, and binds the issued access token via `cnf.x5t#S256` set to
+the certificate's SHA-256 thumbprint. Issued access token
+(self-acting; TTL kept short relative to the X.509-SVID rotation
+cycle):
 
 ~~~ json
 {
@@ -3143,7 +3147,7 @@ access-token binding. Issued access token (self-acting):
   "client_id":   "https://app.example.com/agent",
   "scope":       "repo.read",
   "iat":         1770000005,
-  "exp":         1770003605,
+  "exp":         1770001805,
   "cnf":         { "x5t#S256": "AbCdE...xyz" }
 }
 ~~~
