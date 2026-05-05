@@ -2521,15 +2521,29 @@ adapter holds the (<code>spiffe_id</code> or other workload identifier) →
 descriptor), and re-issues at the underlying credential's rotation
 cadence; deployments size it accordingly (sidecar, per-cluster
 service, or centralized issuer with HA).<a href="#section-7.1-6" class="pilcrow">¶</a></p>
-<p id="section-7.1-7">For workloads with X.509-SVIDs, the recommended pattern uses the
-X.509-SVID itself as the binding key. The adapter (or a SPIFFE-aware
-instance issuer) mints a Client Instance Assertion whose
-<code>cnf.x5t#S256</code> is the SHA-256 thumbprint of the workload's
-X.509-SVID certificate. The workload presents the assertion as
-<code>actor_token</code> and the same X.509-SVID at TLS under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>;
-the AS verifies that the TLS certificate thumbprint matches
-<code>cnf.x5t#S256</code>. This avoids a separate DPoP key and grounds the
-binding in the SPIFFE trust domain that issued the SVID.<a href="#section-7.1-7" class="pilcrow">¶</a></p>
+<p id="section-7.1-7">For workloads with X.509-SVIDs, the X.509-SVID can serve as the
+binding key in two shapes:<a href="#section-7.1-7" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.1-8.1">
+            <p id="section-7.1-8.1.1"><strong>Re-minted with <code>cnf</code></strong>: an adapter mints a Client Instance
+Assertion whose <code>cnf.x5t#S256</code> is the SHA-256 thumbprint of the
+workload's X.509-SVID certificate. The workload presents the
+assertion as <code>actor_token</code> and the same X.509-SVID at TLS under
+<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>; the AS verifies that the TLS certificate thumbprint
+matches <code>cnf.x5t#S256</code>. Use this shape when an OAuth-aware adapter
+is available.<a href="#section-7.1-8.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.1-8.2">
+            <p id="section-7.1-8.2.1"><strong>Raw JWT-SVID with X.509 binding</strong> (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>):
+the workload presents its JWT-SVID directly as <code>actor_token</code> (no
+re-mint, no <code>cnf</code>) and its X.509-SVID at TLS; the AS treats the
+X.509-SVID as the sender-constraint binding under
+<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>. Use this shape when the workload runs
+against unmodified SPIFFE infrastructure.<a href="#section-7.1-8.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-7.1-9">Both ground the binding in the SPIFFE trust domain that issued the
+SVID and avoid a separate DPoP key.<a href="#section-7.1-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="claims">
@@ -3187,7 +3201,9 @@ this mode to bearer-with-<code>aud</code>. Acceptable binding mechanisms include
 <li class="normal" id="section-8.5-8.1">
             <p id="section-8.5-8.1.1">a per-instance mTLS client certificate provisioned by the instance
 issuer (or otherwise tied to instance attestation) and presented
-under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>; or<a href="#section-8.5-8.1.1" class="pilcrow">¶</a></p>
+under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>; when the certificate is an X.509-SVID, the AS
+<span class="bcp14">MUST</span> verify that its SAN URI exactly equals the JWT-SVID's <code>sub</code>;
+or<a href="#section-8.5-8.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.5-8.2">
             <p id="section-8.5-8.2.1">a <code>DPoP</code> key <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> that the AS confirms, through deployment-
@@ -3195,15 +3211,22 @@ specific attestation or out-of-band binding to the instance issuer,
 represents the same runtime named by the instance assertion's <code>sub</code>.<a href="#section-8.5-8.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-8.5-9">The binding policy <span class="bcp14">MUST</span> be auditable: the AS <span class="bcp14">MUST</span> be able to record
+<p id="section-8.5-9">In raw-JWT-SVID mode, the AS <span class="bcp14">MUST</span> set the issued access token's
+top-level <code>cnf</code> to a confirmation member identifying the binding
+key established above (<code>cnf.x5t#S256</code> for an X.509-SVID,
+<code>cnf.jkt</code> for a DPoP key). Access tokens bound via <code>cnf.x5t#S256</code>
+to a rotating X.509-SVID are usable only while the workload holds
+that specific certificate; deployments <span class="bcp14">SHOULD</span> size access-token
+TTL with the SVID rotation cycle in mind.<a href="#section-8.5-9" class="pilcrow">¶</a></p>
+<p id="section-8.5-10">The binding policy <span class="bcp14">MUST</span> be auditable: the AS <span class="bcp14">MUST</span> be able to record
 which mechanism established the binding and which key or certificate
 was bound to the instance. If the AS cannot establish such an
 instance-specific, policy-backed binding, it <span class="bcp14">MUST</span> reject the request
 with <code>invalid_request</code> (<a href="#errors" class="auto internal xref">Section 8.9</a>). This is a SPIFFE compatibility
 path only. A re-minted Client Instance Assertion <span class="bcp14">MUST</span> contain <code>cnf</code> so
 that the binding key is supplied by the same authority that named the
-instance.<a href="#section-8.5-9" class="pilcrow">¶</a></p>
-<p id="section-8.5-10">Deployments combining client-level Mutual-TLS-bound client
+instance.<a href="#section-8.5-10" class="pilcrow">¶</a></p>
+<p id="section-8.5-11">Deployments combining client-level Mutual-TLS-bound client
 authentication (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) with this profile <span class="bcp14">MUST</span> establish
 instance binding through a separate, instance-specific key. The
 typical configuration uses the client's mTLS certificate at the TLS
@@ -3213,7 +3236,7 @@ binding. Per-instance mTLS certificates issued by the instance
 issuer (or otherwise bound to instance attestation) are an
 alternative; in that case the same TLS certificate satisfies both
 client authentication and instance binding only if the AS treats it
-as belonging to the instance for binding purposes.<a href="#section-8.5-10" class="pilcrow">¶</a></p>
+as belonging to the instance for binding purposes.<a href="#section-8.5-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="access-token">
@@ -3701,7 +3724,10 @@ reject instance assertions whose <code>iss</code> does not correspond to a key i
 bundle for the relevant trust domain. The bundle endpoint format,
 freshness, rotation rules, and TLS authentication (WebPKI) follow
 <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>, the same handling used for client
-authentication.<a href="#section-8.8.2-1" class="pilcrow">¶</a></p>
+authentication. When the AS uses an X.509-SVID at the TLS layer for
+sender-constraint binding under raw-JWT-SVID compatibility
+(<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>), the X.509-SVID is validated against the
+X.509 trust anchors served by the same SPIFFE bundle.<a href="#section-8.8.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
