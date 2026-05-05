@@ -2038,13 +2038,8 @@ the pair (instance issuer, instance subject):
   entry, or removal of the instance from the workload identity
   system).
 
-The mechanism for triggering per-instance revocation is deployment-
-specific and out of scope for this document; common patterns include
-an administrative API on the AS, a control-plane hook from the
-workload identity system that signals compromised instances, or
-removal of the instance from the workload identity provider's
-roster (which the AS observes via the descriptor's
-`spiffe_bundle_endpoint` or `jwks_uri` rotation).
+The mechanism for triggering per-instance revocation is
+deployment-specific and out of scope for this document.
 
 ### Introspection Behavior on Revocation {#introspection-on-revocation}
 
@@ -2319,26 +2314,15 @@ lifetimes of seconds to minutes. When refreshing access tokens
 ({{refresh}}), AS implementations SHOULD prefer requiring a fresh
 instance assertion rather than perpetuating stale instance identity.
 
-Replay-cache cardinality at fleet scale is bounded by the rate of
-distinct (`iss`, `jti`) tuples persisted during the retention
-window. ASes enforcing the replay check across all paths should
-expect roughly N × (`exp` / T) active entries, where N is the count
-of concurrent instances minting assertions and T is the inter-mint
-interval; with T close to `exp`, this approaches N entries. ASes
-that use the documented reusable-assertion mode for cnf-bound
-assertions persist replay-cache entries only for paths where the
-strict check still applies.
-
 Distributed AS deployments (multi-replica or geographically
 distributed) MUST share the replay cache or coordinate to prevent
-cross-replica replay for any path on which the strict check applies;
-per-replica in-memory caches do not protect against an attacker
-presenting the same (`iss`, `jti`) to multiple replicas in
-succession. A shared key-value store with TTL eviction (eviction
-time = `exp` plus permitted clock skew) is a natural fit. The
-shared-cache requirement does not apply on cnf-bound paths that are
-operated in the documented reusable-assertion mode, since cnf+PoP
-verification is itself correctness-preserving across replicas.
+cross-replica replay for any path on which the strict check
+applies; per-replica in-memory caches do not protect against an
+attacker presenting the same (`iss`, `jti`) to multiple replicas in
+succession. The shared-cache requirement does not apply on
+cnf-bound paths that are operated in the documented
+reusable-assertion mode, since cnf+PoP verification is itself
+correctness-preserving across replicas.
 
 Reusable mode shifts the blast radius of `cnf`-key compromise from
 "one access token per assertion" (bounded by the strict replay cache)
@@ -2468,30 +2452,10 @@ trails: instance assertion contents SHOULD be logged at a level commensurate
 with the sensitivity of the workload identity they convey.
 
 For incident response, per-instance revocation ({{per-instance-revocation}}),
-and operational audit, ASes issuing access tokens under this profile
-SHOULD log at least the following at issuance time, subject to the
-sensitivity guidance above:
-
-* the authenticated `client_id` (the client);
-* the validated instance assertion's `iss` (the instance issuer) and `sub`
-  (the instance identifier);
-* the instance assertion's `jti` when present (for replay
-  correlation);
-* the `cnf` value or its thumbprint (binding the issued token to a
-  specific key);
-* for raw JWT-SVIDs without `cnf`, the policy-backed binding
-  mechanism used to attribute the presented DPoP key or mTLS
-  certificate to the validated `sub`;
-* the descriptor scope under which validation succeeded (in
-  particular any matched `spiffe_id`, or `trust_domain` when the
-  whole SPIFFE trust domain was delegated); and
-* the classification of the request (delegation or self-acting).
-
-These fields together let operators answer "which instance, attested
-by which issuer, obtained which token" without re-validating the
-original assertion. They also enable the per-instance revocation
-mechanism in {{per-instance-revocation}}, which inherently requires
-the AS to know which active access tokens name a given instance.
+and operational audit, ASes issuing access tokens under this
+profile SHOULD log enough information at issuance time to support
+per-instance revocation ({{per-instance-revocation}}) and incident
+response, subject to the sensitivity guidance above.
 
 # IANA Considerations {#iana}
 
