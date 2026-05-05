@@ -4,16 +4,16 @@
 
 This is the working area for the individual Internet-Draft, "OAuth 2.0 Client Instance Assertion Profile".
 
-* [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/#go.draft-mcguinness-oauth-client-instance-actor-assertion.html)
-* [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-client-instance-actor-assertion)
-* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-client-instance-actor-assertion)
-* [Compare Editor's Copy to Individual Draft](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-actor-assertion/#go.draft-mcguinness-oauth-client-instance-actor-assertion.diff)
+* [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/#go.draft-mcguinness-oauth-client-instance-assertion.html)
+* [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-client-instance-assertion)
+* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-client-instance-assertion)
+* [Compare Editor's Copy to Individual Draft](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/#go.draft-mcguinness-oauth-client-instance-assertion.diff)
 
 
 ## Contributing
 
 See the
-[guidelines for contributions](https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-actor-assertion/blob/main/CONTRIBUTING.md).
+[guidelines for contributions](https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/main/CONTRIBUTING.md).
 
 The contributing file also has tips on how to make contributions, if you
 don't already know how to do that.

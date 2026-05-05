@@ -18,7 +18,7 @@
 /versioned/
 Gemfile.lock
 archive.json
-draft-mcguinness-oauth-client-instance-actor-assertion.xml
+draft-mcguinness-oauth-client-instance-assertion.xml
 package-lock.json
 report.xml
 !requirements.txt
