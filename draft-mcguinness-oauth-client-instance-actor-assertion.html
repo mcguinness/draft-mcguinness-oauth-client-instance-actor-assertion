@@ -4118,13 +4118,8 @@ entry, or removal of the instance from the workload identity
 system).<a href="#section-10.1.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-10.1.2-3">The mechanism for triggering per-instance revocation is deployment-
-specific and out of scope for this document; common patterns include
-an administrative API on the AS, a control-plane hook from the
-workload identity system that signals compromised instances, or
-removal of the instance from the workload identity provider's
-roster (which the AS observes via the descriptor's
-<code>spiffe_bundle_endpoint</code> or <code>jwks_uri</code> rotation).<a href="#section-10.1.2-3" class="pilcrow">¶</a></p>
+<p id="section-10.1.2-3">The mechanism for triggering per-instance revocation is
+deployment-specific and out of scope for this document.<a href="#section-10.1.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="introspection-on-revocation">
@@ -4467,39 +4462,29 @@ limit replay exposure and because client instances often have
 lifetimes of seconds to minutes. When refreshing access tokens
 (<a href="#refresh" class="auto internal xref">Section 8.7</a>), AS implementations <span class="bcp14">SHOULD</span> prefer requiring a fresh
 instance assertion rather than perpetuating stale instance identity.<a href="#section-12.3-3" class="pilcrow">¶</a></p>
-<p id="section-12.3-4">Replay-cache cardinality at fleet scale is bounded by the rate of
-distinct (<code>iss</code>, <code>jti</code>) tuples persisted during the retention
-window. ASes enforcing the replay check across all paths should
-expect roughly N × (<code>exp</code> / T) active entries, where N is the count
-of concurrent instances minting assertions and T is the inter-mint
-interval; with T close to <code>exp</code>, this approaches N entries. ASes
-that use the documented reusable-assertion mode for cnf-bound
-assertions persist replay-cache entries only for paths where the
-strict check still applies.<a href="#section-12.3-4" class="pilcrow">¶</a></p>
-<p id="section-12.3-5">Distributed AS deployments (multi-replica or geographically
+<p id="section-12.3-4">Distributed AS deployments (multi-replica or geographically
 distributed) <span class="bcp14">MUST</span> share the replay cache or coordinate to prevent
-cross-replica replay for any path on which the strict check applies;
-per-replica in-memory caches do not protect against an attacker
-presenting the same (<code>iss</code>, <code>jti</code>) to multiple replicas in
-succession. A shared key-value store with TTL eviction (eviction
-time = <code>exp</code> plus permitted clock skew) is a natural fit. The
-shared-cache requirement does not apply on cnf-bound paths that are
-operated in the documented reusable-assertion mode, since cnf+PoP
-verification is itself correctness-preserving across replicas.<a href="#section-12.3-5" class="pilcrow">¶</a></p>
-<p id="section-12.3-6">Reusable mode shifts the blast radius of <code>cnf</code>-key compromise from
+cross-replica replay for any path on which the strict check
+applies; per-replica in-memory caches do not protect against an
+attacker presenting the same (<code>iss</code>, <code>jti</code>) to multiple replicas in
+succession. The shared-cache requirement does not apply on
+cnf-bound paths that are operated in the documented
+reusable-assertion mode, since cnf+PoP verification is itself
+correctness-preserving across replicas.<a href="#section-12.3-4" class="pilcrow">¶</a></p>
+<p id="section-12.3-5">Reusable mode shifts the blast radius of <code>cnf</code>-key compromise from
 "one access token per assertion" (bounded by the strict replay cache)
 to "rate-limit ceiling within <code>exp</code>": an attacker who steals the
 <code>cnf</code> private key and the assertion can present it repeatedly until
 expiration. The deployment's per-assertion rate limit is therefore
 the bound on this threat, and ASes operating in reusable mode <span class="bcp14">SHOULD</span>
-size that limit accordingly.<a href="#section-12.3-6" class="pilcrow">¶</a></p>
-<p id="section-12.3-7">Replay-cache flooding is a denial-of-service surface: an attacker
+size that limit accordingly.<a href="#section-12.3-5" class="pilcrow">¶</a></p>
+<p id="section-12.3-6">Replay-cache flooding is a denial-of-service surface: an attacker
 holding a compromised instance issuer's signing key can mint
 validly-signed assertions with arbitrary <code>jti</code> values. ASes <span class="bcp14">SHOULD</span>
 apply per-issuer rate limits and bounded cache caps; a sustained
 high rate of distinct <code>jti</code> values from a single issuer is a signal
-of either a misbehaving runtime or compromise.<a href="#section-12.3-7" class="pilcrow">¶</a></p>
-<p id="section-12.3-8">The replay surface depends on whether <code>cnf</code> is present and verified
+of either a misbehaving runtime or compromise.<a href="#section-12.3-6" class="pilcrow">¶</a></p>
+<p id="section-12.3-7">The replay surface depends on whether <code>cnf</code> is present and verified
 at presentation (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>). For re-minted Client
 Instance Assertions <code>cnf</code> is required, making them non-bearer at
 presentation: an attacker with only the JWT cannot use it without
@@ -4509,7 +4494,7 @@ the AS <span class="bcp14">MUST</span> establish a policy-backed, auditable inst
 binding per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>. For the instance-assertion auth
 mode (<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>), where the instance assertion is
 the only client credential, ASes <span class="bcp14">MUST</span> reject requests whose
-instance assertion lacks <code>cnf</code>.<a href="#section-12.3-8" class="pilcrow">¶</a></p>
+instance assertion lacks <code>cnf</code>.<a href="#section-12.3-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-audience">
@@ -4637,44 +4622,10 @@ granularity matches the auditing need.<a href="#section-12.9-2.2.1" class="pilcr
 trails: instance assertion contents <span class="bcp14">SHOULD</span> be logged at a level commensurate
 with the sensitivity of the workload identity they convey.<a href="#section-12.9-3" class="pilcrow">¶</a></p>
 <p id="section-12.9-4">For incident response, per-instance revocation (<a href="#per-instance-revocation" class="auto internal xref">Section 10.1.2</a>),
-and operational audit, ASes issuing access tokens under this profile
-<span class="bcp14">SHOULD</span> log at least the following at issuance time, subject to the
-sensitivity guidance above:<a href="#section-12.9-4" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-12.9-5.1">
-            <p id="section-12.9-5.1.1">the authenticated <code>client_id</code> (the client);<a href="#section-12.9-5.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-12.9-5.2">
-            <p id="section-12.9-5.2.1">the validated instance assertion's <code>iss</code> (the instance issuer) and <code>sub</code>
-(the instance identifier);<a href="#section-12.9-5.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-12.9-5.3">
-            <p id="section-12.9-5.3.1">the instance assertion's <code>jti</code> when present (for replay
-correlation);<a href="#section-12.9-5.3.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-12.9-5.4">
-            <p id="section-12.9-5.4.1">the <code>cnf</code> value or its thumbprint (binding the issued token to a
-specific key);<a href="#section-12.9-5.4.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-12.9-5.5">
-            <p id="section-12.9-5.5.1">for raw JWT-SVIDs without <code>cnf</code>, the policy-backed binding
-mechanism used to attribute the presented DPoP key or mTLS
-certificate to the validated <code>sub</code>;<a href="#section-12.9-5.5.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-12.9-5.6">
-            <p id="section-12.9-5.6.1">the descriptor scope under which validation succeeded (in
-particular any matched <code>spiffe_id</code>, or <code>trust_domain</code> when the
-whole SPIFFE trust domain was delegated); and<a href="#section-12.9-5.6.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-12.9-5.7">
-            <p id="section-12.9-5.7.1">the classification of the request (delegation or self-acting).<a href="#section-12.9-5.7.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<p id="section-12.9-6">These fields together let operators answer "which instance, attested
-by which issuer, obtained which token" without re-validating the
-original assertion. They also enable the per-instance revocation
-mechanism in <a href="#per-instance-revocation" class="auto internal xref">Section 10.1.2</a>, which inherently requires
-the AS to know which active access tokens name a given instance.<a href="#section-12.9-6" class="pilcrow">¶</a></p>
+and operational audit, ASes issuing access tokens under this
+profile <span class="bcp14">SHOULD</span> log enough information at issuance time to support
+per-instance revocation (<a href="#per-instance-revocation" class="auto internal xref">Section 10.1.2</a>) and incident
+response, subject to the sensitivity guidance above.<a href="#section-12.9-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
