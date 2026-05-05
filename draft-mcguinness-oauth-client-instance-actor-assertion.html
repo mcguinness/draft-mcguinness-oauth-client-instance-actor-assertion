@@ -1669,12 +1669,14 @@ on different OAuth parameters and trust sources:<a href="#section-2-3" class="pi
 <p id="section-2-5">The two specifications are orthogonal and <span class="bcp14">MAY</span> be combined: a
 typical combined deployment uses <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> (with a
 wildcard <code>spiffe_id</code>) to authenticate the OAuth client and this
-profile to surface and bind the specific instance; the same SVID
+profile to surface and bind the specific instance. The same SVID
 <span class="bcp14">MAY</span> be presented as both <code>client_assertion</code> and <code>actor_token</code> in a
-single request. This document does not require SPIFFE; instance
-issuers may use any <code>subject_syntax</code>, and the client may
-authenticate via any registered method. SPIFFE deployments get
-first-class support (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>, <a href="#spiffe-compatibility" class="auto internal xref">Section 8.8</a>).<a href="#section-2-5" class="pilcrow">¶</a></p>
+single request when both profiles' audience, client-binding, and
+sender-constraint requirements are satisfied. This document does
+not require SPIFFE; instance issuers may use any <code>subject_syntax</code>,
+and the client may authenticate via any registered method. SPIFFE
+deployments get first-class support (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>,
+<a href="#spiffe-compatibility" class="auto internal xref">Section 8.8</a>).<a href="#section-2-5" class="pilcrow">¶</a></p>
 <p id="section-2-6"><strong>WIMSE Workload Credentials.</strong> The IETF WIMSE working group is
 defining specifications for workload identity (<span>[<a href="#WIMSE-CREDS" class="cite xref">WIMSE-CREDS</a>]</span>,
 <span>[<a href="#WIMSE-ARCH" class="cite xref">WIMSE-ARCH</a>]</span>); WIMSE work is in progress. This profile's Client
@@ -2951,7 +2953,11 @@ specific instance: only the instance that holds the named DPoP
 private key can redeem the resulting code, even if the code is
 intercepted or transferred to another runtime under the same
 client.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
-<p id="section-8.4-4">For Mutual-TLS-bound access tokens (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>), authorization-code
+<p id="section-8.4-4">If <code>dpop_jkt</code> is absent, DPoP still sender-constrains the issued
+access token at the token endpoint, but this profile does not provide
+cryptographic continuity between the authorization endpoint and the
+token endpoint for that authorization code.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
+<p id="section-8.4-5">For Mutual-TLS-bound access tokens (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>), authorization-code
 continuity is deployment-specific. If the AS binds the authorization
 request or authorization code to a client certificate seen at the
 authorization endpoint, then at the token endpoint the AS <span class="bcp14">MUST</span> verify
@@ -2959,13 +2965,13 @@ that the certificate used to redeem the code and the instance
 assertion's <code>cnf.x5t#S256</code> match the certificate bound at
 authorization time. Otherwise, mTLS sender-constraint is established
 at the token endpoint and does not by itself provide authorization-
-to-token endpoint continuity.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
-<p id="section-8.4-5">User consent under this profile applies to the client as a
+to-token endpoint continuity.<a href="#section-8.4-5" class="pilcrow">¶</a></p>
+<p id="section-8.4-6">User consent under this profile applies to the client as a
 whole; consent thereby covers all instances attested by listed
 instance issuers. The key-bound continuity above adds cryptographic
 guarantees about <em>which</em> instance redeems a code, but does not by
-itself constitute per-instance consent.<a href="#section-8.4-5" class="pilcrow">¶</a></p>
-<p id="section-8.4-6">An AS <span class="bcp14">MAY</span> require per-instance or per-key authorization policy when
+itself constitute per-instance consent.<a href="#section-8.4-6" class="pilcrow">¶</a></p>
+<p id="section-8.4-7">An AS <span class="bcp14">MAY</span> require per-instance or per-key authorization policy when
 the authorization request includes a sender-constraining key such as
 <code>dpop_jkt</code>. Such policy is deployment-specific: <code>dpop_jkt</code>
 identifies a key, not an instance, unless the AS has an
@@ -2973,19 +2979,19 @@ authorization-time mapping from that key to an instance identity. In
 those deployments, the AS can require user or administrator approval
 for the specific instance or key and then verify at the token
 endpoint that the DPoP proof, authorization code binding, and
-instance assertion <code>cnf.jkt</code> all reference the approved key.<a href="#section-8.4-6" class="pilcrow">¶</a></p>
-<p id="section-8.4-7">ASes that record consent <span class="bcp14">SHOULD</span> record the descriptor scope under
+instance assertion <code>cnf.jkt</code> all reference the approved key.<a href="#section-8.4-7" class="pilcrow">¶</a></p>
+<p id="section-8.4-8">ASes that record consent <span class="bcp14">SHOULD</span> record the descriptor scope under
 which consent was granted (in particular, the descriptor's issuer
 and <code>trust_domain</code>), and <span class="bcp14">MAY</span> refuse access tokens for the same
 client issued under a different descriptor scope than the one
 consented. This matters for clients deployed across multiple
 trust domains (for example, "production" vs. "staging" SPIFFE trust
 domains, or distinct PaaS environments) where the user's consent to
-one is not necessarily consent to another.<a href="#section-8.4-7" class="pilcrow">¶</a></p>
-<p id="section-8.4-8">This document does not define a general authorization endpoint
+one is not necessarily consent to another.<a href="#section-8.4-8" class="pilcrow">¶</a></p>
+<p id="section-8.4-9">This document does not define a general authorization endpoint
 mechanism for presenting instance identity. Deployments requiring
 standardized per-instance consent without an authorization-time key
-mapping need a separate extension.<a href="#section-8.4-8" class="pilcrow">¶</a></p>
+mapping need a separate extension.<a href="#section-8.4-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sender-constrained">
@@ -3203,11 +3209,20 @@ value <code>client_instance</code> <span class="bcp14">SHOULD</span> be included
 </li>
           </ul>
 <p id="section-8.6.3-3">The instance issuer's identifier (the assertion's <code>iss</code>) is not
-represented as a claim; trust in the issuer is structural via the
-descriptor (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>). For raw JWT-SVIDs that do not
-carry <code>sub_profile</code>, the AS <span class="bcp14">SHOULD</span> set the access token's
-<code>sub_profile</code> to <code>client_instance</code> after successful validation,
-unless local policy intentionally suppresses that signal.<a href="#section-8.6.3-3" class="pilcrow">¶</a></p>
+represented as a standard access-token claim in the self-acting
+case; trust in the issuer is structural via the descriptor
+(<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>). The AS <span class="bcp14">MUST</span> nevertheless retain the
+validated issuer with its token state when needed for revocation,
+introspection, audit, or issuer-aware resource-server policy. For
+JWT access tokens consumed without introspection, if resource
+servers need issuer context and the client lists multiple issuers
+with potentially colliding subject spaces, the AS <span class="bcp14">SHOULD</span> either
+apply AS-scoped namespacing to <code>sub</code> as described below or expose
+issuer context using a deployment-specific claim understood by the
+resource server. For raw JWT-SVIDs that do not carry <code>sub_profile</code>,
+the AS <span class="bcp14">SHOULD</span> set the access token's <code>sub_profile</code> to
+<code>client_instance</code> after successful validation, unless local policy
+intentionally suppresses that signal.<a href="#section-8.6.3-3" class="pilcrow">¶</a></p>
 <p id="section-8.6.3-4">A client that lists multiple instance issuers <span class="bcp14">MUST</span> ensure those
 issuers' <code>sub</code> spaces do not collide (for example, by using
 disjoint naming conventions, prefixes, or a SPIFFE trust-domain
@@ -3389,7 +3404,8 @@ the descriptor's <code>issuer</code>;<a href="#section-8.8-6.1.1" class="pilcrow
 rules and the descriptor's <code>spiffe_bundle_endpoint</code>;<a href="#section-8.8-6.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.8-6.4">
-            <p id="section-8.8-6.4.1">accept only claims that are valid under SPIFFE;<a href="#section-8.8-6.4.1" class="pilcrow">¶</a></p>
+            <p id="section-8.8-6.4.1">validate the SPIFFE JWT-SVID claims required by SPIFFE and ignore
+unrecognized claims unless local policy rejects them;<a href="#section-8.8-6.4.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.8-6.5">
             <p id="section-8.8-6.5.1">validate <code>aud</code> and <code>exp</code>;<a href="#section-8.8-6.5.1" class="pilcrow">¶</a></p>
@@ -3762,7 +3778,7 @@ deployments that can run an adapter.<a href="#section-10.1-2.1.1" class="pilcrow
             <p id="section-10.1-2.2.1"><strong>Raw JWT-SVID compatibility</strong>: the SVID is presented as
 <code>actor_token</code> without re-minting and the AS establishes binding
 through a channel independent of the SVID
-(<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>, <a href="#spiffe-binding" class="auto internal xref">Section 8.8.3</a>). The
+(<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>, <a href="#spiffe-binding" class="auto internal xref">Section 8.8.3</a>). This is the
 SPIFFE-native path. For workloads with X.509-SVIDs, the
 X.509-SVID can serve as the binding key in two shapes:<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
