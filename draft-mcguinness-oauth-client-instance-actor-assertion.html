@@ -2235,20 +2235,12 @@ organization, including cases where SPIFFE trust domains differ.
 The per-client minting rule (<a href="#trust-model-delegation" class="auto internal xref">Section 5.3.1</a>) applies
 unchanged: the foreign issuer <span class="bcp14">MUST</span> mint instance assertions naming
 this <code>client_id</code> only for runtimes authorized as instances of this
-client. Clients <span class="bcp14">SHOULD</span> have an out-of-band trust agreement with
-foreign issuers covering authorized workloads, descriptor bounds,
-and key-rotation and revocation procedures; the AS cannot verify
-such an agreement exists, but its absence amplifies compromise risk.
-Omitting <code>spiffe_id</code> from a foreign SPIFFE descriptor delegates the
-whole foreign trust domain and <span class="bcp14">SHOULD NOT</span> be used absent explicit
-trust-agreement authorization for every workload in that domain.<a href="#section-5.3.4-1" class="pilcrow">¶</a></p>
-<p id="section-5.3.4-2">For SPIFFE cross-trust-domain deployments, the AS <span class="bcp14">SHOULD</span> resolve
-the foreign trust bundle via the descriptor's <code>spiffe_bundle_endpoint</code>,
-which <span class="bcp14">MUST</span> be operated by the foreign organization or its delegate.
-Multi-AS federation is supported structurally: each AS resolves its
-own client metadata independently, and workloads request
-audience-specific JWT-SVIDs per target AS so that <code>aud</code>-based replay
-protection (<a href="#security-replay" class="auto internal xref">Section 12.3</a>) holds across destinations.<a href="#section-5.3.4-2" class="pilcrow">¶</a></p>
+client. For SPIFFE cross-trust-domain deployments, the descriptor's
+<code>spiffe_bundle_endpoint</code> <span class="bcp14">MUST</span> be operated by the foreign organization
+or its delegate; omitting <code>spiffe_id</code> from a foreign SPIFFE
+descriptor delegates the whole foreign trust domain and <span class="bcp14">SHOULD NOT</span>
+be used absent explicit authorization for every workload in that
+domain.<a href="#section-5.3.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -4173,23 +4165,13 @@ separate mechanisms described in <a href="#refresh" class="auto internal xref">S
         <h3 id="name-interactions-with-other-oau">
 <a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-interactions-with-other-oau" class="section-name selfRef">Interactions with Other OAuth Extensions</a>
         </h3>
-<p id="section-10.2-1">This profile conveys actor identity at the token endpoint only and
-does not define authorization-request extensions, so it does not
-interact directly with Pushed Authorization Requests <span>[<a href="#RFC9126" class="cite xref">RFC9126</a>]</span> or
-JWT-Secured Authorization Requests <span>[<a href="#RFC9101" class="cite xref">RFC9101</a>]</span>; the <code>actor_token</code>
-and <code>actor_token_type</code> parameters are presented at /token regardless
-of how the authorization step was performed.<a href="#section-10.2-1" class="pilcrow">¶</a></p>
-<p id="section-10.2-2">The resource parameter <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span> is orthogonal to actor identity:
-the AS populates <code>act</code> (delegation) or <code>sub</code> (self-acting) the same
-way regardless of resource. AS-side per-resource policies that depend
-on the actor <span class="bcp14">MUST</span> be evaluated against the validated instance
-assertion, with inconsistent requests rejected via <code>invalid_grant</code>
-(<a href="#errors" class="auto internal xref">Section 8.9</a>).<a href="#section-10.2-2" class="pilcrow">¶</a></p>
-<p id="section-10.2-3">When an AS supports token introspection <span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>, delegated-token
-responses follow <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>; the top-level <code>cnf</code>, when present,
-<span class="bcp14">SHOULD</span> be returned so introspection-based PoP has the binding key. In
-the self-acting case, <code>sub_profile</code> and <code>cnf</code> <span class="bcp14">SHOULD</span> be returned
-alongside the standard <span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span> response fields.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
+<p id="section-10.2-1">This profile operates at the token endpoint only; <code>actor_token</code> and
+<code>actor_token_type</code> are presented at /token regardless of whether the
+authorization step used PAR (<span>[<a href="#RFC9126" class="cite xref">RFC9126</a>]</span>) or JAR (<span>[<a href="#RFC9101" class="cite xref">RFC9101</a>]</span>), and
+the resource parameter <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span> is orthogonal to actor identity.
+For introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>), the top-level <code>cnf</code> <span class="bcp14">SHOULD</span> be
+returned (delegation case follows <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>); in the
+self-acting case, <code>sub_profile</code> and <code>cnf</code> <span class="bcp14">SHOULD</span> also be returned.<a href="#section-10.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="adoption">
@@ -4548,48 +4530,27 @@ from being presented under a different client's authentication.<a href="#section
 <a href="#section-12.5" class="section-number selfRef">12.5. </a><a href="#name-hardening-client_instance_j" class="section-name selfRef">Hardening client_instance_jwt Authentication</a>
         </h3>
 <p id="section-12.5-1">The <code>client_instance_jwt</code> authentication method
-(<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>) eliminates the requirement for the
-client to control a private key used at the token endpoint. The
-trust chain to the client is preserved (the metadata listing
-endorses the instance issuer), but the AS no longer requires
-possession of two independent keys to issue a token: compromise of
-any listed instance issuer is sufficient to mint tokens that
-authenticate as the client.<a href="#section-12.5-1" class="pilcrow">¶</a></p>
-<p id="section-12.5-2">In contrast, modes such as <code>private_key_jwt</code> require an attacker to
-possess both an instance issuer's signing key (to mint the
-instance assertion) and the client's private key (to assert the client) before any
-token can be issued. Where the operational model permits, deployments
-<span class="bcp14">SHOULD</span> prefer two-key authentication.<a href="#section-12.5-2" class="pilcrow">¶</a></p>
-<p id="section-12.5-3">Two-key authentication provides defense in depth only when the keys
-live in different security domains. Loading both into the runtime
-workload (e.g., the client's <code>private_key_jwt</code> key mounted as a
-secret alongside an instance-attested <code>actor_token</code>) does not
-meaningfully raise the bar against runtime compromise; an attacker
-who compromises the runtime obtains both. Genuine separation
-requires the client's key to live outside the runtime, typically in
-an HSM or signing service that authenticates callers via independent
-workload attestation, so that compromise of the runtime exposes only
-the right to request signatures, not the key itself. Where this
-separation is not operationally feasible, deployments <span class="bcp14">SHOULD</span> use
-<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a> instead, which makes the single-key
-model explicit and applies the hardening guidance in this section
-rather than relying on nominal two-key authentication that does not
-actually separate custody.<a href="#section-12.5-3" class="pilcrow">¶</a></p>
-<p id="section-12.5-4">When <code>client_instance_jwt</code> is used, clients <span class="bcp14">SHOULD</span> constrain
-each instance issuer's authority through <code>spiffe_id</code>, <code>trust_domain</code>,
-and <code>signing_alg_values_supported</code>, and <span class="bcp14">SHOULD</span> list only the minimum
-set of <code>instance_issuers</code> necessary. Clients using SPIFFE <span class="bcp14">SHOULD</span> use
-<code>spiffe_id</code>; omitting it delegates the whole SPIFFE trust domain and
-<span class="bcp14">SHOULD</span> be done only when whole-domain delegation is intentional.<a href="#section-12.5-4" class="pilcrow">¶</a></p>
-<p id="section-12.5-5">Trust withdrawal under this auth method has immediate consequences
-for client authentication: removing an instance issuer from
-<code>instance_issuers</code> (or narrowing its descriptor scope) invalidates
-client authentications that depended on that issuer's endorsement.
-The AS <span class="bcp14">MUST</span> stop accepting <code>client_instance_jwt</code> authentications via
-the removed or narrowed issuer once it has applied the metadata
-update (per <a href="#trust-lifecycle" class="auto internal xref">Section 5.3.3</a>: at the end of the CIMD cache window
-under CIMD, or upon AS-side propagation of the registration update
-under static registration).<a href="#section-12.5-5" class="pilcrow">¶</a></p>
+(<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>) collapses two trust roots (client
+credential and instance issuer) into one. Compromise of any listed
+instance issuer is sufficient to mint tokens that authenticate as
+the client. Modes such as <code>private_key_jwt</code> require an attacker to
+possess both the instance issuer's signing key and the client's
+private key; that two-key property holds only when the two keys
+live in different security domains (e.g., the client's key in an
+HSM or signing service distinct from the runtime). Where genuine
+separation is not feasible, deployments <span class="bcp14">SHOULD</span> use
+<a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a> explicitly rather than rely on nominal
+two-key authentication that does not actually separate custody.<a href="#section-12.5-1" class="pilcrow">¶</a></p>
+<p id="section-12.5-2">When <code>client_instance_jwt</code> is used, clients <span class="bcp14">SHOULD</span> constrain each
+instance issuer's authority through <code>spiffe_id</code>, <code>trust_domain</code>,
+and <code>signing_alg_values_supported</code>, and <span class="bcp14">SHOULD</span> list only the
+minimum set of <code>instance_issuers</code> necessary. Trust withdrawal under
+this auth method has immediate consequences: removing an instance
+issuer from <code>instance_issuers</code> (or narrowing its descriptor scope)
+invalidates client authentications that depended on that issuer's
+endorsement, and the AS <span class="bcp14">MUST</span> stop accepting <code>client_instance_jwt</code>
+authentications via the removed or narrowed issuer once it has
+applied the metadata update (<a href="#trust-lifecycle" class="auto internal xref">Section 5.3.3</a>).<a href="#section-12.5-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-mode-switch">
