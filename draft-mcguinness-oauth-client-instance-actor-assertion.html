@@ -3239,16 +3239,15 @@ not provisioned per-instance, is not sufficient.<a href="#section-8.5-6" class="
 <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a> and does not include a <code>cnf</code> claim, the
 AS <span class="bcp14">MUST</span> establish an instance-specific binding through some other
 means whose key is attributable to the validated instance. The AS
-<span class="bcp14">MUST</span> have explicit local policy identifying which binding mechanisms
-are acceptable for raw JWT-SVIDs, and <span class="bcp14">MUST</span> reject the request unless
-that policy establishes that the presented DPoP key or mTLS
-certificate belongs to the same runtime named by the JWT-SVID's
-<code>sub</code>. The binding mechanism <span class="bcp14">MUST</span> establish key custody through a
-channel independent of the JWT-SVID itself (for example,
-issuer-provisioned per-instance credentials or a workload attestation
-channel that names the same <code>sub</code>); accepting a DPoP key solely
-because it accompanied a valid JWT-SVID is not a binding and reduces
-this mode to bearer-with-<code>aud</code>. Acceptable binding mechanisms include:<a href="#section-8.5-7" class="pilcrow">¶</a></p>
+<span class="bcp14">MUST</span> reject the request unless the presented DPoP key or mTLS
+certificate is bound, by the AS's local policy, to the same runtime
+named by the JWT-SVID's <code>sub</code>. The binding mechanism <span class="bcp14">MUST</span> establish
+key custody through a channel independent of the JWT-SVID itself
+(for example, issuer-provisioned per-instance credentials or a
+workload attestation channel that names the same <code>sub</code>); accepting
+a DPoP key solely because it accompanied a valid JWT-SVID is not a
+binding and reduces this mode to bearer-with-<code>aud</code>. Acceptable
+binding mechanisms include:<a href="#section-8.5-7" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.5-8.1">
             <p id="section-8.5-8.1.1">a per-instance mTLS client certificate provisioned by the instance
@@ -3270,14 +3269,15 @@ key established above (<code>cnf.x5t#S256</code> for an X.509-SVID,
 to a rotating X.509-SVID are usable only while the workload holds
 that specific certificate; deployments <span class="bcp14">SHOULD</span> size access-token
 TTL with the SVID rotation cycle in mind.<a href="#section-8.5-9" class="pilcrow">¶</a></p>
-<p id="section-8.5-10">The binding policy <span class="bcp14">MUST</span> be auditable: the AS <span class="bcp14">MUST</span> be able to record
-which mechanism established the binding and which key or certificate
-was bound to the instance. If the AS cannot establish such an
-instance-specific, policy-backed binding, it <span class="bcp14">MUST</span> reject the request
-with <code>invalid_request</code> (<a href="#errors" class="auto internal xref">Section 8.9</a>). This is a SPIFFE compatibility
-path only. A re-minted Client Instance Assertion <span class="bcp14">MUST</span> contain <code>cnf</code> so
-that the binding key is supplied by the same authority that named the
-instance.<a href="#section-8.5-10" class="pilcrow">¶</a></p>
+<p id="section-8.5-10">The AS <span class="bcp14">SHOULD</span> record which mechanism established the binding and
+which key or certificate was bound to the instance, to support
+incident response and per-instance revocation
+(<a href="#per-instance-revocation" class="auto internal xref">Section 10.1.2</a>). If the AS cannot establish an
+instance-specific binding, it <span class="bcp14">MUST</span> reject the request with
+<code>invalid_request</code> (<a href="#errors" class="auto internal xref">Section 8.9</a>). This is a SPIFFE compatibility path
+only. A re-minted Client Instance Assertion <span class="bcp14">MUST</span> contain <code>cnf</code> so
+that the binding key is supplied by the same authority that named
+the instance.<a href="#section-8.5-10" class="pilcrow">¶</a></p>
 <p id="section-8.5-11">Deployments combining client-level Mutual-TLS-bound client
 authentication (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) with this profile <span class="bcp14">MUST</span> establish
 instance binding through a separate, instance-specific key. The
@@ -4325,8 +4325,8 @@ JWT-SVID compatibility is a separate capability.<a href="#section-11-2.4.1" clas
           <p id="section-11-2.6.1">An AS that accepts raw JWT-SVIDs as <code>actor_token</code> without
 re-minting. Such an AS <span class="bcp14">MUST</span> implement <a href="#spiffe-compatibility" class="auto internal xref">Section 8.8</a>,
 <span class="bcp14">MUST</span> support descriptors using <code>spiffe_bundle_endpoint</code>, and <span class="bcp14">MUST</span>
-establish policy-backed, auditable instance-specific
-sender-constraint when the raw JWT-SVID lacks <code>cnf</code>.<a href="#section-11-2.6.1" class="pilcrow">¶</a></p>
+establish instance-specific sender-constraint when the raw
+JWT-SVID lacks <code>cnf</code> (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>).<a href="#section-11-2.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-11-2.7">Client Instance Assertion Auth Method AS:</dt>
