@@ -184,7 +184,8 @@ Table of Contents
      Client Credentials (Self-Acting)
      Token Exchange with Prior Delegation Chain (Agent Spawns
              Sub-Agent)
-     SPIFFE Workload (Self-Acting, X.509-SVID Bound)
+     SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID
+             Binding)
    Acknowledgments
    Author's Address
 
@@ -812,7 +813,12 @@ Table of Contents
    issuer (REQUIRED):  A StringOrURI [RFC7519] identifying the instance
       issuer.  This value MUST exactly match the iss claim of accepted
       instance assertions and MUST be unique within the instance_issuers
-      array.
+      array.  For raw JWT-SVID compatibility (Section 8.8), this value
+      is the SPIFFE JWT-SVID issuer for the trust domain.  For re-minted
+      Client Instance Assertions, this value identifies the OAuth-aware
+      adapter or instance issuer that signed the assertion; trust_domain
+      and spiffe_id then bound the SPIFFE subject space that issuer is
+      allowed to assert.
 
    A descriptor MUST contain exactly one of jwks_uri, jwks, and
    spiffe_bundle_endpoint.  If two or more are present, or all are
@@ -827,9 +833,14 @@ Table of Contents
    spiffe_bundle_endpoint:  An HTTPS URL of a SPIFFE trust bundle
       endpoint [SPIFFE] from which the AS resolves verification keys for
       instance assertions issued by this issuer.  When present,
-      subject_syntax MUST be "spiffe".  The bundle endpoint format and
-      resolution rules are governed by SPIFFE; see [SPIFFE-CLIENT-AUTH]
-      for the analogous use in client authentication.
+      subject_syntax MUST be "spiffe".  The descriptor is intended for
+      JWT-SVID validation and for other assertions signed with keys
+      distributed in the SPIFFE bundle for the relevant trust domain;
+      OAuth-aware adapters that sign re-minted Client Instance
+      Assertions with separate OAuth signing keys use jwks_uri or jwks
+      instead.  The bundle endpoint format and resolution rules are
+      governed by SPIFFE; see [SPIFFE-CLIENT-AUTH] for the analogous use
+      in client authentication.
 
    signing_alg_values_supported (OPTIONAL):  A JSON array of JWS
       [RFC7515] alg values that this issuer uses to sign instance
@@ -848,7 +859,11 @@ Table of Contents
    trust_domain (OPTIONAL):  When subject_syntax is "spiffe", a SPIFFE
       trust domain that the sub claim MUST belong to.  The AS MUST
       reject any instance assertion whose sub does not lie within this
-      trust domain. trust_domain is meaningful only when subject_syntax
+      trust domain.  A SPIFFE ID lies within a trust domain only when it
+      parses as a valid SPIFFE ID whose trust-domain component exactly
+      equals trust_domain; ASes MUST NOT use case folding, Unicode
+      normalization, or percent-decoding to make a non-matching trust
+      domain match. trust_domain is meaningful only when subject_syntax
       is "spiffe"; an AS MUST reject a descriptor that includes
       trust_domain with any other subject_syntax as invalid client
       metadata.  A descriptor's trust_domain is independent of any
@@ -1808,34 +1823,92 @@ Table of Contents
    thumbprint MAY serve as cnf.x5t#S256 in either the re-minted
    assertion or the issued access token's binding.
 
-   The AS MUST select the validation path (raw JWT-SVID compatibility or
-   re-minted Client Instance Assertion) once, from the matched
-   descriptor's configuration, before validating the assertion, and MUST
-   apply that path's rules exclusively.  A descriptor that satisfies the
-   conditions in Section 8.8.1 selects raw JWT-SVID compatibility;
-   otherwise the re-minted assertion rules in Section 7.2 and
-   Section 7.3 apply.
+   The AS MUST select exactly one validation mode before accepting the
+   assertion and MUST apply that mode's rules exclusively:
 
-   When a raw JWT-SVID is presented under this compatibility mode, it is
-   not a re-minted Client Instance Assertion and is not required to
-   carry the client-instance+jwt JWS typ value.  The AS instead
-   validates the JWT-SVID according to the SPIFFE JWT-SVID validation
-   rules and the descriptor constraints in this section.  The AS MUST
-   accept only JWT-SVID claims that are valid under SPIFFE and MUST
-   apply the additional iss, sub, aud, exp, subject-syntax, spiffe_id,
-   and trust-bundle checks defined by this profile.  The raw JWT-SVID's
-   iss claim MUST identify the SPIFFE trust domain and MUST exactly
-   match the descriptor's issuer member.  Because raw JWT-SVIDs do not
-   require jti, an AS that accepts a raw JWT-SVID without jti MUST rely
-   on sender-constraint and short SVID lifetimes for replay protection;
-   if jti is present, the AS MUST apply the replay-cache rule in
-   Section 12.3.  A deployment that re-mints the SVID into a Client
-   Instance Assertion MUST include the claims required by Section 7.2
-   and MUST use typ = client-instance+jwt per Section 7.3.
+   +=========+==========+======================+============+===========+
+   |Mode     |Selected  |Key source            |Claim       |Binding    |
+   |         |when      |                      |requirements|           |
+   +=========+==========+======================+============+===========+
+   |Raw JWT- |The token |spiffe_bundle_endpoint|SPIFFE JWT- |Established|
+   |SVID mode|has no    |                      |SVID claims;|separately |
+   |         |client_id |                      |client_id,  |per        |
+   |         |claim and |                      |typ, cnf,   |Section 8.5|
+   |         |satisfies |                      |and jti are |           |
+   |         |Section   |                      |not required|           |
+   |         |8.8.1     |                      |            |           |
+   +---------+----------+----------------------+------------+-----------+
+   |Re-minted|The token |jwks_uri, jwks, or    |Full Client |The        |
+   |assertion|contains  |spiffe_bundle_endpoint|Instance    |assertion's|
+   |mode     |client_id,|when the signing key  |Assertion   |cnf drives |
+   |         |or raw    |is distributed in the |claims and  |binding per|
+   |         |JWT-SVID  |SPIFFE bundle         |typ per     |Section 8.5|
+   |         |mode does |                      |Section 7.2 |           |
+   |         |not apply |                      |and         |           |
+   |         |          |                      |Section 7.3 |           |
+   +---------+----------+----------------------+------------+-----------+
+
+                                  Table 4
+
+   In raw JWT-SVID mode, the AS MUST:
+
+   1.  match the descriptor by exact comparison of the JWT-SVID iss to
+       the descriptor's issuer;
+
+   2.  require subject_syntax = "spiffe";
+
+   3.  validate the token as a JWT-SVID using SPIFFE JWT-SVID validation
+       rules and the descriptor's spiffe_bundle_endpoint;
+
+   4.  accept only claims that are valid under SPIFFE;
+
+   5.  validate aud and exp;
+
+   6.  validate iat if present;
+
+   7.  apply the replay-cache rule in Section 12.3 if jti is present;
+
+   8.  validate sub as a SPIFFE ID and enforce the descriptor's
+       spiffe_id, or trust_domain when spiffe_id is absent; and
+
+   9.  establish an instance-specific sender-constraint binding per
+       Section 8.5.
+
+   In raw JWT-SVID mode, the JWT-SVID's iss claim MUST identify the
+   SPIFFE JWT-SVID issuer for the trust domain and MUST exactly match
+   the descriptor's issuer member.  Because raw JWT-SVIDs do not require
+   jti, an AS that accepts a raw JWT-SVID without jti MUST rely on
+   sender-constraint and short SVID lifetimes for replay protection.
+
+   In re-minted assertion mode, the AS MUST:
+
+   1.  match the descriptor by exact comparison of the assertion's iss
+       to the descriptor's issuer;
+
+   2.  verify the JWS signature using the descriptor key source;
+
+   3.  validate typ = client-instance+jwt per Section 7.3;
+
+   4.  require and validate the claims defined in Section 7.2, including
+       client_id, exp, iat, jti, and cnf;
+
+   5.  verify that client_id equals the authenticated client;
+
+   6.  apply the replay-cache rule in Section 12.3;
+
+   7.  if subject_syntax is "spiffe", validate sub as a SPIFFE ID and
+       enforce spiffe_id, or trust_domain when spiffe_id is absent; and
+
+   8.  verify possession of the cnf key per Section 8.5.
+
+   A deployment that re-mints an SVID into a Client Instance Assertion
+   MUST include the claims required by Section 7.2 and MUST use typ =
+   client-instance+jwt per Section 7.3.
 
 8.8.1.  Client ID Claim Omission
 
-   When all of the following hold for the descriptor that matches the
+   Raw JWT-SVID mode applies when the actor_token has no client_id claim
+   and all of the following hold for the descriptor that matches the
    actor_token's iss:
 
    *  subject_syntax is "spiffe";
@@ -1846,22 +1919,21 @@ Table of Contents
       [SPIFFE-CLIENT-AUTH]), or (b) spiffe_id is absent, trust_domain is
       present, and the actor_token's sub falls within that trust domain;
 
-   the AS MUST treat the descriptor as the per-client binding even if
-   the actor_token has no client_id claim.  In this mode:
+   the AS MUST treat the descriptor as the per-client binding for the
+   raw JWT-SVID.  In this mode:
 
    *  The AS MUST verify that the actor_token's sub satisfies the
       descriptor's SPIFFE scope: spiffe_id when present, otherwise the
       descriptor's whole trust_domain.
 
-   *  If the actor_token has a client_id claim, it MUST still equal the
-      request's client_id parameter (Section 8.2); the exception narrows
-      the _requirement_ that the claim be present, not the _consistency_
-      of the claim when present.
-
    *  All other JWT claims and validation rules of Section 7.2 continue
       to apply unchanged, except that a raw JWT-SVID is not required to
       carry iat or jti; if either claim is present, the AS MUST validate
       it per Section 7.2 and Section 12.3.
+
+   A token that contains a client_id claim is processed as a re-minted
+   Client Instance Assertion, not under this omission mode; that claim
+   MUST equal the request's client_id parameter (Section 8.2).
 
    The security rationale is that the descriptor's SPIFFE scope, present
    in the client's registered metadata (whether published as a CIMD
@@ -1966,7 +2038,7 @@ Table of Contents
     | (Section 8.6.1)                        |                        |
     +----------------------------------------+------------------------+
 
-                                  Table 4
+                                  Table 5
 
    The AS MAY return additional information via the error_description
    parameter; deployments MUST NOT include sensitive instance details
@@ -2165,12 +2237,13 @@ Table of Contents
       unchanged.  Recommended for non-SPIFFE deployments.
 
    *  *Raw JWT-SVID compatibility* (Section 8.8.1): the SVID is
-      presented as actor_token without re-minting.  SPIFFE-only and
-      deployment-specific, not the baseline interoperable assertion
-      format.  The SVID itself carries no cnf, so the AS MUST establish
-      instance binding through a channel independent of the SVID
-      (Section 8.5) and record an audit trail for the binding.  Two
-      deployment shapes satisfy this:
+      presented as actor_token without re-minting.  This is the SPIFFE-
+      native path when the AS can validate the JWT-SVID against the
+      SPIFFE bundle and correlate the sender- constraint key to the same
+      SPIFFE workload identity.  The SVID itself carries no cnf, so the
+      AS MUST establish instance binding through a channel independent
+      of the SVID (Section 8.5) and record an audit trail for the
+      binding.  Two deployment shapes satisfy this:
 
       -  the workload presents a per-instance X.509-SVID at the TLS
          layer under [RFC8705], and the certificate thumbprint
@@ -2181,12 +2254,14 @@ Table of Contents
          out-of-band attestation channel that ties the DPoP key
          thumbprint to the SVID's sub.
 
-      Default SPIRE installations provide neither path: JWT-SVIDs are
-      issued without cnf, and the Workload API does not expose a binding
-      channel for separately-held DPoP keys.  Adoption on default SPIRE
-      therefore requires either a SPIRE extension that surfaces per-
-      workload binding keys or use of the *Adapter pattern* above
-      instead.
+      A deployment that uses a JWT-SVID as actor_token and an X.509-SVID
+      from the same workload at the TLS layer can satisfy this
+      requirement by verifying that both SVIDs name the same SPIFFE ID
+      and trust domain, then using the X.509-SVID certificate thumbprint
+      as the access-token binding.  Deployments using DPoP need an
+      equivalent attestation or registration channel for the DPoP key;
+      default JWT-SVID issuance alone does not provide that key-to-
+      workload correlation.
 
    *  *Defer adoption* until the workload identity system can emit per-
       instance keys directly.
@@ -3051,7 +3126,8 @@ Authorization Code with User Delegation
 
    6.   Validates JWT claims.
 
-   7.   Verifies actor_token.client_id == request client_id.
+   7.   Verifies actor_token.client_id == request client_id and applies
+        the (iss, jti) replay check.
 
    8.   Applies AS-local maximum delegation depth.
 
@@ -3105,6 +3181,20 @@ Client Credentials (Self-Acting)
    &actor_token=eyJhbGciOiJFUzI1NiIs...
    &actor_token_type=
      urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
+
+   Decoded actor_token:
+
+   {
+     "iss":         "https://workload.app.example.com",
+     "sub":         "https://workload.app.example.com/inst-02",
+     "aud":         "https://as.example.com",
+     "client_id":   "https://app.example.com/agent",
+     "sub_profile": "client_instance",
+     "iat":         1770000000,
+     "exp":         1770000300,
+     "jti":         "cc-2b3c4d",
+     "cnf":         { "jkt": "PqR...XyZ" }
+   }
 
    Issued access token (self-acting; no user, instance is the
    principal):
@@ -3167,7 +3257,20 @@ Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)
      urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
 
    The actor_token is the sub-agent runtime inst-03, with no act of its
-   own (per [ACTOR-PROFILE], actor_token MUST NOT carry act).
+   own (per [ACTOR-PROFILE], actor_token MUST NOT carry act).  Decoded
+   actor_token:
+
+   {
+     "iss":         "https://workload.app.example.com",
+     "sub":         "https://workload.app.example.com/inst-03",
+     "aud":         "https://as.example.com",
+     "client_id":   "https://app.example.com/agent",
+     "sub_profile": "client_instance",
+     "iat":         1770000005,
+     "exp":         1770000305,
+     "jti":         "tx-3c4d5e",
+     "cnf":         { "jkt": "AbC...123" }
+   }
 
    Chain construction per Section 8.6.4:
 
@@ -3207,15 +3310,14 @@ Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)
    servers and audit pipelines can attribute the request to the specific
    sub-agent that performed it.
 
-SPIFFE Workload (Self-Acting, X.509-SVID Bound)
+SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID Binding)
 
    A SPIFFE workload makes a client_credentials request.  The workload
-   holds an X.509-SVID issued by its SPIFFE trust domain.  A SPIFFE-
-   aware instance issuer mints a Client Instance Assertion whose
-   cnf.x5t#S256 is the SHA-256 thumbprint of the SVID's certificate.
-   The workload presents the assertion as actor_token and the same
-   X.509-SVID at TLS, so the certificate authenticates the connection
-   and supplies the sender-constraint binding ([RFC8705]).
+   holds both a JWT-SVID and an X.509-SVID issued by its SPIFFE trust
+   domain.  The workload presents the JWT-SVID directly as actor_token
+   under raw JWT-SVID compatibility and presents the X.509-SVID at TLS,
+   so the certificate supplies the sender-constraint binding
+   ([RFC8705]).
 
    The descriptor uses subject_syntax="spiffe" and the access token is
    mTLS-bound, in place of the preamble's URI-syntax descriptor and DPoP
@@ -3253,24 +3355,20 @@ SPIFFE Workload (Self-Acting, X.509-SVID Bound)
      "iss":         "spiffe://example.com",
      "sub":         "spiffe://example.com/agent/inst-04",
      "aud":         "https://as.example.com",
-     "client_id":   "https://app.example.com/agent",
-     "sub_profile": "client_instance",
      "iat":         1770000000,
-     "exp":         1770000300,
-     "jti":         "sp-1",
-     "cnf":         { "x5t#S256": "AbCdE...xyz" }
+     "exp":         1770000300
    }
 
-   The AS verifies the SVID signature against the trust bundle, that sub
-   falls under the descriptor's spiffe_id prefix, and that the TLS
-   client certificate's thumbprint equals cnf.x5t#S256.  Issued access
-   token (self-acting):
+   The AS verifies the JWT-SVID signature against the trust bundle, that
+   sub falls under the descriptor's spiffe_id prefix, that the
+   X.509-SVID presented at TLS names the same SPIFFE ID and trust
+   domain, and that the TLS certificate thumbprint can be used as the
+   access-token binding.  Issued access token (self-acting):
 
    {
      "iss":         "https://as.example.com",
      "aud":         "https://api.example.com",
      "sub":         "spiffe://example.com/agent/inst-04",
-     "sub_profile": "client_instance",
      "client_id":   "https://app.example.com/agent",
      "scope":       "repo.read",
      "iat":         1770000005,
