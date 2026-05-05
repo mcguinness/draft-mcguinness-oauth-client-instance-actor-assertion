@@ -1502,6 +1502,9 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.3">
                 <p id="section-toc.1-1.16.2.3.1"><a href="#appendix-B.3" class="auto internal xref"></a><a href="#name-token-exchange-with-prior-d" class="internal xref">Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)</a></p>
 </li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.4">
+                <p id="section-toc.1-1.16.2.4.1"><a href="#appendix-B.4" class="auto internal xref"></a><a href="#name-spiffe-workload-self-acting" class="internal xref">SPIFFE Workload (Self-Acting, X.509-SVID Bound)</a></p>
+</li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
@@ -1749,6 +1752,12 @@ credential) <span class="bcp14">SHOULD</span> use the OAuth-aware adapter patter
 the underlying credential's identity together with the required
 OAuth claims. From the AS's perspective, the adapter is the
 instance issuer.<a href="#section-2.4-4" class="pilcrow">¶</a></p>
+<p id="section-2.4-5">For sender-constraint, this profile pins the binding member of <code>cnf</code>
+to <code>jkt</code> (<span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>) or <code>x5t#S256</code> (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) for stable
+interoperability with deployed OAuth infrastructure. WIMSE-defined
+binding mechanisms (for example, a future Workload Proof Token) can
+be added by a companion profile when those mechanisms reach
+deployment maturity.<a href="#section-2.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2485,13 +2494,27 @@ authorized, by issuer-side policy, as a member.<a href="#section-7.1-5.2.1" clas
 A common deployment pattern wraps an underlying workload identity
 system (Kubernetes projected service-account tokens, AWS IMDS, GCP
 metadata server, Azure managed identity, a SPIFFE control plane,
-etc.) in a thin OAuth-aware adapter that re-mints a Client Instance
+etc.) in an OAuth-aware adapter that re-mints a Client Instance
 Assertion by adding the claims required by this profile and signing
 with a key registered in the issuer's descriptor. From the AS's
 perspective, the adapter is the instance issuer; the adapter <span class="bcp14">SHOULD</span>
 enforce the per-client authorization rule above, since underlying
 workload-identity systems typically do not know about OAuth clients
-or their class-and-instance relationship.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
+or their class-and-instance relationship. Operationally, the
+adapter holds the (<code>spiffe_id</code> or other workload identifier) →
+<code>client_id</code> mapping, the OAuth signing keys (registered in the
+descriptor), and re-issues at the underlying credential's rotation
+cadence; deployments size it accordingly (sidecar, per-cluster
+service, or centralized issuer with HA).<a href="#section-7.1-6" class="pilcrow">¶</a></p>
+<p id="section-7.1-7">For workloads with X.509-SVIDs, the recommended pattern uses the
+X.509-SVID itself as the binding key. The adapter (or a SPIFFE-aware
+instance issuer) mints a Client Instance Assertion whose
+<code>cnf.x5t#S256</code> is the SHA-256 thumbprint of the workload's
+X.509-SVID certificate. The workload presents the assertion as
+<code>actor_token</code> and the same X.509-SVID at TLS under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>;
+the AS verifies that the TLS certificate thumbprint matches
+<code>cnf.x5t#S256</code>. This avoids a separate DPoP key and grounds the
+binding in the SPIFFE trust domain that issued the SVID.<a href="#section-7.1-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="claims">
@@ -3433,29 +3456,36 @@ is implicitly invalidated when that instance terminates. This keeps
 <code>act.sub</code> (delegation) or <code>sub</code> (self-acting) stable across the
 refresh chain, matching the expectation of audit pipelines that a
 token's actor identity does not change after issuance.<a href="#section-8.7-3" class="pilcrow">¶</a></p>
-<p id="section-8.7-4">Deployments requiring cross-instance session continuity (for
+<p id="section-8.7-4">For SPIFFE deployments, the cnf binding key <span class="bcp14">MUST</span> outlive the
+JWT-SVID rotation cycle (typically 5-10 minutes in default SPIRE).
+Deployments that bind <code>cnf</code> to a per-instance DPoP or mTLS key
+held by the workload satisfy this naturally; deployments that
+attempt to bind <code>cnf</code> to the SVID's signing key directly will lose
+refresh-token continuity at every rotation and <span class="bcp14">SHOULD NOT</span> use
+that pattern.<a href="#section-8.7-4" class="pilcrow">¶</a></p>
+<p id="section-8.7-5">Deployments requiring cross-instance session continuity (for
 example, agent platforms whose runtime is recycled but whose session
 should continue) <span class="bcp14">MUST</span> handle this at the deployment layer rather
-than through refresh-token semantics. Suitable mechanisms include:<a href="#section-8.7-4" class="pilcrow">¶</a></p>
+than through refresh-token semantics. Suitable mechanisms include:<a href="#section-8.7-5" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-8.7-5.1">
-            <p id="section-8.7-5.1.1">re-authorizing the client through a fresh authorization
-grant (e.g., a new authorization_code flow with passive sign-in);<a href="#section-8.7-5.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-8.7-6.1">
+            <p id="section-8.7-6.1.1">re-authorizing the client through a fresh authorization
+grant (e.g., a new authorization_code flow with passive sign-in);<a href="#section-8.7-6.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-8.7-5.2">
-            <p id="section-8.7-5.2.1">using token-exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) to mint a new instance-bound
+          <li class="normal" id="section-8.7-6.2">
+            <p id="section-8.7-6.2.1">using token-exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) to mint a new instance-bound
 token chain in the successor instance from a long-lived parent
-token held by the platform; or<a href="#section-8.7-5.2.1" class="pilcrow">¶</a></p>
+token held by the platform; or<a href="#section-8.7-6.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-8.7-5.3">
-            <p id="section-8.7-5.3.1">persisting session state outside the refresh token (e.g., in a
+          <li class="normal" id="section-8.7-6.3">
+            <p id="section-8.7-6.3.1">persisting session state outside the refresh token (e.g., in a
 shared store keyed by the user-and-class) and obtaining new tokens
-through a fresh grant.<a href="#section-8.7-5.3.1" class="pilcrow">¶</a></p>
+through a fresh grant.<a href="#section-8.7-6.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-8.7-6">This profile does not extend refresh-token semantics to
+<p id="section-8.7-7">This profile does not extend refresh-token semantics to
 cross-instance succession; doing so would break the per-instance
-audit-stability invariant the profile is designed to provide.<a href="#section-8.7-6" class="pilcrow">¶</a></p>
+audit-stability invariant the profile is designed to provide.<a href="#section-8.7-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="spiffe-compatibility">
@@ -3473,14 +3503,20 @@ SPIFFE compatibility mode driven entirely by descriptor
 configuration. An AS is not required to support raw JWT-SVID
 compatibility in order to support re-minted Client Instance
 Assertions with <code>subject_syntax</code> = "spiffe".<a href="#section-8.8-1" class="pilcrow">¶</a></p>
-<p id="section-8.8-2">The AS <span class="bcp14">MUST</span> select the validation path (raw JWT-SVID compatibility or
+<p id="section-8.8-2">This profile uses JWT-format actor tokens. X.509-SVIDs are not
+presented as <code>actor_token</code>; SPIFFE deployments using X.509-SVIDs
+authenticate at the TLS layer (per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) and obtain a
+JWT-SVID separately for <code>actor_token</code> presentation. The X.509-SVID
+certificate thumbprint <span class="bcp14">MAY</span> serve as <code>cnf.x5t#S256</code> in either the
+re-minted assertion or the issued access token's binding.<a href="#section-8.8-2" class="pilcrow">¶</a></p>
+<p id="section-8.8-3">The AS <span class="bcp14">MUST</span> select the validation path (raw JWT-SVID compatibility or
 re-minted Client Instance Assertion) once, from the matched
 descriptor's configuration, before validating the assertion, and
 <span class="bcp14">MUST</span> apply that path's rules exclusively. A descriptor that satisfies
 the conditions in <a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a> selects raw JWT-SVID
 compatibility; otherwise the re-minted assertion rules in <a href="#claims" class="auto internal xref">Section 7.2</a>
-and <a href="#signing" class="auto internal xref">Section 7.3</a> apply.<a href="#section-8.8-2" class="pilcrow">¶</a></p>
-<p id="section-8.8-3">When a raw JWT-SVID is presented under this compatibility mode, it is
+and <a href="#signing" class="auto internal xref">Section 7.3</a> apply.<a href="#section-8.8-3" class="pilcrow">¶</a></p>
+<p id="section-8.8-4">When a raw JWT-SVID is presented under this compatibility mode, it is
 not a re-minted Client Instance Assertion and is not required to carry
 the <code>client-instance+jwt</code> JWS <code>typ</code> value. The AS instead validates the
 JWT-SVID according to the SPIFFE JWT-SVID validation rules and the
@@ -3495,7 +3531,7 @@ require <code>jti</code>, an AS that accepts a raw JWT-SVID without <code>jti</c
 protection; if <code>jti</code> is present, the AS <span class="bcp14">MUST</span> apply the replay-cache
 rule in <a href="#security-replay" class="auto internal xref">Section 12.3</a>. A deployment that re-mints the SVID into
 a Client Instance Assertion <span class="bcp14">MUST</span> include the claims required by
-<a href="#claims" class="auto internal xref">Section 7.2</a> and <span class="bcp14">MUST</span> use <code>typ</code> = <code>client-instance+jwt</code> per <a href="#signing" class="auto internal xref">Section 7.3</a>.<a href="#section-8.8-3" class="pilcrow">¶</a></p>
+<a href="#claims" class="auto internal xref">Section 7.2</a> and <span class="bcp14">MUST</span> use <code>typ</code> = <code>client-instance+jwt</code> per <a href="#signing" class="auto internal xref">Section 7.3</a>.<a href="#section-8.8-4" class="pilcrow">¶</a></p>
 <div id="spiffe-client-id-omission">
 <section id="section-8.8.1">
           <h4 id="name-client-id-claim-omission">
@@ -3994,12 +4030,33 @@ workload identity system is unchanged. Recommended for
 non-SPIFFE deployments.<a href="#section-10.3.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10.3.1-2.2">
-              <p id="section-10.3.1-2.2.1"><strong>Raw JWT-SVID compatibility</strong> (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>)
-with AS-side instance binding under <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>.
+              <p id="section-10.3.1-2.2.1"><strong>Raw JWT-SVID compatibility</strong> (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>):
+the SVID is presented as <code>actor_token</code> without re-minting.
 SPIFFE-only and deployment-specific, not the baseline
-interoperable assertion format. The AS needs explicit local policy
-and audit records for how the presented DPoP key or mTLS
-certificate is attributed to the SVID subject.<a href="#section-10.3.1-2.2.1" class="pilcrow">¶</a></p>
+interoperable assertion format. The SVID itself carries no <code>cnf</code>,
+so the AS <span class="bcp14">MUST</span> establish instance binding through a channel
+independent of the SVID (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>) and record an
+audit trail for the binding. Two deployment shapes satisfy this:<a href="#section-10.3.1-2.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.3.1-2.2.2.1">
+                  <p id="section-10.3.1-2.2.2.1.1">the workload presents a per-instance X.509-SVID at the TLS
+layer under <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>, and the certificate thumbprint
+(<code>x5t#S256</code>) is the binding; or<a href="#section-10.3.1-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-10.3.1-2.2.2.2">
+                  <p id="section-10.3.1-2.2.2.2.1">the workload's DPoP key is conveyed to the instance issuer
+at attestation time, and the AS confirms the binding through
+an out-of-band attestation channel that ties the DPoP key
+thumbprint to the SVID's <code>sub</code>.<a href="#section-10.3.1-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+<p id="section-10.3.1-2.2.3">
+Default SPIRE installations provide neither path: JWT-SVIDs are
+issued without <code>cnf</code>, and the Workload API does not expose a
+binding channel for separately-held DPoP keys. Adoption on
+default SPIRE therefore requires either a SPIRE extension that
+surfaces per-workload binding keys or use of the <strong>Adapter
+pattern</strong> above instead.<a href="#section-10.3.1-2.2.3" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10.3.1-2.3">
               <p id="section-10.3.1-2.3.1"><strong>Defer adoption</strong> until the workload identity system can emit
@@ -5315,6 +5372,91 @@ the parent agent agent-orchestrator-alpha, which acted on behalf of
 user alice. Each <code>act</code> layer names a distinct runtime; resource
 servers and audit pipelines can attribute the request to the
 specific sub-agent that performed it.<a href="#appendix-B.3-11" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="appendix-examples-spiffe">
+<section id="appendix-B.4">
+        <h3 id="name-spiffe-workload-self-acting">
+<a href="#name-spiffe-workload-self-acting" class="section-name selfRef">SPIFFE Workload (Self-Acting, X.509-SVID Bound)</a>
+        </h3>
+<p id="appendix-B.4-1">A SPIFFE workload makes a <code>client_credentials</code> request. The workload
+holds an X.509-SVID issued by its SPIFFE trust domain. A SPIFFE-aware
+instance issuer mints a Client Instance Assertion whose <code>cnf.x5t#S256</code>
+is the SHA-256 thumbprint of the SVID's certificate. The workload
+presents the assertion as <code>actor_token</code> and the same X.509-SVID at
+TLS, so the certificate authenticates the connection and supplies the
+sender-constraint binding (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>).<a href="#appendix-B.4-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.4-2">The descriptor uses <code>subject_syntax</code>="spiffe" and the access token
+is mTLS-bound, in place of the preamble's URI-syntax descriptor and
+DPoP binding.<a href="#appendix-B.4-2" class="pilcrow">¶</a></p>
+<p id="appendix-B.4-3">Instance issuer descriptor:<a href="#appendix-B.4-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-B.4-4">
+<pre>
+{
+  "issuer": "spiffe://example.com",
+  "spiffe_bundle_endpoint": "https://example.com/spiffe/bundle",
+  "subject_syntax": "spiffe",
+  "trust_domain": "example.com",
+  "spiffe_id": "spiffe://example.com/agent/*",
+  "signing_alg_values_supported": ["ES256"]
+}
+</pre><a href="#appendix-B.4-4" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.4-5">Token request (TLS presents the workload's X.509-SVID; client
+authentication uses <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> X.509 mode, so
+<code>client_assertion</code> is omitted):<a href="#appendix-B.4-5" class="pilcrow">¶</a></p>
+<div class="lang-http-message sourcecode" id="appendix-B.4-6">
+<pre>
+POST /token HTTP/1.1
+Host: as.example.com
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&amp;scope=repo.read
+&amp;client_id=https%3A%2F%2Fapp.example.com%2Fagent
+&amp;actor_token=eyJhbGciOiJFUzI1NiIs...
+&amp;actor_token_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aclient-instance-jwt
+</pre><a href="#appendix-B.4-6" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.4-7">Decoded <code>actor_token</code>:<a href="#appendix-B.4-7" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-B.4-8">
+<pre>
+{
+  "iss":         "spiffe://example.com",
+  "sub":         "spiffe://example.com/agent/inst-04",
+  "aud":         "https://as.example.com",
+  "client_id":   "https://app.example.com/agent",
+  "sub_profile": "client_instance",
+  "iat":         1770000000,
+  "exp":         1770000300,
+  "jti":         "sp-1",
+  "cnf":         { "x5t#S256": "AbCdE...xyz" }
+}
+</pre><a href="#appendix-B.4-8" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.4-9">The AS verifies the SVID signature against the trust bundle, that
+<code>sub</code> falls under the descriptor's <code>spiffe_id</code> prefix, and that the
+TLS client certificate's thumbprint equals <code>cnf.x5t#S256</code>. Issued
+access token (self-acting):<a href="#appendix-B.4-9" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-B.4-10">
+<pre>
+{
+  "iss":         "https://as.example.com",
+  "aud":         "https://api.example.com",
+  "sub":         "spiffe://example.com/agent/inst-04",
+  "sub_profile": "client_instance",
+  "client_id":   "https://app.example.com/agent",
+  "scope":       "repo.read",
+  "iat":         1770000005,
+  "exp":         1770003605,
+  "cnf":         { "x5t#S256": "AbCdE...xyz" }
+}
+</pre><a href="#appendix-B.4-10" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.4-11">At the resource server, the workload connects over mTLS with the
+same X.509-SVID; the RS verifies that the certificate thumbprint
+matches the access token's <code>cnf.x5t#S256</code>.<a href="#appendix-B.4-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
