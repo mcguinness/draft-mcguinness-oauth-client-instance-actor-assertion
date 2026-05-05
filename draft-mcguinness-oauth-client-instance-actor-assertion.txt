@@ -1055,8 +1055,9 @@ Table of Contents
       token if this value does not exactly equal the client_id of the
       authenticated client.  When omitted under Section 8.8.1, the
       binding is established structurally by the matched descriptor's
-      spiffe_id rather than by a JWT claim, and a SPIFFE JWT-SVID may be
-      presented as the actor_token directly without re-minting.
+      SPIFFE scope (spiffe_id when present, otherwise trust_domain)
+      rather than by a JWT claim, and a SPIFFE JWT-SVID may be presented
+      as the actor_token directly without re-minting.
 
    exp (REQUIRED):  Expiration time.  Issuers SHOULD set short lifetimes
       (e.g., five minutes or less); see Section 12.3.
@@ -1350,10 +1351,13 @@ Table of Contents
 
 8.3.1.  Request Format
 
-   A request using this auth method carries client_id, actor_token, and
-   actor_token_type.  It MUST NOT carry client_assertion or any other
-   client authentication credential.  Example, using the
-   client_credentials grant:
+   A request using this auth method MUST include the client_id form
+   parameter, the actor_token, and actor_token_type.  It MUST NOT carry
+   client_assertion or any other client authentication credential.  The
+   client_id form parameter is required so the AS can resolve client
+   metadata before validating the assertion; the assertion's client_id
+   claim (Section 7.2) is then matched against this value.  Example,
+   using the client_credentials grant:
 
    POST /token HTTP/1.1
    Host: as.example.com
@@ -1697,15 +1701,17 @@ Table of Contents
 
    *  cnf is set per Section 8.5
 
-   *  act MUST be omitted, except that an upstream actor chain
-      (introduced by an inner act in a presented subject_token) MUST be
-      preserved.
+   *  act MUST be omitted.
 
    The instance issuer's identifier (the instance assertion's iss) is
    not represented as a claim in the self-acting access token.  Trust in
    the instance issuer is structural: the AS validated the instance
    assertion against the descriptor in Section 6.1.1 before issuance,
    and the resource server trusts the AS.
+
+   For raw JWT-SVIDs that do not carry sub_profile, the AS SHOULD set
+   the access token's sub_profile to client_instance after successful
+   validation, unless local policy intentionally suppresses that signal.
 
    A client that lists multiple instance issuers MUST ensure those
    issuers' sub spaces do not collide within the client (for example, by
@@ -1762,9 +1768,7 @@ Table of Contents
    (Section 8.9), per [ACTOR-PROFILE].
 
    In the self-acting case (Section 8.6.3) the act claim is omitted at
-   top level.  When a subject_token is present (uncommon outside token-
-   exchange, which this profile classifies as delegation in any case),
-   any act chain it carries is preserved verbatim per [ACTOR-PROFILE].
+   top level.
 
 8.7.  Refresh Tokens
 
@@ -1776,7 +1780,9 @@ Table of Contents
    Refresh tokens issued under this profile MUST be sender-constrained
    to the originating instance's cnf key, by the same mechanism used to
    sender-constrain the access token (Section 8.5).  Only the
-   originating instance can present the refresh token.  A client MAY
+   originating instance can present the refresh token.  A refresh
+   request MUST NOT introduce a client instance identity if the refresh
+   token was not originally issued under this profile.  A client MAY
    include actor_token and actor_token_type (Section 8.1) on a refresh
    request to supply a fresh instance assertion (for example, to rotate
    the underlying assertion before its exp); when present, the
@@ -1784,8 +1790,11 @@ Table of Contents
    MUST have (iss, sub) matching those recorded at the refresh token's
    original issuance, and MUST pass the token-type check, instance
    issuer descriptor lookup, signature verification, JWT claim
-   validation, and client_id binding checks defined in Section 8.2.  The
-   AS MUST reject with invalid_grant any refresh request whose presented
+   validation, and client_id binding checks defined in Section 8.2.  If
+   the presented actor_token is a raw JWT-SVID without cnf, the AS MUST
+   establish the binding key per Section 8.5 and verify that the
+   established binding key matches the refresh token's binding.  The AS
+   MUST reject with invalid_grant any refresh request whose presented
    actor_token is not bound to the same cnf key, or whose (iss, sub)
    differ from those recorded at issuance.
 
@@ -2413,28 +2422,28 @@ Table of Contents
 
    Actor tokens MUST include jti, exp, and iat (Section 7.2), except for
    raw JWT-SVIDs accepted under the SPIFFE compatibility mode in
-   Section 8.8.1.  After the AS has identified the issuer and validated
-   the instance assertion signature, it MUST reject a token whose (iss,
-   jti) pair has already been seen within the token's validity window.
-   ASes SHOULD enforce this replay check for all Client Instance
-   Assertions.  An AS MAY skip this check for assertions whose cnf claim
-   has been verified at presentation per Section 8.5 only when the
-   deployment explicitly treats cnf-bound assertions as reusable proof-
-   of-possession credentials within their exp window, documents that
-   behavior, and applies rate limits, monitoring, and audit logging for
-   assertion use.  The MUST applies unconditionally to assertions
-   without a verified cnf (including raw JWT-SVIDs accepted under
-   Section 8.8.1 when jti is present).  When the AS applies the replay
-   check, it MUST retain replay-cache entries at least until the token's
-   exp time, plus any allowed clock skew.  For a raw JWT-SVID, the AS
-   MUST apply the replay check when jti is present; when jti is absent,
-   deployments rely on sender-constraint, short SVID lifetimes, and
-   audience restriction to bound replay.  Issuers SHOULD use short
-   lifetimes (five minutes or less) both to limit replay exposure and
-   because client instances often have lifetimes of seconds to minutes.
-   When refreshing access tokens (Section 8.7), AS implementations
-   SHOULD prefer requiring a fresh instance assertion rather than
-   perpetuating stale instance identity.
+   Section 8.8.1.  When jti is present, after the AS has identified the
+   issuer and validated the instance assertion signature, it MUST reject
+   a token whose (iss, jti) pair has already been seen within the
+   token's validity window.  ASes SHOULD enforce this replay check for
+   all Client Instance Assertions.  An AS MAY skip this check for
+   assertions whose cnf claim has been verified at presentation per
+   Section 8.5 only when the deployment explicitly treats cnf-bound
+   assertions as reusable proof-of-possession credentials within their
+   exp window, documents that behavior, and applies rate limits,
+   monitoring, and audit logging for assertion use.  The MUST applies
+   unconditionally to assertions without a verified cnf (including raw
+   JWT-SVIDs accepted under Section 8.8.1 when jti is present).  When
+   the AS applies the replay check, it MUST retain replay-cache entries
+   at least until the token's exp time, plus any allowed clock skew.
+   For a raw JWT-SVID, the AS MUST apply the replay check when jti is
+   present; when jti is absent, deployments rely on sender-constraint,
+   short SVID lifetimes, and audience restriction to bound replay.
+   Issuers SHOULD use short lifetimes (five minutes or less) both to
+   limit replay exposure and because client instances often have
+   lifetimes of seconds to minutes.  When refreshing access tokens
+   (Section 8.7), AS implementations SHOULD prefer requiring a fresh
+   instance assertion rather than perpetuating stale instance identity.
 
    Replay-cache cardinality at fleet scale is bounded by the rate of
    distinct (iss, jti) tuples persisted during the retention window.
@@ -3172,7 +3181,7 @@ Authorization Code with User Delegation
      "client_id": "https://app.example.com/agent",
      "scope":     "repo.write",
      "iat":       1770000005,
-     "exp":       1770003605,
+     "exp":       1770001805,
      "cnf":       { "jkt": "0ZcOCORZNYy...iguA4I" },
      "act": {
        "iss":         "https://workload.app.example.com",
@@ -3232,7 +3241,7 @@ Client Credentials (Self-Acting)
      "client_id":   "https://app.example.com/agent",
      "scope":       "repo.read",
      "iat":         1770000005,
-     "exp":         1770003605,
+     "exp":         1770001805,
      "cnf":         { "jkt": "PqR...XyZ" }
    }
 
@@ -3313,7 +3322,7 @@ Token Exchange with Prior Delegation Chain (Agent Spawns Sub-Agent)
      "client_id": "https://app.example.com/agent",
      "scope":     "repo.write",
      "iat":       1770000010,
-     "exp":       1770003610,
+     "exp":       1770001810,
      "cnf":       { "jkt": "AbC...123" },
      "act": {
        "iss":         "https://workload.app.example.com",
@@ -3340,9 +3349,11 @@ SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID Binding)
    A SPIFFE workload makes a client_credentials request.  The workload
    holds both a JWT-SVID and an X.509-SVID issued by its SPIFFE trust
    domain.  The workload presents the JWT-SVID directly as actor_token
-   under raw JWT-SVID compatibility and presents the X.509-SVID at TLS,
-   so the certificate supplies the sender-constraint binding
-   ([RFC8705]).
+   under raw JWT-SVID compatibility (Section 8.8.1) and presents the
+   X.509-SVID at TLS, so the certificate supplies the sender-constraint
+   binding ([RFC8705]).  Because the actor_token is a raw JWT-SVID, its
+   JOSE header follows SPIFFE conventions and is not required to carry
+   typ=client-instance+jwt.
 
    The descriptor uses subject_syntax="spiffe" and the access token is
    mTLS-bound, in place of the preamble's URI-syntax descriptor and DPoP
@@ -3385,19 +3396,21 @@ SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID Binding)
    }
 
    The AS verifies the JWT-SVID signature against the trust bundle, that
-   sub falls under the descriptor's spiffe_id prefix, that the
-   X.509-SVID presented at TLS names the same SPIFFE ID and trust
-   domain, and that the TLS certificate thumbprint can be used as the
-   access-token binding.  Issued access token (self-acting):
+   sub falls under the descriptor's spiffe_id prefix, that the TLS-
+   presented X.509-SVID has SAN URI exactly equal to the JWT-SVID's sub,
+   and binds the issued access token via cnf.x5t#S256 set to the
+   certificate's SHA-256 thumbprint.  Issued access token (self-acting;
+   TTL kept short relative to the X.509-SVID rotation cycle):
 
    {
      "iss":         "https://as.example.com",
      "aud":         "https://api.example.com",
      "sub":         "spiffe://example.com/agent/inst-04",
+     "sub_profile": "client_instance",
      "client_id":   "https://app.example.com/agent",
      "scope":       "repo.read",
      "iat":         1770000005,
-     "exp":         1770003605,
+     "exp":         1770001805,
      "cnf":         { "x5t#S256": "AbCdE...xyz" }
    }
 
