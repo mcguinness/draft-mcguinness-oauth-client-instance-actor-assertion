@@ -4,30 +4,31 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>OAuth 2.0 Actor Token Grant Extension and Client Instance Assertion Profile</title>
+<title>OAuth 2.0 Client Instance Assertions using Actor Tokens</title>
 <meta content="Karl McGuinness" name="author">
 <meta content="
-       This specification defines two related OAuth 2.0 extensions. First, it
-permits the  actor_token  and  actor_token_type  parameters defined by
-OAuth 2.0 Token Exchange (RFC 8693) to be used with selected token
-endpoint grant types other than token exchange. Second, it defines a
-profile for representing client instance identity using that extension. 
-       The client instance profile does not introduce a new  client_instance 
-identifier in protocol messages. Instead, it defines client metadata
-parameters (applicable to clients identified by a Client ID Metadata
-Document (CIMD) or registered via OAuth Dynamic Client Registration
-(RFC 7591)) that let a  client_id  identify a logical client
-whose concrete runtime instances are authenticated by one or more
-trusted instance issuers (for example, workload identity systems). 
-       This document registers a new  actor_token_type ,
+       This specification defines a profile for representing OAuth 2.0
+client instance identity to an authorization server. It registers a
+new  actor_token_type ,
  urn:ietf:params:oauth:token-type:client-instance-jwt , that carries
-the instance identity as a signed JWT. The Authorization Server
-validates the instance assertion and represents the instance either as
-an  act  claim, when another principal is present (e.g., a user
-delegating to the instance), or as the access token's  sub , when the
-instance itself is the principal (e.g., a client credentials grant).
-The issued access token is sender-constrained to a key the instance
-possesses. 
+the instance identity as a signed JWT presented via the  actor_token 
+parameter defined by OAuth 2.0 Token Exchange (RFC 8693). To support
+presentation outside token exchange, this specification also permits
+ actor_token  and  actor_token_type  on selected additional grant
+types. 
+       The profile does not introduce a new  client_instance  identifier in
+protocol messages. Instead, it defines client metadata parameters
+(applicable to clients identified by a Client ID Metadata Document
+(CIMD) or registered via OAuth Dynamic Client Registration (RFC 7591))
+that let a  client_id  identify a logical client whose concrete
+runtime instances are authenticated by one or more trusted instance
+issuers (for example, workload identity systems). 
+       The Authorization Server validates the instance assertion and
+represents the instance either as an  act  claim, when another
+principal is present (e.g., a user delegating to the instance), or as
+the access token's  sub , when the instance itself is the principal
+(e.g., a client credentials grant). The issued access token is
+sender-constrained to a key the instance possesses. 
     " name="description">
 <meta content="xml2rfc 3.33.0" name="generator">
 <meta content="OAuth" name="keyword">
@@ -1068,12 +1069,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <table class="ears">
 <thead><tr>
 <td class="left">Internet-Draft</td>
-<td class="center">oauth-actor-token-grant-extension</td>
+<td class="center">oauth-client-instance-assertion</td>
 <td class="right">May 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 4 November 2026</td>
+<td class="center">Expires 6 November 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1086,12 +1087,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-mcguinness-oauth-client-instance-actor-assertion-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-05-03" class="published">3 May 2026</time>
+<time datetime="2026-05-05" class="published">5 May 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-11-04">4 November 2026</time></dd>
+<dd class="expires"><time datetime="2026-11-06">6 November 2026</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1101,30 +1102,31 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </dd>
 </dl>
 </div>
-<h1 id="title">OAuth 2.0 Actor Token Grant Extension and Client Instance Assertion Profile</h1>
+<h1 id="title">OAuth 2.0 Client Instance Assertions using Actor Tokens</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This specification defines two related OAuth 2.0 extensions. First, it
-permits the <code>actor_token</code> and <code>actor_token_type</code> parameters defined by
-OAuth 2.0 Token Exchange (RFC 8693) to be used with selected token
-endpoint grant types other than token exchange. Second, it defines a
-profile for representing client instance identity using that extension.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">The client instance profile does not introduce a new <code>client_instance</code>
-identifier in protocol messages. Instead, it defines client metadata
-parameters (applicable to clients identified by a Client ID Metadata
-Document (CIMD) or registered via OAuth Dynamic Client Registration
-(RFC 7591)) that let a <code>client_id</code> identify a logical client
-whose concrete runtime instances are authenticated by one or more
-trusted instance issuers (for example, workload identity systems).<a href="#section-abstract-2" class="pilcrow">¶</a></p>
-<p id="section-abstract-3">This document registers a new <code>actor_token_type</code>,
+<p id="section-abstract-1">This specification defines a profile for representing OAuth 2.0
+client instance identity to an authorization server. It registers a
+new <code>actor_token_type</code>,
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>, that carries
-the instance identity as a signed JWT. The Authorization Server
-validates the instance assertion and represents the instance either as
-an <code>act</code> claim, when another principal is present (e.g., a user
-delegating to the instance), or as the access token's <code>sub</code>, when the
-instance itself is the principal (e.g., a client credentials grant).
-The issued access token is sender-constrained to a key the instance
-possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
+the instance identity as a signed JWT presented via the <code>actor_token</code>
+parameter defined by OAuth 2.0 Token Exchange (RFC 8693). To support
+presentation outside token exchange, this specification also permits
+<code>actor_token</code> and <code>actor_token_type</code> on selected additional grant
+types.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">The profile does not introduce a new <code>client_instance</code> identifier in
+protocol messages. Instead, it defines client metadata parameters
+(applicable to clients identified by a Client ID Metadata Document
+(CIMD) or registered via OAuth Dynamic Client Registration (RFC 7591))
+that let a <code>client_id</code> identify a logical client whose concrete
+runtime instances are authenticated by one or more trusted instance
+issuers (for example, workload identity systems).<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-3">The Authorization Server validates the instance assertion and
+represents the instance either as an <code>act</code> claim, when another
+principal is present (e.g., a user delegating to the instance), or as
+the access token's <code>sub</code>, when the instance itself is the principal
+(e.g., a client credentials grant). The issued access token is
+sender-constrained to a key the instance possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1161,7 +1163,7 @@ possesses.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 4 November 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 6 November 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1514,72 +1516,67 @@ representing an actor in an issued token. The OAuth Actor Profile
 <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> further constrains the <code>act</code> claim and registers
 actor-related claims, but explicitly leaves out a token request
 parameter for proving an actor in flows other than token exchange.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">This document defines two related specifications, each
-independently useful:<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4"><strong>An actor token grant extension.</strong> It permits the
-<code>actor_token</code> and <code>actor_token_type</code> parameters from <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> on
-token endpoint grants other than token-exchange (specifically:
-<code>authorization_code</code>, <code>client_credentials</code>, <code>refresh_token</code>, and
-the JWT bearer grant <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>). The extension is independent of
-any specific <code>actor_token_type</code>: it provides the wire mechanism on
-which other profiles can build their own actor token types for
-non-instance use cases (for example, AI agents acting on behalf of
-a user, or services invoked under a delegation grant). See
-<a href="#grant-extension" class="auto internal xref">Section 4</a>.<a href="#section-1-4" class="pilcrow">¶</a></p>
-<p id="section-1-5"><strong>An actor token type for client instance identity.</strong> Building on
-the actor token grant extension, this document:<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-3">This document defines a profile for representing client instance
+identity at the OAuth 2.0 token endpoint. It:<a href="#section-1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-1-6.1">
-          <p id="section-1-6.1.1">Recognizes that the OAuth <code>client_id</code> identifies an application
-class with concrete runtime instances (a relationship already
-implicit in deployed OAuth practice; see <a href="#client-instance-model" class="auto internal xref">Section 5</a>),
-and defines client metadata describing the <em>instance issuers</em>
-trusted to attest those instances. The metadata applies whether
+<li class="normal" id="section-1-4.1">
+          <p id="section-1-4.1.1">Recognizes that an OAuth <code>client_id</code> commonly abstracts over many
+concrete runtime instances (a relationship already implicit in
+deployed OAuth practice; see <a href="#client-instance-model" class="auto internal xref">Section 5</a>), and
+defines client metadata describing the <em>instance issuers</em> trusted
+to attest those instances. The metadata applies whether
 the client is identified by a Client ID Metadata Document <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>
-or registered via <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>; see <a href="#registration-models" class="auto internal xref">Section 5.2</a>.<a href="#section-1-6.1.1" class="pilcrow">¶</a></p>
+or registered via <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>; see <a href="#registration-models" class="auto internal xref">Section 5.2</a>.<a href="#section-1-4.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-6.2">
-          <p id="section-1-6.2.1">Registers a new <code>actor_token_type</code>,
+        <li class="normal" id="section-1-4.2">
+          <p id="section-1-4.2.1">Registers a new <code>actor_token_type</code>,
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>, that
 carries the instance identity as a JWT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> signed by an
-instance issuer published in the client's metadata.<a href="#section-1-6.2.1" class="pilcrow">¶</a></p>
+instance issuer published in the client's metadata.<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-6.3">
-          <p id="section-1-6.3.1">Requires issued access tokens to be sender-constrained to a key
+        <li class="normal" id="section-1-4.3">
+          <p id="section-1-4.3.1">Requires issued access tokens to be sender-constrained to a key
 the instance possesses, and specifies how the instance
 assertion's <code>cnf</code> claim drives that binding in the interoperable
-re-minted assertion format.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
+re-minted assertion format.<a href="#section-1-4.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-6.4">
-          <p id="section-1-6.4.1">Registers <code>client_instance_jwt</code> as a <code>token_endpoint_auth_method</code>
+        <li class="normal" id="section-1-4.4">
+          <p id="section-1-4.4.1">Registers <code>client_instance_jwt</code> as a <code>token_endpoint_auth_method</code>
 value, allowing deployments without an online client-controlled
 credential to authenticate the client via the instance assertion
-alone.<a href="#section-1-6.4.1" class="pilcrow">¶</a></p>
+alone.<a href="#section-1-4.4.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-6.5">
-          <p id="section-1-6.5.1">Defines first-class support for SPIFFE workload identity, including
-optional direct presentation of JWT-SVIDs as <code>actor_token</code>.<a href="#section-1-6.5.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-4.5">
+          <p id="section-1-4.5.1">Defines first-class support for SPIFFE workload identity, including
+optional direct presentation of JWT-SVIDs as <code>actor_token</code>.<a href="#section-1-4.5.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-6.6">
-          <p id="section-1-6.6.1">Defines authorization server metadata so that clients can
-discover support.<a href="#section-1-6.6.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-4.6">
+          <p id="section-1-4.6.1">Defines authorization server metadata so that clients can
+discover support.<a href="#section-1-4.6.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-1-7">What this document does <em>not</em> do:<a href="#section-1-7" class="pilcrow">¶</a></p>
+<p id="section-1-5">To enable instance assertions to be presented outside token exchange,
+this document also extends <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>'s <code>actor_token</code> and
+<code>actor_token_type</code> parameters to selected additional grant types
+(<code>authorization_code</code>, <code>client_credentials</code>, <code>refresh_token</code>, and
+the JWT bearer grant <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>). See <a href="#grant-extension" class="auto internal xref">Section 4</a>; the
+extension is independent of any specific <code>actor_token_type</code> and may
+be used by other profiles.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">What this document does <em>not</em> do:<a href="#section-1-6" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-1-8.1">
-          <p id="section-1-8.1.1">It does not introduce a <code>client_instance</code> or
+<li class="normal" id="section-1-7.1">
+          <p id="section-1-7.1.1">It does not introduce a <code>client_instance</code> or
 <code>client_instance_assertion</code> request parameter (see
-<a href="#rationale-no-instance-assertion-param" class="auto internal xref">Appendix "Why not a dedicated client_instance_assertion request parameter?"</a>).<a href="#section-1-8.1.1" class="pilcrow">¶</a></p>
+<a href="#rationale-no-instance-assertion-param" class="auto internal xref">Appendix "Why not a dedicated client_instance_assertion request parameter?"</a>).<a href="#section-1-7.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-8.2">
-          <p id="section-1-8.2.1">It does not change the syntax or processing of the <code>act</code> claim
-beyond what <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> already defines.<a href="#section-1-8.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-7.2">
+          <p id="section-1-7.2.1">It does not change the syntax or processing of the <code>act</code> claim
+beyond what <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> already defines.<a href="#section-1-7.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-8.3">
-          <p id="section-1-8.3.1">It does not define authorization endpoint interactions for
+        <li class="normal" id="section-1-7.3">
+          <p id="section-1-7.3.1">It does not define authorization endpoint interactions for
 conveying actor identity; like <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, this is left for
-future work.<a href="#section-1-8.3.1" class="pilcrow">¶</a></p>
+future work.<a href="#section-1-7.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
@@ -1854,14 +1851,13 @@ refresh-token, and security rules for that token type. Such profiles
 can reference this actor token grant extension for the wire-level
 permission to carry <code>actor_token</code> and <code>actor_token_type</code> on the
 grant types listed in <a href="#permitted-grants" class="auto internal xref">Section 4.1</a>.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
-<p id="section-4.2-5">The token endpoint processing rules for the <code>client-instance-jwt</code>
-token type (<a href="#token-endpoint" class="auto internal xref">Section 8</a>) are written in a way that may serve
-as a template for future actor token type profiles. In particular,
-<a href="#auth-time-consistency" class="auto internal xref">Section 8.4</a>, <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>, <a href="#access-token" class="auto internal xref">Section 8.6</a>,
-and <a href="#refresh" class="auto internal xref">Section 8.7</a> are largely token-type-agnostic and <span class="bcp14">MAY</span> be adopted
-verbatim or adapted by other profiles; their token-type-specific
-hooks (descriptor lookup, JWT claim validation, <code>client_id</code> binding)
-are the parts a new profile is expected to redefine.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+<p id="section-4.2-5">Some of the processing rules in <a href="#token-endpoint" class="auto internal xref">Section 8</a> (notably
+<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>, <a href="#access-token" class="auto internal xref">Section 8.6</a>, and <a href="#refresh" class="auto internal xref">Section 8.7</a>) describe
+behavior that is not specific to the <code>client-instance-jwt</code> token
+type. Other actor-token profiles may find them reusable as a
+starting point, but this document does not prescribe their reuse;
+each new <code>actor_token_type</code> profile defines its own validation,
+representation, and security rules.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
