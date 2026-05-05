@@ -1200,10 +1200,12 @@ Before the steps below, the AS MUST reject the request with
    ({{spiffe-client-id-omission}}); if not, reject with
    `invalid_grant`. When the descriptor satisfies those conditions,
    the AS MUST verify that the `actor_token`'s `sub` falls under the
-   descriptor's `spiffe_id` (with wildcard expansion if any); if not,
-   reject with `invalid_grant`. After `client_id` binding succeeds,
-   apply the `(iss, jti)` replay check per {{security-replay}};
-   reject with `invalid_grant` if a previously seen tuple is found.
+   descriptor's SPIFFE scope: `spiffe_id` when present, otherwise the
+   descriptor's `trust_domain`; if not, reject with `invalid_grant`.
+   After `client_id` binding succeeds, apply replay checking per
+   {{security-replay}}; reject with `invalid_grant` if a previously
+   seen tuple is found. For raw JWT-SVIDs, this replay check applies
+   only when `jti` is present.
    The replay check follows `client_id` binding so that an attacker
    cannot burn a legitimate client's `jti` by presenting the assertion
    under a mismatched `client_id`.
@@ -1752,11 +1754,12 @@ In raw JWT-SVID mode, the AS MUST:
 4. accept only claims that are valid under SPIFFE;
 5. validate `aud` and `exp`;
 6. validate `iat` if present;
-7. apply the replay-cache rule in {{security-replay}} if `jti` is
+7. validate `nbf` if present;
+8. apply the replay-cache rule in {{security-replay}} if `jti` is
    present;
-8. validate `sub` as a SPIFFE ID and enforce the descriptor's
+9. validate `sub` as a SPIFFE ID and enforce the descriptor's
    `spiffe_id`, or `trust_domain` when `spiffe_id` is absent; and
-9. establish an instance-specific sender-constraint binding per
+10. establish an instance-specific sender-constraint binding per
    {{sender-constrained}}.
 
 In raw JWT-SVID mode, the JWT-SVID's `iss` claim MUST identify the
@@ -1831,10 +1834,12 @@ When a descriptor specifies `spiffe_bundle_endpoint` instead of
 `jwks_uri` or `jwks`, the AS resolves verification keys via the SPIFFE
 trust bundle endpoint. The AS MUST validate the bundle's freshness
 and applicability to the trust domain in the descriptor's
-`trust_domain` (or the trust domain implied by `spiffe_id`), and MUST
-reject instance assertions whose `iss` does not correspond to a key in the
-bundle for the relevant trust domain. The bundle endpoint format,
-freshness, rotation rules, and TLS authentication (WebPKI) follow
+`trust_domain` (or the trust domain implied by `spiffe_id`). The AS
+MUST verify JWT signatures with JWT authority keys from the bundle
+for the relevant trust domain, and MUST separately require the
+assertion's `iss` and `sub` to satisfy the descriptor's issuer and
+SPIFFE scope constraints. The bundle endpoint format, freshness,
+rotation rules, and TLS authentication (WebPKI) follow
 {{SPIFFE-CLIENT-AUTH}}, the same handling used for client
 authentication. When the AS uses an X.509-SVID at the TLS layer for
 sender-constraint binding under raw-JWT-SVID compatibility
