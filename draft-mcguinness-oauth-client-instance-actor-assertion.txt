@@ -896,6 +896,14 @@ Table of Contents
       client_id claim names a client for which the runtime has not been
       authorized, by issuer-side policy, as a member.
 
+   An instance issuer MUST NOT reassign an active or audit-relevant sub
+   value to a different runtime.  Issuers SHOULD use stable, non-
+   reassigned subjects, or include sufficient generation or session
+   uniqueness in sub to distinguish runtime incarnations.  If subject
+   reassignment is unavoidable, the client, issuer, and AS audit logs
+   need enough lifecycle metadata to distinguish the old and new
+   runtimes.
+
    How the issuer internally authenticates the runtime is out of scope.
    Common deployment patterns (adapter, raw JWT-SVID compatibility,
    X.509-SVID binding) are described in Section 10.1.
@@ -1462,10 +1470,9 @@ Table of Contents
    AS MUST classify each request as delegation or self-acting before
    populating the issued access token's claims.  In both cases the
    access token's client_id remains the client, the access token MUST be
-   sender- constrained per Section 8.5, and any upstream actor chain
-   MUST be preserved by nesting per [ACTOR-PROFILE] (merge rules in
-   Section 8.6.4).  The classification rule, the two representation
-   cases, and the chain-merging rule appear as peer subsections below.
+   sender-constrained per Section 8.5, and any upstream actor chain MUST
+   be preserved by nesting per [ACTOR-PROFILE] (merge rules in
+   Section 8.6.4).
 
 8.6.1.  Classification
 
@@ -1546,88 +1553,50 @@ Table of Contents
 
    When the request is classified as self-acting, the instance is the
    principal and there is no other party on whose behalf it acts.  The
-   AS MUST populate the issued access token from the validated client
-   instance assertion:
+   AS MUST populate the issued access token from the validated instance
+   assertion:
 
-   *  sub = actor_token's sub (optionally with AS-applied namespacing as
-      described below)
+   *  sub = actor_token's sub (optionally with AS-applied namespacing,
+      see below)
 
    *  sub_profile = actor_token's sub_profile (if present); the value
       client_instance SHOULD be included
 
    *  cnf is set per Section 8.5
 
-   *  act MUST be omitted.
+   *  act MUST be omitted
 
-   The instance issuer's identifier (the instance assertion's iss) is
-   not represented as a claim in the self-acting access token.  Trust in
-   the instance issuer is structural: the AS validated the instance
-   assertion against the descriptor in Section 6.1.1 before issuance,
-   and the resource server trusts the AS.
-
-   For raw JWT-SVIDs that do not carry sub_profile, the AS SHOULD set
-   the access token's sub_profile to client_instance after successful
-   validation, unless local policy intentionally suppresses that signal.
+   The instance issuer's identifier (the assertion's iss) is not
+   represented as a claim; trust in the issuer is structural via the
+   descriptor (Section 6.1.1).  For raw JWT-SVIDs that do not carry
+   sub_profile, the AS SHOULD set the access token's sub_profile to
+   client_instance after successful validation, unless local policy
+   intentionally suppresses that signal.
 
    A client that lists multiple instance issuers MUST ensure those
-   issuers' sub spaces do not collide within the client (for example, by
-   using disjoint naming conventions, prefixes, or a SPIFFE trust-domain
-   split); when the client cannot guarantee disjoint spaces, the AS
-   SHOULD apply namespacing (below) to prevent a compromised issuer from
-   spoofing another's sub.
+   issuers' sub spaces do not collide (for example, by using disjoint
+   naming conventions, prefixes, or a SPIFFE trust-domain split); when
+   the client cannot guarantee disjointness, the AS SHOULD apply
+   namespacing (e.g., prefixing sub with the descriptor's issuer such as
+   <issuer>#<sub>) to prevent a compromised issuer from spoofing
+   another's sub.  Such namespacing is a deployment-side choice and does
+   not affect the wire format of the actor_token.  AS-applied
+   namespacing produces an AS-scoped subject identifier; resource-server
+   policy and audit tooling need to treat it as AS-issued rather than
+   issuer-native.
 
-   Single-issuer clients avoid cross-issuer collision, but the instance
-   issuer still MUST NOT reassign an active or audit-relevant sub value
-   to a different runtime.  Issuers SHOULD use stable, non-reassigned
-   subjects or include sufficient generation or session uniqueness in
-   sub to distinguish runtime incarnations.  If subject reassignment is
-   unavoidable, the client, issuer, and AS audit logs need enough
-   lifecycle metadata to distinguish the old and new runtimes.
-
-   ASes MAY apply additional namespacing (for example, prefixing sub
-   with the descriptor's issuer in a deterministic form such as
-   <issuer>#<sub>) when they cannot otherwise determine that asserted
-   sub values are unique within the client; such namespacing is a
-   deployment-side choice and does not affect the wire format of the
-   actor_token.  If the AS applies such namespacing, the resulting sub
-   is an AS-scoped subject identifier; resource-server policy and audit
-   tooling need to treat it as AS-issued rather than issuer-native.
-   Deployments that require in-token instance-issuer attribution for
-   self-acting tokens may define a separate claim in a future profile.
-
-   In the issued access token, client_id (the client) and sub (the
-   instance) are distinct, and act is absent.  For a worked example see
-   Appendix "Client Credentials (Self-Acting)".
+   For a worked example see Appendix "Client Credentials (Self-Acting)".
 
 8.6.4.  Actor Chain Merging
 
-   Per [ACTOR-PROFILE], a Client Instance Assertion presented as an
-   actor_token MUST NOT itself carry an act claim; if it does, the AS
-   MUST reject the request with invalid_grant.  A Client Instance
-   Assertion is a direct identity assertion of the actor, not a
-   delegation-chain credential.
+   The AS constructs the issued access token's act chain per
+   [ACTOR-PROFILE]'s Delegation Chain Validation and Construction
+   algorithm: the validated client instance assertion is the new
+   outermost actor, and any subject_token act chain (only applicable to
+   token-exchange) is preserved verbatim under it.  Depth limits and
+   rejection on overflow follow [ACTOR-PROFILE].
 
-   Consequently, only two inputs can contribute actor information to the
-   issued token:
-
-   *  the validated client instance assertion (this request's actor, the
-      new outermost actor); and
-
-   *  the subject_token's act chain, if any (only applicable to a token-
-      exchange ([RFC8693]) request, since other grants do not introduce
-      a subject_token).
-
-   The AS MUST construct the issued access token's act chain by applying
-   the algorithm in [ACTOR-PROFILE] (its "Delegation Chain Validation
-   and Construction" section) with the validated client instance
-   assertion as the new outermost actor and the subject_token's
-   preserved delegation chain (when present) nested inside.  The
-   resulting depth MUST NOT exceed the AS's local maximum delegation
-   depth; otherwise the AS MUST reject the request with invalid_request
-   (Section 8.9), per [ACTOR-PROFILE].
-
-   In the self-acting case (Section 8.6.3) the act claim is omitted at
-   top level.
+   In the self-acting case (Section 8.6.3) the act claim is omitted.
 
 8.7.  Refresh Tokens
 

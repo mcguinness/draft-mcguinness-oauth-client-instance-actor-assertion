@@ -2379,10 +2379,17 @@ runtime has not been authorized, by issuer-side policy, as a
 member.<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.1-3">How the issuer internally authenticates the runtime is out of
+<p id="section-7.1-3">An instance issuer <span class="bcp14">MUST NOT</span> reassign an active or audit-relevant
+<code>sub</code> value to a different runtime. Issuers <span class="bcp14">SHOULD</span> use stable,
+non-reassigned subjects, or include sufficient generation or
+session uniqueness in <code>sub</code> to distinguish runtime incarnations.
+If subject reassignment is unavoidable, the client, issuer, and AS
+audit logs need enough lifecycle metadata to distinguish the old
+and new runtimes.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-4">How the issuer internally authenticates the runtime is out of
 scope. Common deployment patterns (adapter, raw JWT-SVID
 compatibility, X.509-SVID binding) are described in
-<a href="#adoption-without-cnf" class="auto internal xref">Section 10.1</a>.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<a href="#adoption-without-cnf" class="auto internal xref">Section 10.1</a>.<a href="#section-7.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="claims">
@@ -3058,16 +3065,13 @@ as belonging to the instance for binding purposes.<a href="#section-8.5-8" class
 <p id="section-8.6-1">A client instance may be acting on behalf of another principal
 (<em>delegation case</em>; e.g., a user authorized the request through an
 authorization_code grant) or acting as itself with no other
-principal involved (<em>self-acting case</em>; e.g., a
-<code>client_credentials</code> grant). The AS <span class="bcp14">MUST</span> classify each request as
-delegation or self-acting before populating the issued access
-token's claims. In both cases the access token's <code>client_id</code>
-remains the client, the access token <span class="bcp14">MUST</span> be sender-
-constrained per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>, and any upstream actor
-chain <span class="bcp14">MUST</span> be preserved by nesting per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> (merge
-rules in <a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>). The classification rule, the two
-representation cases, and the chain-merging rule appear as peer
-subsections below.<a href="#section-8.6-1" class="pilcrow">¶</a></p>
+principal involved (<em>self-acting case</em>; e.g., a <code>client_credentials</code>
+grant). The AS <span class="bcp14">MUST</span> classify each request as delegation or
+self-acting before populating the issued access token's claims. In
+both cases the access token's <code>client_id</code> remains the client, the
+access token <span class="bcp14">MUST</span> be sender-constrained per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>,
+and any upstream actor chain <span class="bcp14">MUST</span> be preserved by nesting per
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> (merge rules in <a href="#chain-merging" class="auto internal xref">Section 8.6.4</a>).<a href="#section-8.6-1" class="pilcrow">¶</a></p>
 <div id="access-token-classification">
 <section id="section-8.6.1">
           <h4 id="name-classification">
@@ -3180,12 +3184,12 @@ carries an <code>act</code> chain), see <a href="#appendix-examples-token-exchan
           </h4>
 <p id="section-8.6.3-1">When the request is classified as self-acting, the instance is the
 principal and there is no other party on whose behalf it acts. The
-AS <span class="bcp14">MUST</span> populate the issued access token from the validated client
+AS <span class="bcp14">MUST</span> populate the issued access token from the validated
 instance assertion:<a href="#section-8.6.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.6.3-2.1">
               <p id="section-8.6.3-2.1.1"><code>sub</code> = <code>actor_token</code>'s <code>sub</code> (optionally with AS-applied
-namespacing as described below)<a href="#section-8.6.3-2.1.1" class="pilcrow">¶</a></p>
+namespacing, see below)<a href="#section-8.6.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.6.3-2.2">
               <p id="section-8.6.3-2.2.1"><code>sub_profile</code> = <code>actor_token</code>'s <code>sub_profile</code> (if present); the
@@ -3195,45 +3199,27 @@ value <code>client_instance</code> <span class="bcp14">SHOULD</span> be included
               <p id="section-8.6.3-2.3.1"><code>cnf</code> is set per <a href="#sender-constrained" class="auto internal xref">Section 8.5</a><a href="#section-8.6.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.6.3-2.4">
-              <p id="section-8.6.3-2.4.1"><code>act</code> <span class="bcp14">MUST</span> be omitted.<a href="#section-8.6.3-2.4.1" class="pilcrow">¶</a></p>
+              <p id="section-8.6.3-2.4.1"><code>act</code> <span class="bcp14">MUST</span> be omitted<a href="#section-8.6.3-2.4.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-8.6.3-3">The instance issuer's identifier (the instance assertion's <code>iss</code>) is
-not represented as a claim in the self-acting access token. Trust
-in the instance issuer is structural: the AS validated the instance
-assertion against the descriptor in <a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a> before
-issuance, and the resource server trusts the AS.<a href="#section-8.6.3-3" class="pilcrow">¶</a></p>
-<p id="section-8.6.3-4">For raw JWT-SVIDs that do not carry <code>sub_profile</code>, the AS <span class="bcp14">SHOULD</span> set
-the access token's <code>sub_profile</code> to <code>client_instance</code> after successful
-validation, unless local policy intentionally suppresses that signal.<a href="#section-8.6.3-4" class="pilcrow">¶</a></p>
-<p id="section-8.6.3-5">A client that lists multiple instance issuers <span class="bcp14">MUST</span> ensure those
-issuers' <code>sub</code> spaces do not collide within the client (for example,
-by using disjoint naming conventions, prefixes, or a SPIFFE
-trust-domain split); when the client cannot guarantee disjoint
-spaces, the AS <span class="bcp14">SHOULD</span> apply namespacing (below) to prevent a
-compromised issuer from spoofing another's <code>sub</code>.<a href="#section-8.6.3-5" class="pilcrow">¶</a></p>
-<p id="section-8.6.3-6">Single-issuer clients avoid cross-issuer collision, but the instance
-issuer still <span class="bcp14">MUST NOT</span> reassign an active or audit-relevant <code>sub</code>
-value to a different runtime. Issuers <span class="bcp14">SHOULD</span> use stable,
-non-reassigned subjects or include sufficient generation or session
-uniqueness in <code>sub</code> to distinguish runtime incarnations. If subject
-reassignment is unavoidable, the client, issuer, and AS audit logs
-need enough lifecycle metadata to distinguish the old and new
-runtimes.<a href="#section-8.6.3-6" class="pilcrow">¶</a></p>
-<p id="section-8.6.3-7">ASes <span class="bcp14">MAY</span> apply additional namespacing (for example, prefixing <code>sub</code>
-with the descriptor's issuer in a deterministic form such as
-<code>&lt;issuer&gt;#&lt;sub&gt;</code>) when they cannot otherwise determine that asserted
-<code>sub</code> values are unique within the client; such namespacing is a
-deployment-side choice and does not affect the wire format of the
-<code>actor_token</code>. If the AS applies such namespacing, the resulting
-<code>sub</code> is an AS-scoped subject identifier; resource-server policy and
-audit tooling need to treat it as AS-issued rather than
-issuer-native. Deployments that require in-token instance-issuer
-attribution for self-acting tokens may define a separate claim in a
-future profile.<a href="#section-8.6.3-7" class="pilcrow">¶</a></p>
-<p id="section-8.6.3-8">In the issued access token, <code>client_id</code> (the client) and <code>sub</code> (the
-instance) are distinct, and <code>act</code> is absent. For a worked example
-see <a href="#appendix-examples-client-credentials" class="auto internal xref">Appendix "Client Credentials (Self-Acting)"</a>.<a href="#section-8.6.3-8" class="pilcrow">¶</a></p>
+<p id="section-8.6.3-3">The instance issuer's identifier (the assertion's <code>iss</code>) is not
+represented as a claim; trust in the issuer is structural via the
+descriptor (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>). For raw JWT-SVIDs that do not
+carry <code>sub_profile</code>, the AS <span class="bcp14">SHOULD</span> set the access token's
+<code>sub_profile</code> to <code>client_instance</code> after successful validation,
+unless local policy intentionally suppresses that signal.<a href="#section-8.6.3-3" class="pilcrow">¶</a></p>
+<p id="section-8.6.3-4">A client that lists multiple instance issuers <span class="bcp14">MUST</span> ensure those
+issuers' <code>sub</code> spaces do not collide (for example, by using
+disjoint naming conventions, prefixes, or a SPIFFE trust-domain
+split); when the client cannot guarantee disjointness, the AS
+<span class="bcp14">SHOULD</span> apply namespacing (e.g., prefixing <code>sub</code> with the
+descriptor's issuer such as <code>&lt;issuer&gt;#&lt;sub&gt;</code>) to prevent a
+compromised issuer from spoofing another's <code>sub</code>. Such namespacing
+is a deployment-side choice and does not affect the wire format of
+the <code>actor_token</code>. AS-applied namespacing produces an AS-scoped
+subject identifier; resource-server policy and audit tooling need
+to treat it as AS-issued rather than issuer-native.<a href="#section-8.6.3-4" class="pilcrow">¶</a></p>
+<p id="section-8.6.3-5">For a worked example see <a href="#appendix-examples-client-credentials" class="auto internal xref">Appendix "Client Credentials (Self-Acting)"</a>.<a href="#section-8.6.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="chain-merging">
@@ -3241,34 +3227,14 @@ see <a href="#appendix-examples-client-credentials" class="auto internal xref">A
           <h4 id="name-actor-chain-merging">
 <a href="#section-8.6.4" class="section-number selfRef">8.6.4. </a><a href="#name-actor-chain-merging" class="section-name selfRef">Actor Chain Merging</a>
           </h4>
-<p id="section-8.6.4-1">Per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>, a Client Instance Assertion presented as an
-<code>actor_token</code> <span class="bcp14">MUST NOT</span> itself carry an <code>act</code> claim; if it does, the AS
-<span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>. A Client Instance
-Assertion is a direct identity assertion of the actor, not a
-delegation-chain credential.<a href="#section-8.6.4-1" class="pilcrow">¶</a></p>
-<p id="section-8.6.4-2">Consequently, only two inputs can contribute actor information to
-the issued token:<a href="#section-8.6.4-2" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-8.6.4-3.1">
-              <p id="section-8.6.4-3.1.1">the validated client instance assertion (this request's actor, the
-new outermost actor); and<a href="#section-8.6.4-3.1.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-8.6.4-3.2">
-              <p id="section-8.6.4-3.2.1">the <code>subject_token</code>'s <code>act</code> chain, if any (only applicable to a
-token-exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) request, since other grants do not
-introduce a <code>subject_token</code>).<a href="#section-8.6.4-3.2.1" class="pilcrow">¶</a></p>
-</li>
-          </ul>
-<p id="section-8.6.4-4">The AS <span class="bcp14">MUST</span> construct the issued access token's <code>act</code> chain by
-applying the algorithm in <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span> (its "Delegation Chain
-Validation and Construction" section) with the validated client
-instance assertion as the new outermost actor and the
-<code>subject_token</code>'s preserved delegation chain (when present) nested
-inside. The resulting depth <span class="bcp14">MUST NOT</span> exceed the AS's local maximum
-delegation depth; otherwise the AS <span class="bcp14">MUST</span> reject the request with
-<code>invalid_request</code> (<a href="#errors" class="auto internal xref">Section 8.9</a>), per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.6.4-4" class="pilcrow">¶</a></p>
-<p id="section-8.6.4-5">In the self-acting case (<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>) the <code>act</code>
-claim is omitted at top level.<a href="#section-8.6.4-5" class="pilcrow">¶</a></p>
+<p id="section-8.6.4-1">The AS constructs the issued access token's <code>act</code> chain per
+<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>'s Delegation Chain Validation and Construction
+algorithm: the validated client instance assertion is the new
+outermost actor, and any <code>subject_token</code> <code>act</code> chain (only
+applicable to token-exchange) is preserved verbatim under it.
+Depth limits and rejection on overflow follow <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-8.6.4-1" class="pilcrow">¶</a></p>
+<p id="section-8.6.4-2">In the self-acting case (<a href="#access-token-self-acting" class="auto internal xref">Section 8.6.3</a>) the <code>act</code>
+claim is omitted.<a href="#section-8.6.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
