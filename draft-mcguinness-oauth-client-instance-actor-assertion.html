@@ -2347,47 +2347,39 @@ specified in <a href="#token-endpoint" class="auto internal xref">Section 8</a>.
 identity of a client instance. It is presented as the <code>actor_token</code>
 parameter (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) with <code>actor_token_type</code> set to
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code> (see
-<a href="#iana-token-type" class="auto internal xref">Section 13.1</a>).<a href="#section-7-2" class="pilcrow">¶</a></p>
+<a href="#iana-token-type" class="auto internal xref">Section 13.1</a>). The assertion serves two purposes: it
+authenticates the runtime instance (workload identity), and it
+asserts that the instance is a member of the named OAuth client.
+This document defines a single JWT carrying both, signed by the
+instance issuer. This matches the prevailing pattern in workload
+identity systems, which already issue audience-scoped, signed
+assertions of runtime identity (e.g., JWT-SVIDs in <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>).<a href="#section-7-2" class="pilcrow">¶</a></p>
 <div id="issuer-obligations">
 <section id="section-7.1">
         <h3 id="name-issuer-obligations">
 <a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-issuer-obligations" class="section-name selfRef">Issuer Obligations</a>
         </h3>
-<p id="section-7.1-1">A client instance assertion serves two conceptually distinct
-purposes:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-7.1-2">
-<li id="section-7.1-2.1">
-            <p id="section-7.1-2.1.1">it authenticates the <em>runtime instance</em> (workload identity); and<a href="#section-7.1-2.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="section-7.1-2.2">
-            <p id="section-7.1-2.2.1">it asserts that the instance is a member of the named <em>client
-class</em>.<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
-</li>
-        </ol>
-<p id="section-7.1-3">This document defines a single combined artifact: a JWT signed by the
-instance issuer that carries both. This matches the prevailing pattern
-in workload identity systems, which already issue audience-scoped,
-signed assertions of runtime identity (e.g., JWT-SVIDs in <span>[<a href="#SPIFFE" class="cite xref">SPIFFE</a>]</span>).<a href="#section-7.1-3" class="pilcrow">¶</a></p>
-<p id="section-7.1-4">The instance issuer is the trust authority for the combined assertion
-and <span class="bcp14">MUST</span>, before minting an instance assertion under this profile:<a href="#section-7.1-4" class="pilcrow">¶</a></p>
+<p id="section-7.1-1">The instance issuer is the trust authority for the assertion and
+<span class="bcp14">MUST</span>, before minting an instance assertion under this profile:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-7.1-5.1">
-            <p id="section-7.1-5.1.1">Authenticate the runtime instance (e.g., via attestation,
-platform-level identity, or possession of an instance key); and<a href="#section-7.1-5.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-7.1-2.1">
+            <p id="section-7.1-2.1.1">Authenticate the runtime instance (e.g., via attestation,
+platform-level identity, or possession of an instance key); and<a href="#section-7.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-7.1-5.2">
-            <p id="section-7.1-5.2.1">Verify, under issuer-side policy, that the runtime is permitted to
-claim the <code>client_id</code> named in the token. This typically means that
-the runtime is operationally part of the client's deployment.
-An instance issuer <span class="bcp14">MUST</span> refuse to mint an instance assertion whose
-<code>client_id</code> claim names a client for which the runtime has not been
-authorized, by issuer-side policy, as a member.<a href="#section-7.1-5.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-7.1-2.2">
+            <p id="section-7.1-2.2.1">Verify, under issuer-side policy, that the runtime is permitted
+to claim the <code>client_id</code> named in the token. This typically
+means the runtime is operationally part of the client's
+deployment. An instance issuer <span class="bcp14">MUST</span> refuse to mint an instance
+assertion whose <code>client_id</code> claim names a client for which the
+runtime has not been authorized, by issuer-side policy, as a
+member.<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.1-6">How the issuer internally authenticates the runtime is out of
+<p id="section-7.1-3">How the issuer internally authenticates the runtime is out of
 scope. Common deployment patterns (adapter, raw JWT-SVID
 compatibility, X.509-SVID binding) are described in
-<a href="#adoption-without-cnf" class="auto internal xref">Section 10.1</a>.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
+<a href="#adoption-without-cnf" class="auto internal xref">Section 10.1</a>.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="claims">

@@ -872,33 +872,25 @@ Table of Contents
    identity of a client instance.  It is presented as the actor_token
    parameter ([RFC8693]) with actor_token_type set to
    urn:ietf:params:oauth:token-type:client-instance-jwt (see
-   Section 13.1).
+   Section 13.1).  The assertion serves two purposes: it authenticates
+   the runtime instance (workload identity), and it asserts that the
+   instance is a member of the named OAuth client.  This document
+   defines a single JWT carrying both, signed by the instance issuer.
+   This matches the prevailing pattern in workload identity systems,
+   which already issue audience-scoped, signed assertions of runtime
+   identity (e.g., JWT-SVIDs in [SPIFFE]).
 
 7.1.  Issuer Obligations
 
-   A client instance assertion serves two conceptually distinct
-   purposes:
-
-   1.  it authenticates the _runtime instance_ (workload identity); and
-
-   2.  it asserts that the instance is a member of the named _client
-       class_.
-
-   This document defines a single combined artifact: a JWT signed by the
-   instance issuer that carries both.  This matches the prevailing
-   pattern in workload identity systems, which already issue audience-
-   scoped, signed assertions of runtime identity (e.g., JWT-SVIDs in
-   [SPIFFE]).
-
-   The instance issuer is the trust authority for the combined assertion
-   and MUST, before minting an instance assertion under this profile:
+   The instance issuer is the trust authority for the assertion and
+   MUST, before minting an instance assertion under this profile:
 
    *  Authenticate the runtime instance (e.g., via attestation,
       platform-level identity, or possession of an instance key); and
 
    *  Verify, under issuer-side policy, that the runtime is permitted to
-      claim the client_id named in the token.  This typically means that
-      the runtime is operationally part of the client's deployment.  An
+      claim the client_id named in the token.  This typically means the
+      runtime is operationally part of the client's deployment.  An
       instance issuer MUST refuse to mint an instance assertion whose
       client_id claim names a client for which the runtime has not been
       authorized, by issuer-side policy, as a member.
