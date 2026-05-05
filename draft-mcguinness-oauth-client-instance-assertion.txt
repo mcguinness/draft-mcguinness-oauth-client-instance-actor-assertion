@@ -9,7 +9,7 @@ Expires: 6 November 2026
 
 
         OAuth 2.0 Client Instance Assertions using Actor Tokens
-     draft-mcguinness-oauth-client-instance-actor-assertion-latest
+        draft-mcguinness-oauth-client-instance-assertion-latest
 
 Abstract
 
@@ -43,10 +43,10 @@ About This Document
 
    The latest revision of this draft can be found at
    https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-
-   actor-assertion/draft-mcguinness-oauth-client-instance-actor-
-   assertion.html.  Status information for this document may be found at
+   assertion/draft-mcguinness-oauth-client-instance-assertion.html.
+   Status information for this document may be found at
    https://datatracker.ietf.org/doc/draft-mcguinness-oauth-client-
-   instance-actor-assertion/.
+   instance-assertion/.
 
    Discussion of this document takes place on the Web Authorization
    Protocol Working Group mailing list (mailto:oauth@ietf.org), which is
@@ -55,7 +55,7 @@ About This Document
 
    Source for this draft and an issue tracker can be found at
    https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-
-   actor-assertion.
+   assertion.
 
 Status of This Memo
 
