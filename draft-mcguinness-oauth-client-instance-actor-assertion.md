@@ -1,12 +1,12 @@
 ---
-title: "OAuth 2.0 Actor Token Grant Extension and Client Instance Assertion Profile"
-abbrev: "oauth-actor-token-grant-extension"
+title: "OAuth 2.0 Client Instance Assertions using Actor Tokens"
+abbrev: "oauth-client-instance-assertion"
 category: std
 
 docname: draft-mcguinness-oauth-client-instance-actor-assertion-latest
 submissiontype: IETF
 number:
-date: 2026-05-03
+date: 2026-05-05
 v: 3
 ipr: trust200902
 area: "Security"
@@ -68,29 +68,30 @@ informative:
 
 --- abstract
 
-This specification defines two related OAuth 2.0 extensions. First, it
-permits the `actor_token` and `actor_token_type` parameters defined by
-OAuth 2.0 Token Exchange (RFC 8693) to be used with selected token
-endpoint grant types other than token exchange. Second, it defines a
-profile for representing client instance identity using that extension.
-
-The client instance profile does not introduce a new `client_instance`
-identifier in protocol messages. Instead, it defines client metadata
-parameters (applicable to clients identified by a Client ID Metadata
-Document (CIMD) or registered via OAuth Dynamic Client Registration
-(RFC 7591)) that let a `client_id` identify a logical client
-whose concrete runtime instances are authenticated by one or more
-trusted instance issuers (for example, workload identity systems).
-
-This document registers a new `actor_token_type`,
+This specification defines a profile for representing OAuth 2.0
+client instance identity to an authorization server. It registers a
+new `actor_token_type`,
 `urn:ietf:params:oauth:token-type:client-instance-jwt`, that carries
-the instance identity as a signed JWT. The Authorization Server
-validates the instance assertion and represents the instance either as
-an `act` claim, when another principal is present (e.g., a user
-delegating to the instance), or as the access token's `sub`, when the
-instance itself is the principal (e.g., a client credentials grant).
-The issued access token is sender-constrained to a key the instance
-possesses.
+the instance identity as a signed JWT presented via the `actor_token`
+parameter defined by OAuth 2.0 Token Exchange (RFC 8693). To support
+presentation outside token exchange, this specification also permits
+`actor_token` and `actor_token_type` on selected additional grant
+types.
+
+The profile does not introduce a new `client_instance` identifier in
+protocol messages. Instead, it defines client metadata parameters
+(applicable to clients identified by a Client ID Metadata Document
+(CIMD) or registered via OAuth Dynamic Client Registration (RFC 7591))
+that let a `client_id` identify a logical client whose concrete
+runtime instances are authenticated by one or more trusted instance
+issuers (for example, workload identity systems).
+
+The Authorization Server validates the instance assertion and
+represents the instance either as an `act` claim, when another
+principal is present (e.g., a user delegating to the instance), or as
+the access token's `sub`, when the instance itself is the principal
+(e.g., a client credentials grant). The issued access token is
+sender-constrained to a key the instance possesses.
 
 
 --- middle
@@ -114,28 +115,14 @@ representing an actor in an issued token. The OAuth Actor Profile
 actor-related claims, but explicitly leaves out a token request
 parameter for proving an actor in flows other than token exchange.
 
-This document defines two related specifications, each
-independently useful:
+This document defines a profile for representing client instance
+identity at the OAuth 2.0 token endpoint. It:
 
-**An actor token grant extension.** It permits the
-`actor_token` and `actor_token_type` parameters from {{RFC8693}} on
-token endpoint grants other than token-exchange (specifically:
-`authorization_code`, `client_credentials`, `refresh_token`, and
-the JWT bearer grant {{RFC7523}}). The extension is independent of
-any specific `actor_token_type`: it provides the wire mechanism on
-which other profiles can build their own actor token types for
-non-instance use cases (for example, AI agents acting on behalf of
-a user, or services invoked under a delegation grant). See
-{{grant-extension}}.
-
-**An actor token type for client instance identity.** Building on
-the actor token grant extension, this document:
-
-* Recognizes that the OAuth `client_id` identifies an application
-  class with concrete runtime instances (a relationship already
-  implicit in deployed OAuth practice; see {{client-instance-model}}),
-  and defines client metadata describing the *instance issuers*
-  trusted to attest those instances. The metadata applies whether
+* Recognizes that an OAuth `client_id` commonly abstracts over many
+  concrete runtime instances (a relationship already implicit in
+  deployed OAuth practice; see {{client-instance-model}}), and
+  defines client metadata describing the *instance issuers* trusted
+  to attest those instances. The metadata applies whether
   the client is identified by a Client ID Metadata Document {{CIMD}}
   or registered via {{RFC7591}}; see {{registration-models}}.
 * Registers a new `actor_token_type`,
@@ -154,6 +141,14 @@ the actor token grant extension, this document:
   optional direct presentation of JWT-SVIDs as `actor_token`.
 * Defines authorization server metadata so that clients can
   discover support.
+
+To enable instance assertions to be presented outside token exchange,
+this document also extends {{RFC8693}}'s `actor_token` and
+`actor_token_type` parameters to selected additional grant types
+(`authorization_code`, `client_credentials`, `refresh_token`, and
+the JWT bearer grant {{RFC7523}}). See {{grant-extension}}; the
+extension is independent of any specific `actor_token_type` and may
+be used by other profiles.
 
 What this document does *not* do:
 
@@ -373,14 +368,13 @@ can reference this actor token grant extension for the wire-level
 permission to carry `actor_token` and `actor_token_type` on the
 grant types listed in {{permitted-grants}}.
 
-The token endpoint processing rules for the `client-instance-jwt`
-token type ({{token-endpoint}}) are written in a way that may serve
-as a template for future actor token type profiles. In particular,
-{{auth-time-consistency}}, {{sender-constrained}}, {{access-token}},
-and {{refresh}} are largely token-type-agnostic and MAY be adopted
-verbatim or adapted by other profiles; their token-type-specific
-hooks (descriptor lookup, JWT claim validation, `client_id` binding)
-are the parts a new profile is expected to redefine.
+Some of the processing rules in {{token-endpoint}} (notably
+{{sender-constrained}}, {{access-token}}, and {{refresh}}) describe
+behavior that is not specific to the `client-instance-jwt` token
+type. Other actor-token profiles may find them reusable as a
+starting point, but this document does not prescribe their reuse;
+each new `actor_token_type` profile defines its own validation,
+representation, and security rules.
 
 # Client Instance Model {#client-instance-model}
 
