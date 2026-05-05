@@ -598,14 +598,15 @@ An instance issuer descriptor has the following members:
 
 issuer (REQUIRED):
 : A StringOrURI {{RFC7519}} identifying the instance issuer. This
-  value MUST exactly match the `iss` claim of accepted instance assertions
-  and MUST be unique within the `instance_issuers` array. For raw
-  JWT-SVID compatibility ({{spiffe-compatibility}}), this value is
-  the SPIFFE JWT-SVID issuer for the trust domain. For re-minted
-  Client Instance Assertions, this value identifies the OAuth-aware
-  adapter or instance issuer that signed the assertion; `trust_domain`
-  and `spiffe_id` then bound the SPIFFE subject space that issuer is
-  allowed to assert.
+  value MUST exactly match the `iss` claim of accepted instance
+  assertions and MUST be unique within the `instance_issuers` array.
+
+  For raw JWT-SVID compatibility ({{spiffe-compatibility}}), this
+  value is the SPIFFE JWT-SVID issuer for the trust domain. For
+  re-minted Client Instance Assertions, this value identifies the
+  OAuth-aware adapter or instance issuer that signed the assertion;
+  `trust_domain` and `spiffe_id` then bound the SPIFFE subject
+  space that issuer is allowed to assert.
 
 A descriptor MUST contain exactly one of `jwks_uri`, `jwks`, and
 `spiffe_bundle_endpoint`. If two or more are present, or all are
@@ -620,16 +621,19 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
 
 `spiffe_bundle_endpoint`:
 : An HTTPS URL of a SPIFFE trust bundle endpoint {{SPIFFE}} from
-  which the AS resolves verification keys for instance assertions issued by
-  this issuer. When present, `subject_syntax` MUST be "spiffe". The
-  descriptor is intended for JWT-SVID validation and for other
-  assertions signed with keys distributed in the SPIFFE bundle for the
-  relevant trust domain; OAuth-aware adapters that sign re-minted
-  Client Instance Assertions with separate OAuth signing keys use
-  `jwks_uri` or `jwks` instead. The
-  bundle endpoint format and resolution rules are governed by SPIFFE;
-  see {{SPIFFE-CLIENT-AUTH}} for the analogous use in client
-  authentication.
+  which the AS resolves verification keys for instance assertions
+  issued by this issuer. When present, `subject_syntax` MUST be
+  "spiffe".
+
+  This descriptor field is intended for JWT-SVID validation and for
+  other assertions signed with keys distributed in the SPIFFE
+  bundle for the relevant trust domain. OAuth-aware adapters that
+  sign re-minted Client Instance Assertions with separate OAuth
+  signing keys use `jwks_uri` or `jwks` instead.
+
+  Bundle endpoint format and resolution rules are governed by
+  SPIFFE; see {{SPIFFE-CLIENT-AUTH}} for the analogous use in
+  client authentication.
 
 `signing_alg_values_supported` (OPTIONAL):
 : A JSON array of JWS {{RFC7515}} `alg` values the AS accepts for
@@ -648,35 +652,43 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
 
 `trust_domain` (OPTIONAL):
 : When `subject_syntax` is "spiffe", a SPIFFE trust domain that the
-  `sub` claim MUST belong to. The AS MUST reject any instance assertion
-  whose `sub` does not lie within this trust domain. A SPIFFE ID lies
-  within a trust domain only when it parses as a valid SPIFFE ID whose
-  trust-domain component exactly equals `trust_domain`; ASes MUST NOT
-  use case folding, Unicode normalization, or percent-decoding to make
-  a non-matching trust domain match. `trust_domain`
-  is meaningful only when `subject_syntax` is "spiffe"; an AS MUST
-  ignore `trust_domain` in descriptors whose `subject_syntax` is
-  any other value. A descriptor's
-  `trust_domain` is independent of any SPIFFE trust domain associated
-  with the client itself under {{SPIFFE-CLIENT-AUTH}}; the two
-  MAY differ.
+  `sub` claim MUST belong to. The AS MUST reject any instance
+  assertion whose `sub` does not lie within this trust domain.
+
+  A SPIFFE ID lies within a trust domain only when it parses as a
+  valid SPIFFE ID whose trust-domain component exactly equals
+  `trust_domain`; ASes MUST NOT use case folding, Unicode
+  normalization, or percent-decoding to make a non-matching trust
+  domain match.
+
+  `trust_domain` is meaningful only when `subject_syntax` is
+  "spiffe"; an AS MUST ignore `trust_domain` in descriptors whose
+  `subject_syntax` is any other value. A descriptor's
+  `trust_domain` is independent of any SPIFFE trust domain
+  associated with the client itself under {{SPIFFE-CLIENT-AUTH}};
+  the two MAY differ.
 
 `spiffe_id` (OPTIONAL):
-: When `subject_syntax` is "spiffe", a SPIFFE ID that further bounds
-  which workloads this issuer may attest as instances of this client.
-  The value is a SPIFFE ID, optionally with a trailing "/*" wildcard.
-  Without "/*", the instance assertion's `sub` MUST equal this value exactly;
-  with "/*", matching follows the `spiffe_id` matching rule of
-  {{SPIFFE-CLIENT-AUTH}}. If both `spiffe_id` and `trust_domain`
-  are present, the trust domain in `spiffe_id` MUST equal `trust_domain`.
-  This member, when present, structurally binds a workload subtree
+: When `subject_syntax` is "spiffe", a SPIFFE ID that further
+  bounds which workloads this issuer may attest as instances of
+  this client. The value is a SPIFFE ID, optionally with a trailing
+  "/*" wildcard.
+
+  Without "/*", the instance assertion's `sub` MUST equal this
+  value exactly; with "/*", matching follows the `spiffe_id`
+  matching rule of {{SPIFFE-CLIENT-AUTH}}. If both `spiffe_id` and
+  `trust_domain` are present, the trust domain in `spiffe_id` MUST
+  equal `trust_domain`.
+
+  When present, this member structurally binds a workload subtree
   to this client; see {{spiffe-client-id-omission}}. If
   `subject_syntax` is "spiffe" and `spiffe_id` is absent,
   `trust_domain` MUST be present and the descriptor delegates the
-  entire trust domain to this instance issuer. Clients SHOULD include
-  `spiffe_id`; omitting it is appropriate only when every workload in
-  the SPIFFE trust domain is authorized to act as an instance of the
-  client.
+  entire trust domain to this instance issuer.
+
+  Clients SHOULD include `spiffe_id`; omitting it is appropriate
+  only when every workload in the SPIFFE trust domain is authorized
+  to act as an instance of the client.
 
 Example client metadata document with a SPIFFE instance issuer:
 
@@ -803,33 +815,37 @@ The following claims are defined for client instance assertions.
   in {{access-token-self-acting}}.
 
 `aud` (REQUIRED):
-: The intended audience, identifying the AS. The AS validates `aud` per
-  {{RFC7523}} Section 3, accepting its own issuer identifier or
+: The intended audience, identifying the AS. The AS validates `aud`
+  per {{RFC7523}} Section 3, accepting its own issuer identifier or
   token endpoint URL; if multiple values are present, at least one
-  MUST match. Each AS SHOULD specify a single canonical `aud` format
-  (typically its issuer identifier) and document it; instance issuers
-  SHOULD use that canonical form. Where instance assertions are scoped per
-  AS, instance issuers SHOULD mint an AS-specific instance assertion rather
-  than a multi-`aud` JWT, to limit the replay surface.
+  MUST match.
+
+  Each AS SHOULD specify a single canonical `aud` format (typically
+  its issuer identifier) and document it; instance issuers SHOULD
+  use that canonical form. Where instance assertions are scoped per
+  AS, instance issuers SHOULD mint an AS-specific instance assertion
+  rather than a multi-`aud` JWT, to limit the replay surface.
 
 `client_id` (REQUIRED unless the SPIFFE compatibility conditions of {{spiffe-client-id-omission}} are met):
 : The `client_id` of the client to which this instance belongs.
-  This claim uses the JSON Web Token `client_id` claim registered by
-  {{RFC9068}} Section 2.2 (which itself defers to {{RFC8693}}
+  This claim uses the JSON Web Token `client_id` claim registered
+  by {{RFC9068}} Section 2.2 (which itself defers to {{RFC8693}}
   Section 4.3 for the underlying definition). Note that RFC 9068
-  defines `client_id` as the OAuth client to which a JWT access token
-  was issued; in this profile, the claim instead names the OAuth
-  client to which the asserted instance belongs. It binds the actor
-  token to a specific client and is not part of the actor's
-  identity (per {{ACTOR-PROFILE}}, `client_id` identifies an OAuth
-  client, not an actor). When present, the AS MUST reject the token
-  if this value does not exactly equal the `client_id` of the
-  authenticated client. When omitted under
-  {{spiffe-client-id-omission}}, the binding is established
-  structurally by the matched descriptor's SPIFFE scope (`spiffe_id`
-  when present, otherwise `trust_domain`) rather than by a JWT claim,
-  and a SPIFFE JWT-SVID may be presented as the `actor_token`
-  directly without re-minting.
+  defines `client_id` as the OAuth client to which a JWT access
+  token was issued; in this profile, the claim instead names the
+  OAuth client to which the asserted instance belongs.
+
+  The claim binds the actor token to a specific client and is not
+  part of the actor's identity (per {{ACTOR-PROFILE}}, `client_id`
+  identifies an OAuth client, not an actor). When present, the AS
+  MUST reject the token if this value does not exactly equal the
+  `client_id` of the authenticated client.
+
+  When omitted under {{spiffe-client-id-omission}}, the binding is
+  established structurally by the matched descriptor's SPIFFE scope
+  (`spiffe_id` when present, otherwise `trust_domain`) rather than
+  by a JWT claim, and a SPIFFE JWT-SVID may be presented as the
+  `actor_token` directly without re-minting.
 
 `exp` (REQUIRED):
 : Expiration time. Issuers SHOULD set short lifetimes (e.g., five
@@ -847,29 +863,33 @@ The following claims are defined for client instance assertions.
   classifying the actor. {{ENTITY-PROFILES}} defines this claim as
   OPTIONAL; this profile elevates it to RECOMMENDED so resource
   servers can apply actor-class-aware policy without bespoke
-  configuration. Its syntax (a space-delimited string of profile
-  names) is the one defined by {{ACTOR-PROFILE}}. This
-  document registers the value `client_instance`
-  ({{iana-entity-profile}}). Issuers MAY include additional values
-  registered with the "Actor Profile" usage location in the OAuth
-  Entity Profiles registry, or privately defined collision-resistant
-  values, per
-  {{ACTOR-PROFILE}}.
+  configuration.
+
+  Its syntax (a space-delimited string of profile names) is the one
+  defined by {{ACTOR-PROFILE}}. This document registers the value
+  `client_instance` ({{iana-entity-profile}}). Issuers MAY include
+  additional values registered with the "Actor Profile" usage
+  location in the OAuth Entity Profiles registry, or privately
+  defined collision-resistant values, per {{ACTOR-PROFILE}}.
 
 `cnf` (REQUIRED unless the token is a raw JWT-SVID accepted under {{spiffe-client-id-omission}}):
 : A confirmation claim {{RFC7800}} carrying a key bound to this
-  instance. The `cnf` value MUST contain exactly one of `jkt` (a JWK
-  SHA-256 thumbprint per {{RFC9449}} Section 3.1) or `x5t#S256` (an
-  X.509 certificate SHA-256 thumbprint per {{RFC8705}} Section 3.1)
-  as the binding member; other confirmation methods registered under
-  {{RFC7800}} MAY appear alongside but are not the binding. The instance issuer
-  MUST mint `cnf` from a key the named runtime instance demonstrably
-  possesses (e.g., an instance-attested key, a per-instance workload
-  key, or a `DPoP` public key presented to the issuer at attestation
-  time). Binding rules and AS verification are defined in
-  {{sender-constrained}}. Raw JWT-SVID compatibility is the only
-  exception to this claim requirement, because the AS validates the
-  SVID without re-minting; see {{spiffe-client-id-omission}} and
+  instance. The `cnf` value MUST contain exactly one of `jkt` (a
+  JWK SHA-256 thumbprint per {{RFC9449}} Section 3.1) or
+  `x5t#S256` (an X.509 certificate SHA-256 thumbprint per
+  {{RFC8705}} Section 3.1) as the binding member; other
+  confirmation methods registered under {{RFC7800}} MAY appear
+  alongside but are not the binding.
+
+  The instance issuer MUST mint `cnf` from a key the named runtime
+  instance demonstrably possesses (e.g., an instance-attested key,
+  a per-instance workload key, or a `DPoP` public key presented to
+  the issuer at attestation time). Binding rules and AS
+  verification are defined in {{sender-constrained}}.
+
+  Raw JWT-SVID compatibility is the only exception to this claim
+  requirement, because the AS validates the SVID without
+  re-minting; see {{spiffe-client-id-omission}} and
   {{sender-constrained}}.
 
 `nbf` (OPTIONAL):
