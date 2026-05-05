@@ -1263,9 +1263,13 @@ each listed issuer is authorized for that role.
 
 ### Request Format {#instance-assertion-auth-request}
 
-A request using this auth method carries `client_id`, `actor_token`,
-and `actor_token_type`. It MUST NOT carry `client_assertion` or any
-other client authentication credential. Example, using the
+A request using this auth method MUST include the `client_id` form
+parameter, the `actor_token`, and `actor_token_type`. It MUST NOT
+carry `client_assertion` or any other client authentication
+credential. The `client_id` form parameter is required so the AS
+can resolve client metadata before validating the assertion; the
+assertion's `client_id` claim ({{claims}}) is then matched against
+this value. Example, using the
 `client_credentials` grant:
 
 ~~~ http-message
@@ -1589,9 +1593,7 @@ instance assertion:
 * `sub_profile` = `actor_token`'s `sub_profile` (if present); the
   value `client_instance` SHOULD be included
 * `cnf` is set per {{sender-constrained}}
-* `act` MUST be omitted, except that an upstream actor chain
-  (introduced by an inner `act` in a presented `subject_token`) MUST
-  be preserved.
+* `act` MUST be omitted.
 
 The instance issuer's identifier (the instance assertion's `iss`) is
 not represented as a claim in the self-acting access token. Trust
@@ -1659,10 +1661,7 @@ delegation depth; otherwise the AS MUST reject the request with
 `invalid_request` ({{errors}}), per {{ACTOR-PROFILE}}.
 
 In the self-acting case ({{access-token-self-acting}}) the `act`
-claim is omitted at top level. When a `subject_token` is present
-(uncommon outside token-exchange, which this profile classifies as
-delegation in any case), any `act` chain it carries is preserved
-verbatim per {{ACTOR-PROFILE}}.
+claim is omitted at top level.
 
 ## Refresh Tokens {#refresh}
 
@@ -2893,7 +2892,7 @@ Issued access token:
   "client_id": "https://app.example.com/agent",
   "scope":     "repo.write",
   "iat":       1770000005,
-  "exp":       1770003605,
+  "exp":       1770001805,
   "cnf":       { "jkt": "0ZcOCORZNYy...iguA4I" },
   "act": {
     "iss":         "https://workload.app.example.com",
@@ -2960,7 +2959,7 @@ principal):
   "client_id":   "https://app.example.com/agent",
   "scope":       "repo.read",
   "iat":         1770000005,
-  "exp":         1770003605,
+  "exp":         1770001805,
   "cnf":         { "jkt": "PqR...XyZ" }
 }
 ~~~
@@ -3049,7 +3048,7 @@ Issued access token:
   "client_id": "https://app.example.com/agent",
   "scope":     "repo.write",
   "iat":       1770000010,
-  "exp":       1770003610,
+  "exp":       1770001810,
   "cnf":       { "jkt": "AbC...123" },
   "act": {
     "iss":         "https://workload.app.example.com",
