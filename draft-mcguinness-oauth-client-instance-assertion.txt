@@ -817,7 +817,7 @@ Table of Contents
 
    actor_token_types_supported:  A JSON array of actor_token_type values
       supported by the AS at the token endpoint.  An AS implementing
-      this profile SHOULD publish this parameter and MUST include
+      this profile MUST publish this parameter and include
       urn:ietf:params:oauth:token-type:client-instance-jwt in it.  This
       is the only AS-side discovery signal for support of this profile;
       clients use it to decide whether to assemble token requests
@@ -970,7 +970,8 @@ Table of Contents
       (an X.509 certificate SHA-256 thumbprint per [RFC8705]
       Section 3.1) as the binding member; other confirmation methods
       registered under [RFC7800] MAY appear alongside but are not the
-      binding.
+      binding and do not change this profile's sender-constraint
+      verification requirement.
 
       The instance issuer MUST mint cnf from a key the named runtime
       instance demonstrably possesses (e.g., an instance-attested key, a
@@ -1416,12 +1417,13 @@ Table of Contents
       token's top-level cnf to the instance assertion's cnf value;
 
    *  verify possession of the cnf key at the token endpoint, matching
-      the confirmation method used in cnf per [RFC7800].  For cnf.jkt,
-      the JWK thumbprint of the DPoP proof's public key [RFC9449] MUST
-      equal cnf.jkt.  For cnf.x5t#S256, the certificate authenticated at
-      the TLS layer [RFC8705] MUST match cnf.x5t#S256.  Other
-      confirmation methods MUST be verified per their defining
-      specifications;
+      the binding member used in cnf per [RFC7800].  For cnf.jkt, the
+      JWK thumbprint of the DPoP proof's public key [RFC9449] MUST equal
+      cnf.jkt.  For cnf.x5t#S256, the certificate authenticated at the
+      TLS layer [RFC8705] MUST match cnf.x5t#S256.  Other confirmation
+      methods present in cnf are not binding members for this profile
+      and MAY be ignored unless local policy or their defining
+      specifications require additional processing;
 
    *  reject the request with invalid_request if verification fails.
 
@@ -1735,12 +1737,15 @@ Table of Contents
 
    7.   validate nbf if present;
 
-   8.   apply the replay-cache rule in Section 12.5 if jti is present;
+   8.   enforce the descriptor's signing_alg_values_supported when
+        present;
 
-   9.   validate sub as a SPIFFE ID and enforce the descriptor's
+   9.   apply the replay-cache rule in Section 12.5 if jti is present;
+
+   10.  validate sub as a SPIFFE ID and enforce the descriptor's
         spiffe_id, or trust_domain when spiffe_id is absent; and
 
-   10.  establish an instance-specific sender-constraint binding per
+   11.  establish an instance-specific sender-constraint binding per
         Section 8.8.3.
 
    In raw JWT-SVID mode, the JWT-SVID's iss claim MUST identify the
@@ -2627,20 +2632,6 @@ Table of Contents
    [RFC7009]  Lodderstedt, T., Ed., Dronia, S., and M. Scurtescu, "OAuth
               2.0 Token Revocation", RFC 7009, DOI 10.17487/RFC7009,
               August 2013, <https://www.rfc-editor.org/rfc/rfc7009>.
-
-   [RFC8707]  Campbell, B., Bradley, J., and H. Tschofenig, "Resource
-              Indicators for OAuth 2.0", RFC 8707, DOI 10.17487/RFC8707,
-              February 2020, <https://www.rfc-editor.org/rfc/rfc8707>.
-
-   [RFC9101]  Sakimura, N., Bradley, J., and M. Jones, "The OAuth 2.0
-              Authorization Framework: JWT-Secured Authorization Request
-              (JAR)", RFC 9101, DOI 10.17487/RFC9101, August 2021,
-              <https://www.rfc-editor.org/rfc/rfc9101>.
-
-   [RFC9126]  Lodderstedt, T., Campbell, B., Sakimura, N., Tonge, D.,
-              and F. Skokan, "OAuth 2.0 Pushed Authorization Requests",
-              RFC 9126, DOI 10.17487/RFC9126, September 2021,
-              <https://www.rfc-editor.org/rfc/rfc9126>.
 
    [SPIFFE]   SPIFFE, "SPIFFE: Secure Production Identity Framework For
               Everyone", 2024, <https://spiffe.io/docs/latest/spiffe-

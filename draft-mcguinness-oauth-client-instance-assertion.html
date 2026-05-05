@@ -2283,8 +2283,8 @@ to act as an instance of the client.<a href="#section-6.1.1-5.14.4" class="pilcr
 <code>actor_token_types_supported</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-6.2-2.2">
             <p id="section-6.2-2.2.1">A JSON array of <code>actor_token_type</code> values supported by the AS at the
-token endpoint. An AS implementing this profile <span class="bcp14">SHOULD</span> publish this
-parameter and <span class="bcp14">MUST</span> include
+token endpoint. An AS implementing this profile <span class="bcp14">MUST</span> publish this
+parameter and include
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code> in it. This is
 the only AS-side discovery signal for support of this profile;
 clients use it to decide whether to assemble token requests
@@ -2484,7 +2484,8 @@ JWK SHA-256 thumbprint per <span>[<a href="#RFC9449" class="cite xref">RFC9449</
 <code>x5t#S256</code> (an X.509 certificate SHA-256 thumbprint per
 <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span> Section 3.1) as the binding member; other
 confirmation methods registered under <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span> <span class="bcp14">MAY</span> appear
-alongside but are not the binding.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
+alongside but are not the binding and do not change this
+profile's sender-constraint verification requirement.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
 <p id="section-7.2-2.18.2">The instance issuer <span class="bcp14">MUST</span> mint <code>cnf</code> from a key the named runtime
 instance demonstrably possesses (e.g., an instance-attested key,
 a per-instance workload key, or a <code>DPoP</code> public key presented to
@@ -3009,12 +3010,13 @@ token's top-level <code>cnf</code> to the instance assertion's <code>cnf</code> 
 </li>
           <li class="normal" id="section-8.5-4.2">
             <p id="section-8.5-4.2.1">verify possession of the <code>cnf</code> key at the token endpoint, matching
-the confirmation method used in <code>cnf</code> per <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>. For <code>cnf.jkt</code>,
+the binding member used in <code>cnf</code> per <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>. For <code>cnf.jkt</code>,
 the JWK thumbprint of the <code>DPoP</code> proof's public key <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> <span class="bcp14">MUST</span>
 equal <code>cnf.jkt</code>. For <code>cnf.x5t#S256</code>, the certificate authenticated at
 the TLS layer <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span> <span class="bcp14">MUST</span> match <code>cnf.x5t#S256</code>. Other
-confirmation methods <span class="bcp14">MUST</span> be verified per their defining
-specifications;<a href="#section-8.5-4.2.1" class="pilcrow">¶</a></p>
+confirmation methods present in <code>cnf</code> are not binding members for
+this profile and <span class="bcp14">MAY</span> be ignored unless local policy or their defining
+specifications require additional processing;<a href="#section-8.5-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.5-4.3">
             <p id="section-8.5-4.3.1">reject the request with <code>invalid_request</code> if verification fails.<a href="#section-8.5-4.3.1" class="pilcrow">¶</a></p>
@@ -3402,16 +3404,20 @@ unrecognized claims unless local policy rejects them;<a href="#section-8.8-6.4.1
             <p id="section-8.8-6.7.1">validate <code>nbf</code> if present;<a href="#section-8.8-6.7.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.8-6.8">
-            <p id="section-8.8-6.8.1">apply the replay-cache rule in <a href="#security-replay" class="auto internal xref">Section 12.5</a> if <code>jti</code> is
+            <p id="section-8.8-6.8.1">enforce the descriptor's <code>signing_alg_values_supported</code> when
 present;<a href="#section-8.8-6.8.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.8-6.9">
-            <p id="section-8.8-6.9.1">validate <code>sub</code> as a SPIFFE ID and enforce the descriptor's
-<code>spiffe_id</code>, or <code>trust_domain</code> when <code>spiffe_id</code> is absent; and<a href="#section-8.8-6.9.1" class="pilcrow">¶</a></p>
+            <p id="section-8.8-6.9.1">apply the replay-cache rule in <a href="#security-replay" class="auto internal xref">Section 12.5</a> if <code>jti</code> is
+present;<a href="#section-8.8-6.9.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.8-6.10">
-            <p id="section-8.8-6.10.1">establish an instance-specific sender-constraint binding per
-   <a href="#spiffe-binding" class="auto internal xref">Section 8.8.3</a>.<a href="#section-8.8-6.10.1" class="pilcrow">¶</a></p>
+            <p id="section-8.8-6.10.1">validate <code>sub</code> as a SPIFFE ID and enforce the descriptor's
+   <code>spiffe_id</code>, or <code>trust_domain</code> when <code>spiffe_id</code> is absent; and<a href="#section-8.8-6.10.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-8.8-6.11">
+            <p id="section-8.8-6.11.1">establish an instance-specific sender-constraint binding per
+   <a href="#spiffe-binding" class="auto internal xref">Section 8.8.3</a>.<a href="#section-8.8-6.11.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="section-8.8-7">In raw JWT-SVID mode, the JWT-SVID's <code>iss</code> claim <span class="bcp14">MUST</span> identify the
@@ -4591,18 +4597,6 @@ registration is contingent on the establishment of that registry.<a href="#secti
 <dt id="RFC7009">[RFC7009]</dt>
         <dd>
 <span class="refAuthor">Lodderstedt, T., Ed.</span>, <span class="refAuthor">Dronia, S.</span>, and <span class="refAuthor">M. Scurtescu</span>, <span class="refTitle">"OAuth 2.0 Token Revocation"</span>, <span class="seriesInfo">RFC 7009</span>, <span class="seriesInfo">DOI 10.17487/RFC7009</span>, <time datetime="2013-08" class="refDate">August 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7009">https://www.rfc-editor.org/rfc/rfc7009</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC8707">[RFC8707]</dt>
-        <dd>
-<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"Resource Indicators for OAuth 2.0"</span>, <span class="seriesInfo">RFC 8707</span>, <span class="seriesInfo">DOI 10.17487/RFC8707</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8707">https://www.rfc-editor.org/rfc/rfc8707</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC9101">[RFC9101]</dt>
-        <dd>
-<span class="refAuthor">Sakimura, N.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">M. Jones</span>, <span class="refTitle">"The OAuth 2.0 Authorization Framework: JWT-Secured Authorization Request (JAR)"</span>, <span class="seriesInfo">RFC 9101</span>, <span class="seriesInfo">DOI 10.17487/RFC9101</span>, <time datetime="2021-08" class="refDate">August 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9101">https://www.rfc-editor.org/rfc/rfc9101</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC9126">[RFC9126]</dt>
-        <dd>
-<span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Sakimura, N.</span>, <span class="refAuthor">Tonge, D.</span>, and <span class="refAuthor">F. Skokan</span>, <span class="refTitle">"OAuth 2.0 Pushed Authorization Requests"</span>, <span class="seriesInfo">RFC 9126</span>, <span class="seriesInfo">DOI 10.17487/RFC9126</span>, <time datetime="2021-09" class="refDate">September 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9126">https://www.rfc-editor.org/rfc/rfc9126</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="SPIFFE">[SPIFFE]</dt>
         <dd>
