@@ -132,6 +132,7 @@ Table of Contents
      8.8.  SPIFFE Compatibility
        8.8.1.  Client ID Claim Omission
        8.8.2.  SPIFFE Trust Bundle Resolution
+       8.8.3.  Sender-Constraint Binding for Raw JWT-SVIDs
      8.9.  Error Responses
    9.  Resource Server Processing
      9.1.  Self-Acting Case
@@ -1433,45 +1434,12 @@ Table of Contents
    private_key_jwt key, or any other client-controlled key not
    provisioned per-instance, is not sufficient.
 
-   If the actor token is a raw JWT-SVID accepted under Section 8.8.1 and
-   does not include a cnf claim, the AS MUST establish an instance-
-   specific binding through some other means whose key is attributable
-   to the validated instance.  The AS MUST reject the request unless the
-   presented DPoP key or mTLS certificate is bound, by the AS's local
-   policy, to the same runtime named by the JWT-SVID's sub.  The binding
-   mechanism MUST establish key custody through a channel independent of
-   the JWT-SVID itself (for example, issuer-provisioned per-instance
-   credentials or a workload attestation channel that names the same
-   sub); accepting a DPoP key solely because it accompanied a valid JWT-
-   SVID is not a binding and reduces this mode to bearer-with-aud.
-   Acceptable binding mechanisms include:
-
-   *  a per-instance mTLS client certificate provisioned by the instance
-      issuer (or otherwise tied to instance attestation) and presented
-      under [RFC8705]; when the certificate is an X.509-SVID, the AS
-      MUST verify that its SAN URI exactly equals the JWT-SVID's sub; or
-
-   *  a DPoP key [RFC9449] that the AS confirms, through deployment-
-      specific attestation or out-of-band binding to the instance
-      issuer, represents the same runtime named by the instance
-      assertion's sub.
-
-   In raw-JWT-SVID mode, the AS MUST set the issued access token's top-
-   level cnf to a confirmation member identifying the binding key
-   established above (cnf.x5t#S256 for an X.509-SVID, cnf.jkt for a DPoP
-   key).  Access tokens bound via cnf.x5t#S256 to a rotating X.509-SVID
-   are usable only while the workload holds that specific certificate;
-   deployments SHOULD size access-token TTL with the SVID rotation cycle
-   in mind.
-
-   The AS SHOULD record which mechanism established the binding and
-   which key or certificate was bound to the instance, to support
-   incident response and per-instance revocation (Section 12.4.2).  If
-   the AS cannot establish an instance-specific binding, it MUST reject
-   the request with invalid_request (Section 8.9).  This is a SPIFFE
-   compatibility path only.  A re-minted Client Instance Assertion MUST
-   contain cnf so that the binding key is supplied by the same authority
-   that named the instance.
+   A re-minted Client Instance Assertion MUST contain cnf so that the
+   binding key is supplied by the same authority that named the
+   instance.  The only profile-defined case where cnf can be absent is
+   raw-JWT-SVID compatibility, where the AS establishes an instance-
+   specific binding through a channel independent of the SVID; rules are
+   in Section 8.8.3.
 
    Deployments combining client-level Mutual-TLS-bound client
    authentication ([RFC8705]) with this profile MUST establish instance
@@ -1690,7 +1658,7 @@ Table of Contents
       binding checks defined in Section 8.2.
 
    If the presented actor_token is a raw JWT-SVID without cnf, the AS
-   MUST establish the binding key per Section 8.5 and verify that the
+   MUST establish the binding key per Section 8.8.3 and verify that the
    established binding key matches the refresh token's binding.  The AS
    MUST reject with invalid_grant any refresh request whose presented
    actor_token is not bound to the same cnf key, or whose (iss, sub)
@@ -1759,8 +1727,8 @@ Table of Contents
    +=========+==========+======================+============+===========+
    |Raw JWT- |The token |spiffe_bundle_endpoint|SPIFFE JWT- |Established|
    |SVID mode|has no    |                      |SVID claims;|separately |
-   |         |client_id |                      |client_id,  |per        |
-   |         |claim and |                      |typ, cnf,   |Section 8.5|
+   |         |client_id |                      |client_id,  |per Section|
+   |         |claim and |                      |typ, cnf,   |8.8.3      |
    |         |satisfies |                      |and jti are |           |
    |         |Section   |                      |not required|           |
    |         |8.8.1     |                      |            |           |
@@ -1801,7 +1769,7 @@ Table of Contents
         spiffe_id, or trust_domain when spiffe_id is absent; and
 
    10.  establish an instance-specific sender-constraint binding per
-        Section 8.5.
+        Section 8.8.3.
 
    In raw JWT-SVID mode, the JWT-SVID's iss claim MUST identify the
    SPIFFE JWT-SVID issuer for the trust domain and MUST exactly match
@@ -1888,8 +1856,48 @@ Table of Contents
    and TLS authentication (WebPKI) follow [SPIFFE-CLIENT-AUTH], the same
    handling used for client authentication.  When the AS uses an
    X.509-SVID at the TLS layer for sender-constraint binding under raw-
-   JWT-SVID compatibility (Section 8.5), the X.509-SVID is validated
+   JWT-SVID compatibility (Section 8.8.3), the X.509-SVID is validated
    against the X.509 trust anchors served by the same SPIFFE bundle.
+
+8.8.3.  Sender-Constraint Binding for Raw JWT-SVIDs
+
+   A raw JWT-SVID accepted under Section 8.8.1 does not include a cnf
+   claim.  The AS MUST establish an instance-specific binding through
+   some other means whose key is attributable to the validated instance.
+   The AS MUST reject the request unless the presented DPoP key or mTLS
+   certificate is bound, by the AS's local policy, to the same runtime
+   named by the JWT-SVID's sub.  The binding mechanism MUST establish
+   key custody through a channel independent of the JWT-SVID itself (for
+   example, issuer-provisioned per-instance credentials or a workload
+   attestation channel that names the same sub); accepting a DPoP key
+   solely because it accompanied a valid JWT-SVID is not a binding and
+   reduces this mode to bearer-with-aud.
+
+   Acceptable binding mechanisms include:
+
+   *  a per-instance mTLS client certificate provisioned by the instance
+      issuer (or otherwise tied to instance attestation) and presented
+      under [RFC8705]; when the certificate is an X.509-SVID, the AS
+      MUST verify that its SAN URI exactly equals the JWT-SVID's sub; or
+
+   *  a DPoP key [RFC9449] that the AS confirms, through deployment-
+      specific attestation or out-of-band binding to the instance
+      issuer, represents the same runtime named by the instance
+      assertion's sub.
+
+   In raw-JWT-SVID mode, the AS MUST set the issued access token's top-
+   level cnf to a confirmation member identifying the binding key
+   established above (cnf.x5t#S256 for an X.509-SVID, cnf.jkt for a DPoP
+   key).  Access tokens bound via cnf.x5t#S256 to a rotating X.509-SVID
+   are usable only while the workload holds that specific certificate;
+   deployments SHOULD size access-token TTL with the SVID rotation cycle
+   in mind.
+
+   The AS SHOULD record which mechanism established the binding and
+   which key or certificate was bound to the instance, to support
+   incident response and per-instance revocation (Section 12.4.2).  If
+   the AS cannot establish an instance-specific binding, it MUST reject
+   the request with invalid_request (Section 8.9).
 
 8.9.  Error Responses
 
@@ -2046,8 +2054,8 @@ Table of Contents
 
    *  *Raw JWT-SVID compatibility*: the SVID is presented as actor_token
       without re-minting and the AS establishes binding through a
-      channel independent of the SVID (Section 8.8.1, Section 8.5).  The
-      SPIFFE-native path.  For workloads with X.509-SVIDs, the
+      channel independent of the SVID (Section 8.8.1, Section 8.8.3).
+      The SPIFFE-native path.  For workloads with X.509-SVIDs, the
       X.509-SVID can serve as the binding key in two shapes:
 
       -  *Re-minted with cnf*: an adapter mints a Client Instance
@@ -2061,7 +2069,7 @@ Table of Contents
       -  *Raw JWT-SVID with X.509 binding*: the workload presents its
          JWT-SVID directly as actor_token (no re-mint, no cnf) and its
          X.509-SVID at TLS; the AS treats the X.509-SVID as the sender-
-         constraint binding under Section 8.5.  Use when the workload
+         constraint binding under Section 8.8.3.  Use when the workload
          runs against unmodified SPIFFE infrastructure.
 
       Both ground the binding in the SPIFFE trust domain that issued the
