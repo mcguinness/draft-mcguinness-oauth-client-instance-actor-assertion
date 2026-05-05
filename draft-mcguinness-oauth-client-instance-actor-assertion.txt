@@ -3003,10 +3003,14 @@ Why not a dedicated client_instance_assertion request parameter?
    parameter would not eliminate actor_token; it would parallel it for
    one use case, doubling the wire surface.
 
-   Second, the validated artifact's token-side role is already to
-   populate act (delegation case) or sub (self-acting case) per
-   [ACTOR-PROFILE]; using actor_token on the request side aligns request
-   and token semantics.
+   Second, in delegated flows the instance is the actor, and actor_token
+   is already the established wire mechanism for naming the actor
+   (required by [RFC8693] on token-exchange).  Introducing
+   client_instance_assertion alongside actor_token would carry the same
+   JWT in two parameter slots for delegated flows.  Using actor_token
+   for both keeps the request side canonical with the token side, where
+   the validated artifact populates act (delegation case) or sub (self-
+   acting case) per [ACTOR-PROFILE].
 
    Third, an actor_token_type URN is a well-known IANA-registered
    extension point; clients with existing actor_token plumbing pick up

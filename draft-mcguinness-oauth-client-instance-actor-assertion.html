@@ -5141,10 +5141,14 @@ to appear on grants beyond token-exchange. A separate
 <code>client_instance_assertion</code> parameter would not eliminate
 <code>actor_token</code>; it would parallel it for one use case, doubling the
 wire surface.<a href="#appendix-A.2-2" class="pilcrow">¶</a></p>
-<p id="appendix-A.2-3">Second, the validated artifact's token-side role is already to
-populate <code>act</code> (delegation case) or <code>sub</code> (self-acting case) per
-<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>; using <code>actor_token</code> on the request side aligns
-request and token semantics.<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-3">Second, in delegated flows the instance is the actor, and
+<code>actor_token</code> is already the established wire mechanism for naming
+the actor (required by <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> on token-exchange). Introducing
+<code>client_instance_assertion</code> alongside <code>actor_token</code> would carry the
+same JWT in two parameter slots for delegated flows. Using
+<code>actor_token</code> for both keeps the request side canonical with the
+token side, where the validated artifact populates <code>act</code> (delegation
+case) or <code>sub</code> (self-acting case) per <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
 <p id="appendix-A.2-4">Third, an <code>actor_token_type</code> URN is a well-known IANA-registered
 extension point; clients with existing <code>actor_token</code> plumbing pick
 up <code>client-instance-jwt</code> without parser changes.<a href="#appendix-A.2-4" class="pilcrow">¶</a></p>
