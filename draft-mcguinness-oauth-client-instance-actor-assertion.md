@@ -2181,7 +2181,7 @@ AS from replaying it against another ({{RFC7523}} Section 3). The
 actor identity), prevents an instance assertion issued for one client
 from being presented under a different client's authentication.
 
-## Hardening client_instance_jwt Authentication {#security-instance-assertion-auth}
+## Client Instance Assertion Trust-Root Collapse {#security-instance-assertion-auth}
 
 The `client_instance_jwt` authentication method
 ({{instance-assertion-auth}}) collapses two trust roots (client
