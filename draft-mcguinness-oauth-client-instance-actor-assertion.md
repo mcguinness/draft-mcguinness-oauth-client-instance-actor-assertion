@@ -1894,42 +1894,32 @@ X.509 trust anchors served by the same SPIFFE bundle.
 ## Error Responses {#errors}
 
 Errors are returned per {{RFC6749}} Section 5.2 and {{RFC8693}}
-Section 2.2.2. The following table maps the validation failures
-defined in {{as-processing}} to error codes:
+Section 2.2.2. This profile uses the existing OAuth error codes:
 
-| Failure | Error code |
-| --- | --- |
-| `actor_token` present but `actor_token_type` absent | `invalid_request` |
-| `actor_token_type` present but `actor_token` absent | `invalid_request` |
-| `client-instance-jwt` `actor_token` not a syntactically valid JWT | `invalid_request` |
-| re-minted Client Instance Assertion `typ` JOSE header is not `client-instance+jwt` ({{signing}}) | `invalid_request` |
-| `cnf` possession verification fails ({{sender-constrained}}) | `invalid_request` |
-| instance-specific binding key cannot be established ({{sender-constrained}}) | `invalid_request` |
-| `actor_token_type` not understood and required for the grant | `unsupported_token_type` ({{RFC8693}}) |
-| `iss` not found in `instance_issuers` | `invalid_grant` |
-| signature invalid | `invalid_grant` |
-| `alg` not in `signing_alg_values_supported`, or `alg` is "none" | `invalid_grant` |
-| `crit` header includes unrecognized parameter | `invalid_grant` |
-| `aud`, `exp`, `iat`, `nbf`, or `jti` validation fails | `invalid_grant` |
-| `client_id` binding mismatch | `invalid_grant` |
-| `client_id` claim absent and SPIFFE compatibility conditions not met ({{spiffe-client-id-omission}}) | `invalid_grant` |
-| `spiffe_id` prefix match fails ({{instance-issuers}}) | `invalid_grant` |
-| SPIFFE descriptor omits both `spiffe_id` and `trust_domain` | `invalid_grant` |
-| descriptor has zero or multiple of `jwks_uri` / `jwks` / `spiffe_bundle_endpoint` ({{instance-issuers}}) | `invalid_grant` |
-| `instance_issuers` absent or empty for client ({{instance-issuers}}) | `invalid_grant` |
-| `subject_syntax` or `trust_domain` constraint fails | `invalid_grant` |
-| `subject_syntax` is "spiffe" but `sub` is not a valid SPIFFE ID | `invalid_grant` |
-| delegation chain depth exceeds AS local maximum ({{ACTOR-PROFILE}}) | `invalid_request` |
-| `actor_token` carries an `act` claim ({{ACTOR-PROFILE}}) | `invalid_grant` |
-| classification ambiguous ({{access-token-classification}}) | `invalid_grant` |
-
-When `actor_token` is used as the client authentication credential
-under {{instance-assertion-auth}}, validation failures that this table
-maps to `invalid_grant` are returned as `invalid_client`.
+* `invalid_request`: pre-condition and request-shape failures,
+  including missing or mismatched `actor_token`/`actor_token_type`,
+  malformed JWT, JWS `typ` mismatch ({{signing}}), sender-constraint
+  binding failures ({{sender-constrained}}), and chain depth
+  exceeding the AS local maximum ({{ACTOR-PROFILE}}).
+* `invalid_grant`: failures of instance-assertion validation,
+  including signature, JWT claim validation, descriptor lookup or
+  shape, `client_id` binding, SPIFFE compatibility conditions,
+  classification ambiguity, and `actor_token` carrying an `act`
+  claim.
+* `unsupported_token_type` ({{RFC8693}}): an unrecognized
+  `actor_token_type` required for the grant.
+* `invalid_client`: when the `actor_token` is the client
+  authentication credential under {{instance-assertion-auth}},
+  validation failures that would otherwise be returned as
+  `invalid_grant` are returned as `invalid_client`.
 
 The AS MAY return additional information via the error_description
 parameter; deployments MUST NOT include sensitive instance details
 (e.g., raw SPIFFE IDs of unrelated workloads) in error responses.
+To help client-developer debugging, AS implementations SHOULD
+include non-sensitive diagnostic context such as which validation
+step failed (for example, "issuer not in instance_issuers" or
+"cnf possession failed").
 
 # Resource Server Processing {#rs-processing}
 
