@@ -2383,8 +2383,8 @@ trust-domain component exactly equals <code>trust_domain</code>; ASes <span clas
 use case folding, Unicode normalization, or percent-decoding to make
 a non-matching trust domain match. <code>trust_domain</code>
 is meaningful only when <code>subject_syntax</code> is "spiffe"; an AS <span class="bcp14">MUST</span>
-reject a descriptor that includes <code>trust_domain</code> with any other
-<code>subject_syntax</code> as invalid client metadata. A descriptor's
+ignore <code>trust_domain</code> in descriptors whose <code>subject_syntax</code> is
+any other value. A descriptor's
 <code>trust_domain</code> is independent of any SPIFFE trust domain associated
 with the client itself under <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span>; the two
 <span class="bcp14">MAY</span> differ.<a href="#section-6.1.1-5.12.1" class="pilcrow">¶</a></p>
@@ -2734,8 +2734,8 @@ algorithms (<code>HS256</code>, <code>HS384</code>, <code>HS512</code>) <span cl
 <span class="bcp14">MUST</span> reject assertions signed with them. The descriptor's
 <code>signing_alg_values_supported</code> (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>), when present,
 <span class="bcp14">MUST</span> contain only asymmetric algorithm identifiers. Implementations
-<span class="bcp14">MUST</span> follow the guidance in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>. For interoperability, ASes
-<span class="bcp14">SHOULD</span> support at least <code>RS256</code> and <code>ES256</code>. Issuers <span class="bcp14">SHOULD</span> include a
+<span class="bcp14">SHOULD</span> follow the JWT BCP guidance in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>. For
+interoperability, ASes <span class="bcp14">SHOULD</span> support at least <code>RS256</code> and <code>ES256</code>. Issuers <span class="bcp14">SHOULD</span> include a
 <code>kid</code> in the JWS protected header; ASes <span class="bcp14">SHOULD</span> use <code>kid</code> for key
 selection.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
 <p id="section-7.3-2">Issuers minting a Client Instance Assertion under this profile <span class="bcp14">MUST</span>
@@ -3560,17 +3560,17 @@ is implicitly invalidated when that instance terminates. This keeps
 <code>act.sub</code> (delegation) or <code>sub</code> (self-acting) stable across the
 refresh chain, matching the expectation of audit pipelines that a
 token's actor identity does not change after issuance.<a href="#section-8.7-6" class="pilcrow">¶</a></p>
-<p id="section-8.7-7">For SPIFFE deployments, the cnf binding key <span class="bcp14">MUST</span> outlive the
-JWT-SVID rotation cycle (typically 5-10 minutes in default SPIRE).
-Deployments that bind <code>cnf</code> to a per-instance DPoP or mTLS key
-held by the workload satisfy this naturally; deployments that
-attempt to bind <code>cnf</code> to the SVID's signing key directly will lose
-refresh-token continuity at every rotation and <span class="bcp14">SHOULD NOT</span> use
-that pattern.<a href="#section-8.7-7" class="pilcrow">¶</a></p>
+<p id="section-8.7-7">For SPIFFE deployments, the cnf binding key <span class="bcp14">SHOULD</span> outlive the
+JWT-SVID rotation cycle (typically 5-10 minutes in default SPIRE)
+when refresh tokens are issued. Deployments that bind <code>cnf</code> to a
+per-instance DPoP or mTLS key held by the workload satisfy this
+naturally; deployments that attempt to bind <code>cnf</code> to the SVID's
+signing key directly will lose refresh-token continuity at every
+rotation and <span class="bcp14">SHOULD NOT</span> use that pattern.<a href="#section-8.7-7" class="pilcrow">¶</a></p>
 <p id="section-8.7-8">Deployments requiring cross-instance session continuity (for
 example, agent platforms whose runtime is recycled but whose session
-should continue) <span class="bcp14">MUST</span> handle this at the deployment layer rather
-than through refresh-token semantics. Suitable mechanisms include:<a href="#section-8.7-8" class="pilcrow">¶</a></p>
+should continue) handle this at the deployment layer rather than
+through refresh-token semantics. Suitable mechanisms include:<a href="#section-8.7-8" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.7-9.1">
             <p id="section-8.7-9.1.1">re-authorizing the client through a fresh authorization
