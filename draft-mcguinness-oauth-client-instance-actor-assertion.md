@@ -609,19 +609,21 @@ applied), this profile imposes no additional revocation requirement
 on previously issued access tokens. After the AS has adopted the
 updated metadata, the AS SHOULD treat further use of access tokens
 whose validated instance identity is no longer endorsed by the
-client as invalid. For delegation tokens, this applies when the
-`act` claim either (a) names a removed instance issuer, or (b) falls
-outside the descriptor's updated scope. For self-acting tokens, this
-applies when the instance issuer recorded by the AS at issuance time
-has been removed, or when the access token's `sub` falls outside
-the descriptor's updated scope. Where the deployment supports it,
-this is naturally enforced by access-token introspection and short
-access-token lifetimes; AS implementations MAY additionally revoke
-such tokens per {{RFC7009}}, including via the per-instance
-mechanism described in {{revocation}}. ASes MAY apply the same
-policy to changes in a descriptor's `jwks_uri`, `jwks`, or
-`spiffe_bundle_endpoint` keys that {{CIMD}} permits for changes
-in client-level keys.
+client as invalid:
+
+* for delegation tokens, when the `act` claim names a removed
+  instance issuer or falls outside the descriptor's updated scope;
+* for self-acting tokens, when the instance issuer recorded by the
+  AS at issuance time has been removed, or when the access token's
+  `sub` falls outside the descriptor's updated scope.
+
+Where the deployment supports it, this is naturally enforced by
+access-token introspection and short access-token lifetimes; AS
+implementations MAY additionally revoke such tokens per {{RFC7009}},
+including via the per-instance mechanism described in
+{{revocation}}. ASes MAY apply the same policy to changes in a
+descriptor's `jwks_uri`, `jwks`, or `spiffe_bundle_endpoint` keys
+that {{CIMD}} permits for changes in client-level keys.
 
 The trust-withdrawal latency, that is, the worst-case time from
 metadata change to all derived access tokens having expired, is
@@ -1640,25 +1642,28 @@ For raw JWT-SVIDs that do not carry `sub_profile`, the AS SHOULD set
 the access token's `sub_profile` to `client_instance` after successful
 validation, unless local policy intentionally suppresses that signal.
 
-A client that lists multiple instance issuers MUST ensure
-those issuers' `sub` spaces do not collide within the client (for
-example, by using disjoint naming conventions, prefixes, or a
-SPIFFE trust-domain split); when the client cannot guarantee
-disjoint spaces, the AS SHOULD apply namespacing (below) to prevent
-a compromised issuer from spoofing another's `sub`. Single-issuer
-clients avoid cross-issuer collision, but the instance issuer still
-MUST NOT reassign an active or audit-relevant `sub` value to a
-different runtime. Issuers SHOULD use stable, non-reassigned subjects
-or include sufficient generation or session uniqueness in `sub` to
-distinguish runtime incarnations. If subject reassignment is
-unavoidable, the client, issuer, and AS audit logs need enough
-lifecycle metadata to distinguish the old and new runtimes. ASes
-MAY apply additional namespacing (for example, prefixing `sub` with
-the descriptor's issuer in a deterministic form such as
-`<issuer>#<sub>`) when they cannot otherwise determine that
-asserted `sub` values are unique within the client; such namespacing
-is a deployment-side choice and does not affect the wire format of
-the `actor_token`. If the AS applies such namespacing, the resulting
+A client that lists multiple instance issuers MUST ensure those
+issuers' `sub` spaces do not collide within the client (for example,
+by using disjoint naming conventions, prefixes, or a SPIFFE
+trust-domain split); when the client cannot guarantee disjoint
+spaces, the AS SHOULD apply namespacing (below) to prevent a
+compromised issuer from spoofing another's `sub`.
+
+Single-issuer clients avoid cross-issuer collision, but the instance
+issuer still MUST NOT reassign an active or audit-relevant `sub`
+value to a different runtime. Issuers SHOULD use stable,
+non-reassigned subjects or include sufficient generation or session
+uniqueness in `sub` to distinguish runtime incarnations. If subject
+reassignment is unavoidable, the client, issuer, and AS audit logs
+need enough lifecycle metadata to distinguish the old and new
+runtimes.
+
+ASes MAY apply additional namespacing (for example, prefixing `sub`
+with the descriptor's issuer in a deterministic form such as
+`<issuer>#<sub>`) when they cannot otherwise determine that asserted
+`sub` values are unique within the client; such namespacing is a
+deployment-side choice and does not affect the wire format of the
+`actor_token`. If the AS applies such namespacing, the resulting
 `sub` is an AS-scoped subject identifier; resource-server policy and
 audit tooling need to treat it as AS-issued rather than
 issuer-native. Deployments that require in-token instance-issuer
@@ -1711,22 +1716,27 @@ to the originating instance's `cnf` key, by the same mechanism used
 to sender-constrain the access token ({{sender-constrained}}). Only
 the originating instance can present the refresh token. A refresh
 request MUST NOT introduce a client instance identity if the refresh
-token was not originally issued under this profile. A client MAY
-include `actor_token` and `actor_token_type` ({{token-request}}) on
-a refresh request to supply a fresh instance assertion (for example,
-to rotate the underlying assertion before its `exp`); when present,
-the `actor_token` MUST be bound to the same `cnf` key as the refresh
-token, MUST have `(iss, sub)` matching those recorded at the
-refresh token's original issuance, and MUST pass the token-type
-check, instance issuer descriptor lookup, signature verification,
-JWT claim validation, and `client_id` binding checks defined in
-{{as-processing}}. If the presented `actor_token` is a raw JWT-SVID
-without `cnf`, the AS MUST establish the binding key per
-{{sender-constrained}} and verify that the established binding key
-matches the refresh token's binding. The AS MUST reject with
-`invalid_grant` any refresh request whose presented `actor_token` is
-not bound to the same `cnf` key, or whose `(iss, sub)` differ from
-those recorded at issuance.
+token was not originally issued under this profile.
+
+A client MAY include `actor_token` and `actor_token_type`
+({{token-request}}) on a refresh request to supply a fresh instance
+assertion (for example, to rotate the underlying assertion before
+its `exp`). When present, the `actor_token` MUST:
+
+* be bound to the same `cnf` key as the refresh token;
+* have `(iss, sub)` matching those recorded at the refresh token's
+  original issuance; and
+* pass the token-type check, instance issuer descriptor lookup,
+  signature verification, JWT claim validation, and `client_id`
+  binding checks defined in {{as-processing}}.
+
+If the presented `actor_token` is a raw JWT-SVID without `cnf`, the
+AS MUST establish the binding key per {{sender-constrained}} and
+verify that the established binding key matches the refresh token's
+binding. The AS MUST reject with `invalid_grant` any refresh
+request whose presented `actor_token` is not bound to the same
+`cnf` key, or whose `(iss, sub)` differ from those recorded at
+issuance.
 
 Because the refresh token is bound to the originating instance, it
 is implicitly invalidated when that instance terminates. This keeps
@@ -2097,26 +2107,29 @@ metadata (CIMD documents or static registrations) that does not
 declare `instance_issuers` continues to work unchanged, and existing
 access tokens in circulation when a client adds `instance_issuers`
 remain valid for their original lifetime.
+
 An AS MAY implement this profile while continuing to serve clients
-that do not use it: token requests are dispatched on
+that do not use it. Token requests are dispatched on
 `actor_token_type`, with
-`urn:ietf:params:oauth:token-type:client-instance-jwt`
-triggering this profile's processing
-({{as-processing}}) and other (or absent) values processed under
-their own specifications. ASes SHOULD advertise support via
-`actor_token_types_supported` ({{as-metadata}}). Clients SHOULD
-verify that `urn:ietf:params:oauth:token-type:client-instance-jwt`
-is present in the AS's `actor_token_types_supported` before
-sending an `actor_token` on a token request, since RFC 6749 permits
-ASes that do not implement this extension to silently ignore
-unrecognized parameters and issue an unbound access token. The
+`urn:ietf:params:oauth:token-type:client-instance-jwt` triggering
+this profile's processing ({{as-processing}}) and other (or absent)
+values processed under their own specifications.
+
+ASes SHOULD advertise support via `actor_token_types_supported`
+({{as-metadata}}). Clients SHOULD verify that
+`urn:ietf:params:oauth:token-type:client-instance-jwt` is present in
+the AS's `actor_token_types_supported` before sending an
+`actor_token` on a token request, since RFC 6749 permits ASes that
+do not implement this extension to silently ignore unrecognized
+parameters and issue an unbound access token. The
 `actor_token_types_supported` value is a coarse capability signal;
-clients may still need registration-time or deployment agreement for
-grant-specific use, raw JWT-SVID compatibility, accepted sender-
-constraint methods, and refresh-token behavior. A client MAY add
-`instance_issuers` at any time; a client that wants to mandate
-instance assertions for every issued access token can register
-`token_endpoint_auth_method = client_instance_jwt`
+clients may still need registration-time or deployment agreement
+for grant-specific use, raw JWT-SVID compatibility, accepted
+sender-constraint methods, and refresh-token behavior.
+
+A client MAY add `instance_issuers` at any time. A client that wants
+to mandate instance assertions for every issued access token can
+register `token_endpoint_auth_method` = `client_instance_jwt`
 ({{instance-assertion-auth}}), which intrinsically requires the
 `actor_token`.
 
@@ -2299,14 +2312,15 @@ intervals when instance identity is present.
 
 Actor tokens MUST include `jti`, `exp`, and `iat` ({{claims}}),
 except for raw JWT-SVIDs accepted under the SPIFFE compatibility
-mode in {{spiffe-client-id-omission}}. When `jti` is present, after
-the AS has identified the issuer and validated the instance assertion
-signature, it MUST reject a token whose (`iss`, `jti`) pair has
-already been seen within the token's validity window. ASes SHOULD
-enforce this replay check for all Client Instance Assertions. An AS
-MAY skip this check
-for assertions whose `cnf` claim has been verified at presentation
-per {{sender-constrained}} only when the deployment explicitly treats
+mode in {{spiffe-client-id-omission}}.
+
+When `jti` is present, after the AS has identified the issuer and
+validated the instance assertion signature, it MUST reject a token
+whose (`iss`, `jti`) pair has already been seen within the token's
+validity window. ASes SHOULD enforce this replay check for all
+Client Instance Assertions. An AS MAY skip this check for
+assertions whose `cnf` claim has been verified at presentation per
+{{sender-constrained}} only when the deployment explicitly treats
 cnf-bound assertions as reusable proof-of-possession credentials
 within their `exp` window, documents that behavior, and applies
 rate limits, monitoring, and audit logging for assertion use. The
@@ -2314,10 +2328,12 @@ MUST applies unconditionally to assertions without a verified `cnf`
 (including raw JWT-SVIDs accepted under
 {{spiffe-client-id-omission}} when `jti` is present). When the AS
 applies the replay check, it MUST retain replay-cache entries at
-least until the token's `exp` time, plus any allowed clock skew. For
-a raw JWT-SVID, the AS MUST apply the replay check when `jti` is
-present; when `jti` is absent, deployments rely on sender-constraint,
-short SVID lifetimes, and audience restriction to bound replay.
+least until the token's `exp` time, plus any allowed clock skew.
+For a raw JWT-SVID, the AS MUST apply the replay check when `jti`
+is present; when `jti` is absent, deployments rely on
+sender-constraint, short SVID lifetimes, and audience restriction
+to bound replay.
+
 Issuers SHOULD use short lifetimes (five minutes or less) both to
 limit replay exposure and because client instances often have
 lifetimes of seconds to minutes. When refreshing access tokens
