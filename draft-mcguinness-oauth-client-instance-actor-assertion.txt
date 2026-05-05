@@ -2036,92 +2036,34 @@ Table of Contents
 8.9.  Error Responses
 
    Errors are returned per [RFC6749] Section 5.2 and [RFC8693]
-   Section 2.2.2.  The following table maps the validation failures
-   defined in Section 8.2 to error codes:
+   Section 2.2.2.  This profile uses the existing OAuth error codes:
 
-    +========================================+========================+
-    | Failure                                | Error code             |
-    +========================================+========================+
-    | actor_token present but                | invalid_request        |
-    | actor_token_type absent                |                        |
-    +----------------------------------------+------------------------+
-    | actor_token_type present but           | invalid_request        |
-    | actor_token absent                     |                        |
-    +----------------------------------------+------------------------+
-    | client-instance-jwt actor_token not a  | invalid_request        |
-    | syntactically valid JWT                |                        |
-    +----------------------------------------+------------------------+
-    | re-minted Client Instance Assertion    | invalid_request        |
-    | typ JOSE header is not client-         |                        |
-    | instance+jwt (Section 7.3)             |                        |
-    +----------------------------------------+------------------------+
-    | cnf possession verification fails      | invalid_request        |
-    | (Section 8.5)                          |                        |
-    +----------------------------------------+------------------------+
-    | instance-specific binding key cannot   | invalid_request        |
-    | be established (Section 8.5)           |                        |
-    +----------------------------------------+------------------------+
-    | actor_token_type not understood and    | unsupported_token_type |
-    | required for the grant                 | ([RFC8693])            |
-    +----------------------------------------+------------------------+
-    | iss not found in instance_issuers      | invalid_grant          |
-    +----------------------------------------+------------------------+
-    | signature invalid                      | invalid_grant          |
-    +----------------------------------------+------------------------+
-    | alg not in                             | invalid_grant          |
-    | signing_alg_values_supported, or alg   |                        |
-    | is "none"                              |                        |
-    +----------------------------------------+------------------------+
-    | crit header includes unrecognized      | invalid_grant          |
-    | parameter                              |                        |
-    +----------------------------------------+------------------------+
-    | aud, exp, iat, nbf, or jti validation  | invalid_grant          |
-    | fails                                  |                        |
-    +----------------------------------------+------------------------+
-    | client_id binding mismatch             | invalid_grant          |
-    +----------------------------------------+------------------------+
-    | client_id claim absent and SPIFFE      | invalid_grant          |
-    | compatibility conditions not met       |                        |
-    | (Section 8.8.1)                        |                        |
-    +----------------------------------------+------------------------+
-    | spiffe_id prefix match fails           | invalid_grant          |
-    | (Section 6.1.1)                        |                        |
-    +----------------------------------------+------------------------+
-    | SPIFFE descriptor omits both spiffe_id | invalid_grant          |
-    | and trust_domain                       |                        |
-    +----------------------------------------+------------------------+
-    | descriptor has zero or multiple of     | invalid_grant          |
-    | jwks_uri / jwks /                      |                        |
-    | spiffe_bundle_endpoint (Section 6.1.1) |                        |
-    +----------------------------------------+------------------------+
-    | instance_issuers absent or empty for   | invalid_grant          |
-    | client (Section 6.1.1)                 |                        |
-    +----------------------------------------+------------------------+
-    | subject_syntax or trust_domain         | invalid_grant          |
-    | constraint fails                       |                        |
-    +----------------------------------------+------------------------+
-    | subject_syntax is "spiffe" but sub is  | invalid_grant          |
-    | not a valid SPIFFE ID                  |                        |
-    +----------------------------------------+------------------------+
-    | delegation chain depth exceeds AS      | invalid_request        |
-    | local maximum ([ACTOR-PROFILE])        |                        |
-    +----------------------------------------+------------------------+
-    | actor_token carries an act claim       | invalid_grant          |
-    | ([ACTOR-PROFILE])                      |                        |
-    +----------------------------------------+------------------------+
-    | classification ambiguous               | invalid_grant          |
-    | (Section 8.6.1)                        |                        |
-    +----------------------------------------+------------------------+
+   *  invalid_request: pre-condition and request-shape failures,
+      including missing or mismatched actor_token/actor_token_type,
+      malformed JWT, JWS typ mismatch (Section 7.3), sender-constraint
+      binding failures (Section 8.5), and chain depth exceeding the AS
+      local maximum ([ACTOR-PROFILE]).
 
-                                  Table 5
+   *  invalid_grant: failures of instance-assertion validation,
+      including signature, JWT claim validation, descriptor lookup or
+      shape, client_id binding, SPIFFE compatibility conditions,
+      classification ambiguity, and actor_token carrying an act claim.
 
-   When actor_token is used as the client authentication credential
-   under Section 8.3, validation failures that this table maps to
-   invalid_grant are returned as invalid_client.
+   *  unsupported_token_type ([RFC8693]): an unrecognized
+      actor_token_type required for the grant.
+
+   *  invalid_client: when the actor_token is the client authentication
+      credential under Section 8.3, validation failures that would
+      otherwise be returned as invalid_grant are returned as
+      invalid_client.
 
    The AS MAY return additional information via the error_description
    parameter; deployments MUST NOT include sensitive instance details
-   (e.g., raw SPIFFE IDs of unrelated workloads) in error responses.
+   (e.g., raw SPIFFE IDs of unrelated workloads) in error responses.  To
+   help client-developer debugging, AS implementations SHOULD include
+   non-sensitive diagnostic context such as which validation step failed
+   (for example, "issuer not in instance_issuers" or "cnf possession
+   failed").
 
 9.  Resource Server Processing
 

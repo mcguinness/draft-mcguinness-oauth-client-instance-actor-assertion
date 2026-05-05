@@ -3801,180 +3801,40 @@ X.509 trust anchors served by the same SPIFFE bundle.<a href="#section-8.8.2-1" 
 <a href="#section-8.9" class="section-number selfRef">8.9. </a><a href="#name-error-responses" class="section-name selfRef">Error Responses</a>
         </h3>
 <p id="section-8.9-1">Errors are returned per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 5.2 and <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>
-Section 2.2.2. The following table maps the validation failures
-defined in <a href="#as-processing" class="auto internal xref">Section 8.2</a> to error codes:<a href="#section-8.9-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-5">
-          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
-<thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">Failure</th>
-              <th class="text-left" rowspan="1" colspan="1">Error code</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>actor_token</code> present but <code>actor_token_type</code> absent</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_request</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>actor_token_type</code> present but <code>actor_token</code> absent</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_request</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>client-instance-jwt</code> <code>actor_token</code> not a syntactically valid JWT</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_request</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">re-minted Client Instance Assertion <code>typ</code> JOSE header is not <code>client-instance+jwt</code> (<a href="#signing" class="auto internal xref">Section 7.3</a>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_request</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>cnf</code> possession verification fails (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_request</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">instance-specific binding key cannot be established (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_request</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>actor_token_type</code> not understood and required for the grant</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>unsupported_token_type</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>)</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>iss</code> not found in <code>instance_issuers</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">signature invalid</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>alg</code> not in <code>signing_alg_values_supported</code>, or <code>alg</code> is "none"</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>crit</code> header includes unrecognized parameter</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>aud</code>, <code>exp</code>, <code>iat</code>, <code>nbf</code>, or <code>jti</code> validation fails</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>client_id</code> binding mismatch</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>client_id</code> claim absent and SPIFFE compatibility conditions not met (<a href="#spiffe-client-id-omission" class="auto internal xref">Section 8.8.1</a>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>spiffe_id</code> prefix match fails (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">SPIFFE descriptor omits both <code>spiffe_id</code> and <code>trust_domain</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">descriptor has zero or multiple of <code>jwks_uri</code> / <code>jwks</code> / <code>spiffe_bundle_endpoint</code> (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>instance_issuers</code> absent or empty for client (<a href="#instance-issuers" class="auto internal xref">Section 6.1.1</a>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>subject_syntax</code> or <code>trust_domain</code> constraint fails</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>subject_syntax</code> is "spiffe" but <code>sub</code> is not a valid SPIFFE ID</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">delegation chain depth exceeds AS local maximum (<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_request</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>actor_token</code> carries an <code>act</code> claim (<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">classification ambiguous (<a href="#access-token-classification" class="auto internal xref">Section 8.6.1</a>)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>invalid_grant</code>
-</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-8.9-3">When <code>actor_token</code> is used as the client authentication credential
-under <a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>, validation failures that this table
-maps to <code>invalid_grant</code> are returned as <code>invalid_client</code>.<a href="#section-8.9-3" class="pilcrow">¶</a></p>
-<p id="section-8.9-4">The AS <span class="bcp14">MAY</span> return additional information via the error_description
+Section 2.2.2. This profile uses the existing OAuth error codes:<a href="#section-8.9-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8.9-2.1">
+            <p id="section-8.9-2.1.1"><code>invalid_request</code>: pre-condition and request-shape failures,
+including missing or mismatched <code>actor_token</code>/<code>actor_token_type</code>,
+malformed JWT, JWS <code>typ</code> mismatch (<a href="#signing" class="auto internal xref">Section 7.3</a>), sender-constraint
+binding failures (<a href="#sender-constrained" class="auto internal xref">Section 8.5</a>), and chain depth
+exceeding the AS local maximum (<span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>).<a href="#section-8.9-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.9-2.2">
+            <p id="section-8.9-2.2.1"><code>invalid_grant</code>: failures of instance-assertion validation,
+including signature, JWT claim validation, descriptor lookup or
+shape, <code>client_id</code> binding, SPIFFE compatibility conditions,
+classification ambiguity, and <code>actor_token</code> carrying an <code>act</code>
+claim.<a href="#section-8.9-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.9-2.3">
+            <p id="section-8.9-2.3.1"><code>unsupported_token_type</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>): an unrecognized
+<code>actor_token_type</code> required for the grant.<a href="#section-8.9-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.9-2.4">
+            <p id="section-8.9-2.4.1"><code>invalid_client</code>: when the <code>actor_token</code> is the client
+authentication credential under <a href="#instance-assertion-auth" class="auto internal xref">Section 8.3</a>,
+validation failures that would otherwise be returned as
+<code>invalid_grant</code> are returned as <code>invalid_client</code>.<a href="#section-8.9-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-8.9-3">The AS <span class="bcp14">MAY</span> return additional information via the error_description
 parameter; deployments <span class="bcp14">MUST NOT</span> include sensitive instance details
-(e.g., raw SPIFFE IDs of unrelated workloads) in error responses.<a href="#section-8.9-4" class="pilcrow">¶</a></p>
+(e.g., raw SPIFFE IDs of unrelated workloads) in error responses.
+To help client-developer debugging, AS implementations <span class="bcp14">SHOULD</span>
+include non-sensitive diagnostic context such as which validation
+step failed (for example, "issuer not in instance_issuers" or
+"cnf possession failed").<a href="#section-8.9-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
