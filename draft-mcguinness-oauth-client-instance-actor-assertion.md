@@ -209,12 +209,14 @@ on different OAuth parameters and trust sources:
 The two specifications are orthogonal and MAY be combined: a
 typical combined deployment uses {{SPIFFE-CLIENT-AUTH}} (with a
 wildcard `spiffe_id`) to authenticate the OAuth client and this
-profile to surface and bind the specific instance; the same SVID
+profile to surface and bind the specific instance. The same SVID
 MAY be presented as both `client_assertion` and `actor_token` in a
-single request. This document does not require SPIFFE; instance
-issuers may use any `subject_syntax`, and the client may
-authenticate via any registered method. SPIFFE deployments get
-first-class support ({{instance-issuers}}, {{spiffe-compatibility}}).
+single request when both profiles' audience, client-binding, and
+sender-constraint requirements are satisfied. This document does
+not require SPIFFE; instance issuers may use any `subject_syntax`,
+and the client may authenticate via any registered method. SPIFFE
+deployments get first-class support ({{instance-issuers}},
+{{spiffe-compatibility}}).
 
 **WIMSE Workload Credentials.** The IETF WIMSE working group is
 defining specifications for workload identity ({{WIMSE-CREDS}},
@@ -1269,6 +1271,11 @@ private key can redeem the resulting code, even if the code is
 intercepted or transferred to another runtime under the same
 client.
 
+If `dpop_jkt` is absent, DPoP still sender-constrains the issued
+access token at the token endpoint, but this profile does not provide
+cryptographic continuity between the authorization endpoint and the
+token endpoint for that authorization code.
+
 For Mutual-TLS-bound access tokens ({{RFC8705}}), authorization-code
 continuity is deployment-specific. If the AS binds the authorization
 request or authorization code to a client certificate seen at the
@@ -1461,11 +1468,20 @@ instance assertion:
 * `act` MUST be omitted
 
 The instance issuer's identifier (the assertion's `iss`) is not
-represented as a claim; trust in the issuer is structural via the
-descriptor ({{instance-issuers}}). For raw JWT-SVIDs that do not
-carry `sub_profile`, the AS SHOULD set the access token's
-`sub_profile` to `client_instance` after successful validation,
-unless local policy intentionally suppresses that signal.
+represented as a standard access-token claim in the self-acting
+case; trust in the issuer is structural via the descriptor
+({{instance-issuers}}). The AS MUST nevertheless retain the
+validated issuer with its token state when needed for revocation,
+introspection, audit, or issuer-aware resource-server policy. For
+JWT access tokens consumed without introspection, if resource
+servers need issuer context and the client lists multiple issuers
+with potentially colliding subject spaces, the AS SHOULD either
+apply AS-scoped namespacing to `sub` as described below or expose
+issuer context using a deployment-specific claim understood by the
+resource server. For raw JWT-SVIDs that do not carry `sub_profile`,
+the AS SHOULD set the access token's `sub_profile` to
+`client_instance` after successful validation, unless local policy
+intentionally suppresses that signal.
 
 A client that lists multiple instance issuers MUST ensure those
 issuers' `sub` spaces do not collide (for example, by using
@@ -1595,7 +1611,8 @@ In raw JWT-SVID mode, the AS MUST:
 2. require `subject_syntax` = "spiffe";
 3. validate the token as a JWT-SVID using SPIFFE JWT-SVID validation
    rules and the descriptor's `spiffe_bundle_endpoint`;
-4. accept only claims that are valid under SPIFFE;
+4. validate the SPIFFE JWT-SVID claims required by SPIFFE and ignore
+   unrecognized claims unless local policy rejects them;
 5. validate `aud` and `exp`;
 6. validate `iat` if present;
 7. validate `nbf` if present;
@@ -1887,7 +1904,7 @@ per-instance keys has three options:
 * **Raw JWT-SVID compatibility**: the SVID is presented as
   `actor_token` without re-minting and the AS establishes binding
   through a channel independent of the SVID
-  ({{spiffe-client-id-omission}}, {{spiffe-binding}}). The
+  ({{spiffe-client-id-omission}}, {{spiffe-binding}}). This is the
   SPIFFE-native path. For workloads with X.509-SVIDs, the
   X.509-SVID can serve as the binding key in two shapes:
 
