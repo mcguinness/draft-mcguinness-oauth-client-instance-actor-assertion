@@ -943,9 +943,10 @@ The following claims are defined for client instance assertions.
   if this value does not exactly equal the `client_id` of the
   authenticated client. When omitted under
   {{spiffe-client-id-omission}}, the binding is established
-  structurally by the matched descriptor's `spiffe_id` rather than by
-  a JWT claim, and a SPIFFE JWT-SVID may be presented as the
-  `actor_token` directly without re-minting.
+  structurally by the matched descriptor's SPIFFE scope (`spiffe_id`
+  when present, otherwise `trust_domain`) rather than by a JWT claim,
+  and a SPIFFE JWT-SVID may be presented as the `actor_token`
+  directly without re-minting.
 
 `exp` (REQUIRED):
 : Expiration time. Issuers SHOULD set short lifetimes (e.g., five
@@ -1598,6 +1599,10 @@ in the instance issuer is structural: the AS validated the instance
 assertion against the descriptor in {{instance-issuers}} before
 issuance, and the resource server trusts the AS.
 
+For raw JWT-SVIDs that do not carry `sub_profile`, the AS SHOULD set
+the access token's `sub_profile` to `client_instance` after successful
+validation, unless local policy intentionally suppresses that signal.
+
 A client that lists multiple instance issuers MUST ensure
 those issuers' `sub` spaces do not collide within the client (for
 example, by using disjoint naming conventions, prefixes, or a
@@ -1670,7 +1675,9 @@ request itself.
 Refresh tokens issued under this profile MUST be sender-constrained
 to the originating instance's `cnf` key, by the same mechanism used
 to sender-constrain the access token ({{sender-constrained}}). Only
-the originating instance can present the refresh token. A client MAY
+the originating instance can present the refresh token. A refresh
+request MUST NOT introduce a client instance identity if the refresh
+token was not originally issued under this profile. A client MAY
 include `actor_token` and `actor_token_type` ({{token-request}}) on
 a refresh request to supply a fresh instance assertion (for example,
 to rotate the underlying assertion before its `exp`); when present,
@@ -1679,10 +1686,13 @@ token, MUST have `(iss, sub)` matching those recorded at the
 refresh token's original issuance, and MUST pass the token-type
 check, instance issuer descriptor lookup, signature verification,
 JWT claim validation, and `client_id` binding checks defined in
-{{as-processing}}. The AS MUST reject with `invalid_grant` any
-refresh request whose presented `actor_token` is not bound to the
-same `cnf` key, or whose `(iss, sub)` differ from those recorded at
-issuance.
+{{as-processing}}. If the presented `actor_token` is a raw JWT-SVID
+without `cnf`, the AS MUST establish the binding key per
+{{sender-constrained}} and verify that the established binding key
+matches the refresh token's binding. The AS MUST reject with
+`invalid_grant` any refresh request whose presented `actor_token` is
+not bound to the same `cnf` key, or whose `(iss, sub)` differ from
+those recorded at issuance.
 
 Because the refresh token is bound to the originating instance, it
 is implicitly invalidated when that instance terminates. This keeps
@@ -2235,11 +2245,12 @@ intervals when instance identity is present.
 
 Actor tokens MUST include `jti`, `exp`, and `iat` ({{claims}}),
 except for raw JWT-SVIDs accepted under the SPIFFE compatibility
-mode in {{spiffe-client-id-omission}}. After the AS has identified
-the issuer and validated the instance assertion signature, it MUST
-reject a token whose (`iss`, `jti`) pair has already been seen
-within the token's validity window. ASes SHOULD enforce this replay
-check for all Client Instance Assertions. An AS MAY skip this check
+mode in {{spiffe-client-id-omission}}. When `jti` is present, after
+the AS has identified the issuer and validated the instance assertion
+signature, it MUST reject a token whose (`iss`, `jti`) pair has
+already been seen within the token's validity window. ASes SHOULD
+enforce this replay check for all Client Instance Assertions. An AS
+MAY skip this check
 for assertions whose `cnf` claim has been verified at presentation
 per {{sender-constrained}} only when the deployment explicitly treats
 cnf-bound assertions as reusable proof-of-possession credentials
@@ -3128,6 +3139,7 @@ access-token binding. Issued access token (self-acting):
   "iss":         "https://as.example.com",
   "aud":         "https://api.example.com",
   "sub":         "spiffe://example.com/agent/inst-04",
+  "sub_profile": "client_instance",
   "client_id":   "https://app.example.com/agent",
   "scope":       "repo.read",
   "iat":         1770000005,
