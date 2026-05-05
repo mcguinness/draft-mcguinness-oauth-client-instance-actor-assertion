@@ -1531,8 +1531,8 @@ or registered via <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span
         <li class="normal" id="section-1-4.2">
           <p id="section-1-4.2.1">Registers a new <code>actor_token_type</code>,
 <code>urn:ietf:params:oauth:token-type:client-instance-jwt</code>, that
-carries the instance identity as a JWT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> signed by an
-instance issuer published in the client's metadata.<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
+carries the instance identity as a JSON Web Token (JWT) <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>
+signed by an instance issuer published in the client's metadata.<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-4.3">
           <p id="section-1-4.3.1">Requires issued access tokens to be sender-constrained to a key
@@ -1681,9 +1681,9 @@ token-exchange request remains governed by <span>[<a href="#RFC8693" class="cite
 the <code>act</code> claim, the <code>sub_profile</code> claim, and nested actor
 representation. This document does not redefine those constructs;
 it defines how a client instance proves itself at the token
-endpoint and how the AS represents the validated assertion in
-issued access tokens (<code>act</code> for delegation, top-level <code>sub</code> for
-self-acting). Implementations of this document <span class="bcp14">MUST</span> also implement
+endpoint and how the Authorization Server (AS) represents the
+validated assertion in issued access tokens (<code>act</code> for delegation,
+top-level <code>sub</code> for self-acting). Implementations of this document <span class="bcp14">MUST</span> also implement
 <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>]</span>.<a href="#section-3-2" class="pilcrow">¶</a></p>
 <p id="section-3-3"><strong>SPIFFE Client Authentication.</strong> <span>[<a href="#SPIFFE-CLIENT-AUTH" class="cite xref">SPIFFE-CLIENT-AUTH</a>]</span> (an OAuth
 Working Group document) defines how a SPIFFE workload authenticates
@@ -2187,7 +2187,7 @@ client authentication.<a href="#section-6.1.1-5.6.3" class="pilcrow">¶</a></p>
 <dt id="section-6.1.1-5.7">
 <code>signing_alg_values_supported</code> (<span class="bcp14">OPTIONAL</span>):</dt>
             <dd style="margin-left: 1.5em" id="section-6.1.1-5.8">
-              <p id="section-6.1.1-5.8.1">A JSON array of JWS <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> <code>alg</code> values the AS accepts for
+              <p id="section-6.1.1-5.8.1">A JSON array of JSON Web Signature (JWS) <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> <code>alg</code> values the AS accepts for
 instance assertions issued by this issuer. If present, the AS <span class="bcp14">MUST</span>
 reject instance assertions whose <code>alg</code> is not listed. Issuers <span class="bcp14">SHOULD</span>
 publish only algorithms they actually use.<a href="#section-6.1.1-5.8.1" class="pilcrow">¶</a></p>
@@ -2488,7 +2488,8 @@ alongside but are not the binding and do not change this
 profile's sender-constraint verification requirement.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
 <p id="section-7.2-2.18.2">The instance issuer <span class="bcp14">MUST</span> mint <code>cnf</code> from a key the named runtime
 instance demonstrably possesses (e.g., an instance-attested key,
-a per-instance workload key, or a <code>DPoP</code> public key presented to
+a per-instance workload key, or a Demonstration of
+Proof-of-Possession (DPoP, <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>) public key presented to
 the issuer at attestation time). Binding rules and AS
 verification are defined in <a href="#sender-constrained" class="auto internal xref">Section 8.5</a>.<a href="#section-7.2-2.18.2" class="pilcrow">¶</a></p>
 <p id="section-7.2-2.18.3">Raw JWT-SVID compatibility is the only exception to this claim
@@ -3901,7 +3902,7 @@ mechanisms to keep actor identity current:<a href="#section-12.3-1" class="pilcr
 <span class="break"></span><dl class="dlParallel" id="section-12.3-2">
           <dt id="section-12.3-2.1">Rotation:</dt>
           <dd style="margin-left: 1.5em" id="section-12.3-2.2">
-            <p id="section-12.3-2.2.1">Instance issuers <span class="bcp14">MUST</span> mint short-lived instance assertions
+            <p id="section-12.3-2.2.1">Instance issuers <span class="bcp14">SHOULD</span> mint short-lived instance assertions
 (<a href="#security-replay" class="auto internal xref">Section 12.5</a>). New tokens are issued continuously as
 instances start, restart, or rotate keys.<a href="#section-12.3-2.2.1" class="pilcrow">¶</a></p>
 </dd>

@@ -214,8 +214,8 @@ Table of Contents
 
    *  Registers a new actor_token_type, urn:ietf:params:oauth:token-
       type:client-instance-jwt, that carries the instance identity as a
-      JWT [RFC7519] signed by an instance issuer published in the
-      client's metadata.
+      JSON Web Token (JWT) [RFC7519] signed by an instance issuer
+      published in the client's metadata.
 
    *  Requires issued access tokens to be sender-constrained to a key
       the instance possesses, and specifies how the instance assertion's
@@ -327,10 +327,11 @@ Table of Contents
    *OAuth Actor Profile.* [ACTOR-PROFILE] defines the structure of the
    act claim, the sub_profile claim, and nested actor representation.
    This document does not redefine those constructs; it defines how a
-   client instance proves itself at the token endpoint and how the AS
-   represents the validated assertion in issued access tokens (act for
-   delegation, top-level sub for self-acting).  Implementations of this
-   document MUST also implement [ACTOR-PROFILE].
+   client instance proves itself at the token endpoint and how the
+   Authorization Server (AS) represents the validated assertion in
+   issued access tokens (act for delegation, top-level sub for self-
+   acting).  Implementations of this document MUST also implement
+   [ACTOR-PROFILE].
 
    *SPIFFE Client Authentication.* [SPIFFE-CLIENT-AUTH] (an OAuth
    Working Group document) defines how a SPIFFE workload authenticates
@@ -740,11 +741,11 @@ Table of Contents
       SPIFFE; see [SPIFFE-CLIENT-AUTH] for the analogous use in client
       authentication.
 
-   signing_alg_values_supported (OPTIONAL):  A JSON array of JWS
-      [RFC7515] alg values the AS accepts for instance assertions issued
-      by this issuer.  If present, the AS MUST reject instance
-      assertions whose alg is not listed.  Issuers SHOULD publish only
-      algorithms they actually use.
+   signing_alg_values_supported (OPTIONAL):  A JSON array of JSON Web
+      Signature (JWS) [RFC7515] alg values the AS accepts for instance
+      assertions issued by this issuer.  If present, the AS MUST reject
+      instance assertions whose alg is not listed.  Issuers SHOULD
+      publish only algorithms they actually use.
 
    subject_syntax (OPTIONAL):  A short identifier indicating the
       syntactic profile of the sub claim used by this issuer.  This
@@ -975,9 +976,10 @@ Table of Contents
 
       The instance issuer MUST mint cnf from a key the named runtime
       instance demonstrably possesses (e.g., an instance-attested key, a
-      per-instance workload key, or a DPoP public key presented to the
-      issuer at attestation time).  Binding rules and AS verification
-      are defined in Section 8.5.
+      per-instance workload key, or a Demonstration of Proof-of-
+      Possession (DPoP, [RFC9449]) public key presented to the issuer at
+      attestation time).  Binding rules and AS verification are defined
+      in Section 8.5.
 
       Raw JWT-SVID compatibility is the only exception to this claim
       requirement, because the AS validates the SVID without re-minting;
@@ -2143,9 +2145,9 @@ Table of Contents
    function invocations, agent sessions).  This profile relies on three
    mechanisms to keep actor identity current:
 
-   Rotation:  Instance issuers MUST mint short-lived instance assertions
-      (Section 12.5).  New tokens are issued continuously as instances
-      start, restart, or rotate keys.
+   Rotation:  Instance issuers SHOULD mint short-lived instance
+      assertions (Section 12.5).  New tokens are issued continuously as
+      instances start, restart, or rotate keys.
 
    Revocation within the validity window:  Within an instance
       assertion's exp window, the AS prevents reuse via the jti replay
