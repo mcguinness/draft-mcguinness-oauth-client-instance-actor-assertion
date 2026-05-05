@@ -727,9 +727,10 @@ absent, the AS MUST reject the descriptor as invalid client metadata.
   authentication.
 
 `signing_alg_values_supported` (OPTIONAL):
-: A JSON array of JWS {{RFC7515}} `alg` values that this issuer uses to
-  sign instance assertions. If present, the AS MUST reject instance assertions
-  whose `alg` is not listed.
+: A JSON array of JWS {{RFC7515}} `alg` values the AS accepts for
+  instance assertions issued by this issuer. If present, the AS MUST
+  reject instance assertions whose `alg` is not listed. Issuers SHOULD
+  publish only algorithms they actually use.
 
 `subject_syntax` (OPTIONAL):
 : A short identifier indicating the syntactic profile of the `sub`
@@ -804,7 +805,12 @@ This document defines the following AS metadata parameters for
   `urn:ietf:params:oauth:token-type:client-instance-jwt` in it. This is
   the only AS-side discovery signal for support of this profile;
   clients use it to decide whether to assemble token requests
-  carrying an instance assertion.
+  carrying an instance assertion. This signal is intentionally coarse:
+  it does not describe grant-specific enablement, raw JWT-SVID support,
+  accepted sender-constraint methods, refresh-token behavior, or
+  client-specific registration policy. Clients may still need
+  registration-time or deployment agreement with the AS for those
+  details.
 
 Other values MAY appear and are processed under their own
 specifications; their trust resolution is not via `instance_issuers`.
@@ -981,9 +987,9 @@ The following claims are defined for client instance assertions.
 : A confirmation claim {{RFC7800}} carrying a key bound to this
   instance. The `cnf` value MUST contain exactly one of `jkt` (a JWK
   SHA-256 thumbprint per {{RFC9449}} Section 3.1) or `x5t#S256` (an
-  X.509 certificate SHA-256 thumbprint per {{RFC8705}} Section 3.1);
-  other confirmation methods registered under {{RFC7800}} MAY appear
-  in addition but MUST NOT be the only member. The instance issuer
+  X.509 certificate SHA-256 thumbprint per {{RFC8705}} Section 3.1)
+  as the binding member; other confirmation methods registered under
+  {{RFC7800}} MAY appear alongside but are not the binding. The instance issuer
   MUST mint `cnf` from a key the named runtime instance demonstrably
   possesses (e.g., an instance-attested key, a per-instance workload
   key, or a `DPoP` public key presented to the issuer at attestation
@@ -1937,6 +1943,13 @@ authenticates that instance. This is a deliberate consequence of
 binding the access token to the instance that holds the
 authorization, not to the principal who delegated to it.
 
+Resource-server authorization policies SHOULD evaluate the logical
+client (`client_id`), the instance identity (`act.sub` in delegation
+tokens or `sub` in self-acting tokens), actor/subject profile signals
+such as `sub_profile`, granted scopes, and issuer context where it is
+available. Policies that authorize solely on `client_id` lose the
+instance-level distinction this profile is designed to provide.
+
 ## Self-Acting Case {#rs-self-acting}
 
 In the self-acting case ({{access-token-self-acting}}), the access
@@ -2080,8 +2093,12 @@ verify that `urn:ietf:params:oauth:token-type:client-instance-jwt`
 is present in the AS's `actor_token_types_supported` before
 sending an `actor_token` on a token request, since RFC 6749 permits
 ASes that do not implement this extension to silently ignore
-unrecognized parameters and issue an unbound access token. A client
-MAY add `instance_issuers` at any time; a client that wants to mandate
+unrecognized parameters and issue an unbound access token. The
+`actor_token_types_supported` value is a coarse capability signal;
+clients may still need registration-time or deployment agreement for
+grant-specific use, raw JWT-SVID compatibility, accepted sender-
+constraint methods, and refresh-token behavior. A client MAY add
+`instance_issuers` at any time; a client that wants to mandate
 instance assertions for every issued access token can register
 `token_endpoint_auth_method = client_instance_jwt`
 ({{instance-assertion-auth}}), which intrinsically requires the
@@ -2216,6 +2233,11 @@ SHOULD plan incident response around this window.
 
 Client metadata is itself trust-affecting: an attacker who can
 modify it can add a new instance issuer under their control.
+Adding an `instance_issuers` entry, widening a descriptor's
+`spiffe_id` or `trust_domain`, changing a descriptor's key source, or
+enabling `client_instance_jwt` is equivalent to adding or expanding a
+credential issuer for the client and SHOULD require high-assurance
+change control by the client operator and AS.
 Clients publishing CIMD metadata MUST protect the publication
 channel (per {{CIMD}}'s requirement of HTTPS) and the storage
 backing it; deployments using static registration MUST protect the
@@ -2990,7 +3012,9 @@ The RS treats `sub` as the workload identity (not a human user) per
 A parent agent's user-delegated access token is exchanged at the AS
 for a sub-agent's downstream-resource-scoped token. The sub-agent
 runtime presents an instance assertion; the inbound `subject_token`
-already carries an `act` chain naming the parent agent.
+already carries an `act` chain naming the parent agent. The
+`subject_token` was issued by `upstream.example.com`, which
+`as.example.com` trusts as a token issuer under local policy.
 
 Inbound `subject_token` (decoded; issued earlier when a parent agent
 "agent-orchestrator-alpha" obtained access on the user's behalf):
