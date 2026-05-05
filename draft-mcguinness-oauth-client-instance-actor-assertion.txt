@@ -137,7 +137,7 @@ Table of Contents
    9.  Resource Server Processing
      9.1.  Self-Acting Case
    10. Adoption and Migration
-     10.1.  Migration without re-minted cnf
+     10.1.  Adopting with Existing Workload Identity
    11. Conformance
    12. Security Considerations
      12.1.  Trust Model
@@ -2000,7 +2000,7 @@ Table of Contents
    register token_endpoint_auth_method = client_instance_jwt
    (Section 8.3), which intrinsically requires the actor_token.
 
-10.1.  Migration without re-minted cnf
+10.1.  Adopting with Existing Workload Identity
 
    Re-minted Client Instance Assertions require cnf (Section 7.2).  A
    deployment whose workload identity system does not yet emit per-
