@@ -179,6 +179,7 @@ Table of Contents
              Sub-Agent)
      SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID
              Binding)
+   Document History
    Acknowledgments
    Author's Address
 
@@ -372,6 +373,64 @@ Table of Contents
    client may authenticate via any registered method.  SPIFFE
    deployments get first-class support (Section 6.1.1, Section 8.8).
 
+   *OAuth Attestation-Based Client Authentication.* [ATTEST-CLIENT-AUTH]
+   (an OAuth Working Group document) defines how a Client Attester
+   issues a Client Attestation JWT that an OAuth client uses to
+   authenticate itself, paired with a Client Attestation PoP JWT proving
+   possession of the bound instance key.  Like [SPIFFE-CLIENT-AUTH],
+   that document operates at the client-authentication layer; this
+   profile operates at the actor / instance-identity layer and on
+   different OAuth parameters and trust sources:
+
+   +===============+==============================+===================+
+   | Layer         | Attestation-Based Client     | This document     |
+   |               | Auth                         |                   |
+   +===============+==============================+===================+
+   | What is       | The OAuth client             | An actor          |
+   | authenticated |                              | (instance) acting |
+   |               |                              | under an OAuth    |
+   |               |                              | client            |
+   +---------------+------------------------------+-------------------+
+   | Wire-level    | OAuth-Client-Attestation and | actor_token /     |
+   | transport     | OAuth-Client-Attestation-PoP | actor_token_type  |
+   |               | HTTP headers                 | form parameters   |
+   +---------------+------------------------------+-------------------+
+   | Trust source  | AS-to-Attester trust         | Per-client        |
+   |               | established out-of-band      | instance_issuers  |
+   |               |                              | in client         |
+   |               |                              | metadata          |
+   +---------------+------------------------------+-------------------+
+   | What surfaces | Nothing about the instance   | Instance identity |
+   | in the access |                              | in act.sub        |
+   | token         |                              | (delegation) or   |
+   |               |                              | top-level sub     |
+   |               |                              | (self-acting)     |
+   +---------------+------------------------------+-------------------+
+   | cnf shape     | cnf.jwk carrying the full    | cnf.jkt or        |
+   |               | instance key; PoP via        | cnf.x5t#S256      |
+   |               | dedicated JWT                | thumbprint; PoP   |
+   |               |                              | via [RFC9449] or  |
+   |               |                              | [RFC8705]         |
+   +---------------+------------------------------+-------------------+
+
+                                 Table 2
+
+   The two specifications are orthogonal and MAY be combined.  A
+   deployment using [ATTEST-CLIENT-AUTH] for client authentication and
+   this profile for actor identity SHOULD reuse a single instance-
+   generated key across all three roles: bound by the Client Attester in
+   the attestation's cnf.jwk, named by this profile's Client Instance
+   Assertion in cnf.jkt, and used for the access token's sender-
+   constraint via [RFC9449] or [RFC8705].  This is the natural pattern
+   for mobile and native deployments where a Client Attester is already
+   in place.
+
+   This profile does not redefine or extend [ATTEST-CLIENT-AUTH].
+   Deployments where authenticating the client is sufficient and the
+   resource server does not need to distinguish among instances can use
+   [ATTEST-CLIENT-AUTH] alone; deployments that need the resource server
+   to see and authorize specific instances combine both.
+
    *WIMSE Workload Credentials.* The IETF WIMSE working group is
    defining specifications for workload identity ([WIMSE-CREDS],
    [WIMSE-ARCH]); WIMSE work is in progress.  This profile's Client
@@ -521,7 +580,7 @@ Table of Contents
      |               | or top-level sub represents the instance.     |
      +---------------+-----------------------------------------------+
 
-                                  Table 2
+                                  Table 3
 
    A high-level flow:
 
@@ -1497,7 +1556,7 @@ Table of Contents
        | ([RFC8693])        | subject             |                |
        +--------------------+---------------------+----------------+
 
-                                  Table 3
+                                  Table 4
 
    The jwt-bearer and token-exchange rows always classify as delegation
    under this profile.  [RFC7523] requires a JWT-bearer assertion that
@@ -1718,7 +1777,7 @@ Table of Contents
    |         |          |                      |Section 7.3 |           |
    +---------+----------+----------------------+------------+-----------+
 
-                                  Table 4
+                                  Table 5
 
    In raw JWT-SVID mode, the AS MUST:
 
@@ -2625,6 +2684,14 @@ Table of Contents
 
 14.2.  Informative References
 
+   [ATTEST-CLIENT-AUTH]
+              Looker, T., Bastian, P., and C. Bormann, "OAuth 2.0
+              Attestation-Based Client Authentication", Work in
+              Progress, Internet-Draft, draft-ietf-oauth-attestation-
+              based-client-auth-08, 2 March 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
+              attestation-based-client-auth-08>.
+
    [CIMD]     Parecki, A. and E. Smith, "OAuth Client ID Metadata
               Document", Work in Progress, Internet-Draft, draft-ietf-
               oauth-client-id-metadata-document-01, 1 March 2026,
@@ -3178,6 +3245,21 @@ SPIFFE Workload (Self-Acting, JWT-SVID Reuse with X.509-SVID Binding)
    At the resource server, the workload connects over mTLS with the same
    X.509-SVID; the RS verifies that the certificate thumbprint matches
    the access token's cnf.x5t#S256.
+
+Document History
+
+   _RFC EDITOR: please remove this section before publication._
+
+   -01
+
+   *  Added §Relationship subsection covering OAuth Attestation-Based
+      Client Authentication ([ATTEST-CLIENT-AUTH]); described combined
+      deployment with key sharing across attestation, instance
+      assertion, and access-token sender-constraint.
+
+   -00
+
+   *  Initial version.
 
 Acknowledgments
 
