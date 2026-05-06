@@ -53,6 +53,7 @@ normative:
 
 informative:
   RFC7009:
+  ATTEST-CLIENT-AUTH: I-D.ietf-oauth-attestation-based-client-auth
   CIMD: I-D.ietf-oauth-client-id-metadata-document
   WIMSE-ARCH: I-D.ietf-wimse-arch
   WIMSE-CREDS: I-D.ietf-wimse-workload-creds
@@ -264,6 +265,41 @@ not require SPIFFE; instance issuers may use any `subject_syntax`,
 and the client may authenticate via any registered method. SPIFFE
 deployments get first-class support ({{instance-issuers}},
 {{spiffe-compatibility}}).
+
+**OAuth Attestation-Based Client Authentication.**
+{{ATTEST-CLIENT-AUTH}} (an OAuth Working Group document) defines
+how a Client Attester issues a Client Attestation JWT that an OAuth
+client uses to authenticate itself, paired with a Client Attestation
+PoP JWT proving possession of the bound instance key. Like
+{{SPIFFE-CLIENT-AUTH}}, that document operates at the
+client-authentication layer; this profile operates at the actor /
+instance-identity layer and on different OAuth parameters and trust
+sources:
+
+| Layer | Attestation-Based Client Auth | This document |
+| --- | --- | --- |
+| What is authenticated | The OAuth client | An actor (instance) acting under an OAuth client |
+| Wire-level transport | `OAuth-Client-Attestation` and `OAuth-Client-Attestation-PoP` HTTP headers | `actor_token` / `actor_token_type` form parameters |
+| Trust source | AS-to-Attester trust established out-of-band | Per-client `instance_issuers` in client metadata |
+| What surfaces in the access token | Nothing about the instance | Instance identity in `act.sub` (delegation) or top-level `sub` (self-acting) |
+| `cnf` shape | `cnf.jwk` carrying the full instance key; PoP via dedicated JWT | `cnf.jkt` or `cnf.x5t#S256` thumbprint; PoP via {{RFC9449}} or {{RFC8705}} |
+
+The two specifications are orthogonal and MAY be combined. A
+deployment using {{ATTEST-CLIENT-AUTH}} for client authentication
+and this profile for actor identity SHOULD reuse a single
+instance-generated key across all three roles: bound by the Client
+Attester in the attestation's `cnf.jwk`, named by this profile's
+Client Instance Assertion in `cnf.jkt`, and used for the access
+token's sender-constraint via {{RFC9449}} or {{RFC8705}}. This is
+the natural pattern for mobile and native deployments where a
+Client Attester is already in place.
+
+This profile does not redefine or extend {{ATTEST-CLIENT-AUTH}}.
+Deployments where authenticating the client is sufficient and the
+resource server does not need to distinguish among instances can
+use {{ATTEST-CLIENT-AUTH}} alone; deployments that need the
+resource server to see and authorize specific instances combine
+both.
 
 **WIMSE Workload Credentials.** The IETF WIMSE working group is
 defining specifications for workload identity ({{WIMSE-CREDS}},
@@ -2985,6 +3021,22 @@ cycle):
 At the resource server, the workload connects over mTLS with the
 same X.509-SVID; the RS verifies that the certificate thumbprint
 matches the access token's `cnf.x5t#S256`.
+
+# Document History
+{:numbered="false"}
+
+*RFC EDITOR: please remove this section before publication.*
+
+-01
+
+* Added §Relationship subsection covering OAuth Attestation-Based
+  Client Authentication ({{ATTEST-CLIENT-AUTH}}); described combined
+  deployment with key sharing across attestation, instance
+  assertion, and access-token sender-constraint.
+
+-00
+
+* Initial version.
 
 # Acknowledgments
 {:numbered="false"}
